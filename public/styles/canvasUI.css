@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins');
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevents scrollbars from appearing */
+    position: absolute;
+    background-color: #f0f0f0; /* Sets background color for visibility */
+    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: lightgrey;
+    width: 100vw; /* Ensures it takes the full viewport width */
+    height: 100vh; /* Ensures it takes the full viewport height */
+    border: none; /* Ensures no border is applied */
+    z-index: 1; /* Sets z-index to ensure it is stacked under control buttons */
+    box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+}
+
+* {
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+}
+
+button:focus {
+    outline: none;
+}
+
+.tippy-box {
+    font-family: 'Poppins', sans-serif; 
+}
+
+.button-overlay {
+    position: relative;
+}
+
+.button-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.1); /* Low opacity dark overlay */
+    pointer-events: none;
+    border-radius: 10px;
+}
+
+.button-active {
+    background-color: lightgrey !important; /* Same as hover background color */
+}
+
+.button-hover {
+    background-color: lightgrey !important;
+}
+
+button {
+    /* margin:3px; */
+    border-radius: 10px;
+    transition: background-color 0.3s;
+    background-color: initial;
+}
+
+#control-buttons {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.node-add-sub-buttons {
+    position: static;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    pointer-events: auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+}
+
+.confirmation-modal {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.confirmation-modal div {
+    background: white;
+    width: 300px;
+    margin: 100px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+#node-details, #canvas-details {
+    position: fixed;
+    color: white;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    
+}
+
+#node-details {
+    top: 10px;
+    left: 10px;
+}
+
+#toggle-node-details {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#modify-orbits {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#node-size-range {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#toggle-node-position-fixed {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#toggle-node-position-fixed:disabled {
+    color: #666;
+}
+
+#node-color-picker {
+    pointer-events: auto;
+    color: transparent;
+    background: transparent;
+    border: none;
+    width: 0px; /* Adjust accordingly */
+    height: 20px; /* Adjust accordingly */
+    cursor: pointer;
+    padding: 0px 0px 0px 20px !important;
+}
+#node-color-picker:focus {
+    outline: none; /* Removes focus outline if still visible */
+}
+
+#orbit-details-menu {
+    left: 150px; 
+    top: 10px;
+    position: fixed;
+    color: white;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.orbit-menu-buttons {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#toggle-canvas-details {
+    pointer-events: auto;
+    cursor: pointer;
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+}
+
+#canvas-details {
+    bottom: 10px;
+    right: 10px;
+}
+
+#canvas-details-content{
+    padding: 10px;
+}
+
+.tippy-box {
+    font-family: 'Poppins', sans-serif; 
+}
+
+.button-overlay {
+    position: relative;
+}
+
+.button-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.1); /* Low opacity dark overlay */
+    pointer-events: none;
+    border-radius: 10px;
+}
+
+.button-active {
+    background-color: lightgrey !important; /* Same as hover background color */
+}
+
+.button-hover {
+    background-color: lightgrey !important;
+}
+
+button {
+    border-radius: 10px;
+    transition: background-color 0.3s;
+    background-color: initial;
+}
+.menuBarDiv {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.menuDiv {
+    position: absolute;
+    justify-content: center;
+    align-items: center; 
+    pointer-events: auto;
+    border-radius: 10px;
+    z-index: 1000;
+    background-color: #f0f0f0;  
+    box-shadow:
+  0.9px 1.2px 2.4px rgba(0, 0, 0, 0.062),
+  2.2px 3px 6px rgba(0, 0, 0, 0.089),
+  4.4px 6.2px 12.2px rgba(0, 0, 0, 0.111),
+  9.1px 12.8px 25.2px rgba(0, 0, 0, 0.138),
+  25px 35px 69px rgba(0, 0, 0, 0.2)
+;
+}
+
+
+#top-bar button, #lower-bar button #lower-bar-popups button{
+    border-radius: 10px;
+    transition: background-color 0.3s;
+    background-color: none;
+    border: none;
+}

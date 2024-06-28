@@ -1,0 +1,49 @@
+Canvas
+-Add popping bubble animations for when you add a new node
+-Set up the canvas so that only Spectrum spawns at the start
+-When you double click an agent node, it should become the new central node that the others orbit
+-Update collision, when a node is being dragged it should not move from the cursor
+-Fix touch controls so they are just like mouse controls
+-Update background image to a simple repeating cloud pattern, must scale with screen size
+
+UI
+-Add Current central node name to the center bottom of the screen
+-Update button for dashboard
+-Maybe update top right to have settings and search? 
+-^Or possibly closer match the canvas UI all together, maybe put the dashboard button in the bottom left, put the info button in a sandwich menu in top right
+-Update cursor to match canvas
+
+
+Prompting
+-Update Spectrum prompt, change name from HappyPrism
+-Update Spectrum initial prompt to introduce concept of the app, by the end, prompt should always cause all the other nodes to appear by the end of the first conversation
+-Update all initial prompts to give a detailed description of the agent and their dimension, no goal setting yet.
+-After user has met each dimension, switch to follow up prompts, then they can set up goals with the AI Agents
+-Figure out how to make the Agents stop pretending to be other agents
+
+Styling
+-Make everything a percentage instead of hard pixel measurement.
+-Fix styling for chat window 
+    -Make it always take up the full screen besides the space for the buttons. 
+    -Make it match the button themes. 
+    -Make it slightly clear.
+    -Make App Name Italic in Chat window
+    -Rounded corners
+    -Box Shadow
+
+
+Code
+-Clean up code, use canvas app as a reference
+-Clean up stylesheets
+-start committing to repo
+
+Dashboard
+-start the dashboard
+
+Info
+-Set up dynamic info page that explains the app to users
+
+Chat
+-Look into crewAI
+-create a x button at top of chat
+-add current node name to top of chat, add left and right buttons that let you switch current node

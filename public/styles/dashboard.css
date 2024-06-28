@@ -1,0 +1,175 @@
+#dashboard-popup {
+    position: fixed;
+    width: -webkit-fill-available;
+    background-color: white;
+    box-shadow: 0.9px 1.2px 2.4px rgba(0, 0, 0, 0.062),  2.2px 3px 6px rgba(0, 0, 0, 0.089),  4.4px 6.2px 12.2px rgba(0, 0, 0, 0.111),  9.1px 12.8px 25.2px rgba(0, 0, 0, 0.138),  25px 35px 69px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    overflow: hidden;
+    display: none;
+}
+
+#close-dashboard-button {
+  z-index: 1002;
+  position: absolute;
+  right: 3vh;
+  top: 2vh;
+  background: none;
+  border: none;
+  justify-content: center;
+  align-items: center;
+  width: 4vh;
+  height: 4vh;
+  display: flex;
+}
+
+#close-dashboard-button img{
+  width: 3.5vh;
+  height: 3.5vh;
+}
+
+.button-overlay::before #close-dashboard-button{
+  background-color: rgba(0, 0, 0, 0.3); /* Low opacity dark overlay */
+}
+
+.button-active {
+  background-color: #bdbdbd !important; /* Same as hover background color */
+}
+
+.button-hover {
+  background-color: #bdbdbd !important;
+}
+
+#dashboard-content {
+    background-color: #ededed;
+    color: #000000;
+    position: relative;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow-y: scroll;
+}
+
+#sidebar-nav {
+  width: 200px;
+  background-color: #6200ea;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+}
+
+#sidebar-nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#sidebar-nav ul li {
+  margin: 20px 0;
+}
+
+#sidebar-nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+#sidebar-nav ul li a:hover {
+  text-decoration: underline;
+}
+
+main {
+  margin-left: 220px;
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.dashboard-page {
+  display: none;
+}
+
+#dashboard-main {
+  display: block;
+}
+
+#main-calendar, .daily-insights, .quick-update, .recent-goals, .achieved-goals {
+  margin-bottom: 30px;
+  background-color: #f5f5f5;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#main-calendar .mc-week {
+  display: flex;
+  justify-content: space-between;
+}
+
+#main-calendar .mc-day {
+  width: 13%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  text-align: center;
+  padding: 10px;
+}
+
+.daily-insights .navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+#dashboard-popup button {
+  background-color: #6200ea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+#dashboard-popup button:hover {
+  background-color: #3700b3;
+}
+
+.quick-update form {
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-update .goal-update {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.quick-update label {
+  margin-right: 10px;
+  flex: 1;
+}
+
+.quick-update input {
+  flex: 2;
+  padding: 5px;
+  margin-right: 10px;
+}
+
+.quick-update button {
+  flex: 1;
+}
+
+.recent-goals ul, .achieved-goals ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.recent-goals li, .achieved-goals li {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.achieved-goals .emoji {
+  font-size: 1.5em;
+  margin-right: 10px;
+}
