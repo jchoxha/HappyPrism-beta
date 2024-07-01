@@ -1,195 +1,147 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-// Simple UI components
-const Card = ({ children, className }) => (
-  <div className={`bg-white shadow rounded-lg ${className}`}>{children}</div>
-);
-
-const CardHeader = ({ children }) => (
-  <div className="px-4 py-5 border-b border-gray-200">{children}</div>
-);
-
-const CardTitle = ({ children }) => (
-  <h3 className="text-lg leading-6 font-medium text-gray-900">{children}</h3>
-);
-
-const CardContent = ({ children }) => (
-  <div className="px-4 py-5">{children}</div>
-);
-
-const Button = ({ children, onClick, className }) => (
-  <button
-    onClick={onClick}
-    className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${className}`}
-  >
-    {children}
-  </button>
-);
-
-const Progress = ({ value }) => (
-  <div className="w-full bg-gray-200 rounded-full h-2.5">
-    <div
-      className="bg-blue-600 h-2.5 rounded-full"
-      style={{ width: `${value}%` }}
-    ></div>
-  </div>
-);
-
-// Simple icon components
-const PlusCircle = () => <span>+</span>;
-const CheckCircle = () => <span>✓</span>;
-const Circle = () => <span>○</span>;
-const ArrowRight = () => <span>→</span>;
-const Calendar = () => <span>📅</span>;
-const TrendingUp = () => <span>📈</span>;
-const Trello = () => <span>📋</span>;
-
-const PerformanceChart = ({ data }) => (
-  <ResponsiveContainer width="100%" height={200}>
-    <LineChart data={data}>
-      <XAxis dataKey="date" />
-      <YAxis />
-      <Tooltip />
-      <Line type="monotone" dataKey="value" stroke="#8884d8" />
-    </LineChart>
-  </ResponsiveContainer>
-);
-
-const ProjectBoard = ({ columns }) => (
-  <div className="flex space-x-4 overflow-x-auto pb-4">
-    {columns.map((column, index) => (
-      <div key={index} className="flex-shrink-0 w-64 bg-gray-100 rounded p-2">
-        <h3 className="font-bold mb-2">{column.title}</h3>
-        {column.tasks.map((task, taskIndex) => (
-          <div key={taskIndex} className="bg-white p-2 mb-2 rounded shadow">
-            {task}
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-);
-
-const GoalCard = ({ title, type, progress, milestones, habitData, performanceData, projectData }) => (
-  <Card className="w-full mb-4">
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
-      <div className="text-sm text-gray-500">{type}</div>
-    </CardHeader>
-    <CardContent>
-      {type === 'Transformation' && (
-        <Progress value={progress} />
-      )}
-      {type === 'Challenge' && milestones && (
-        <div className="flex items-center space-x-2">
-          {milestones.map((milestone, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <ArrowRight />}
-              {milestone.completed ? (
-                <CheckCircle />
-              ) : (
-                <Circle />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      )}
-      {type === 'Habit' && habitData && (
-        <div>
-          <div className="flex items-center mb-2">
-            <Calendar />
-            <span className="ml-2">{habitData.frequency}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="mr-2">Current streak:</span>
-            <span className="font-bold">{habitData.currentStreak} days</span>
-          </div>
-        </div>
-      )}
-      {type === 'Performance' && performanceData && (
-        <div>
-          <div className="flex items-center mb-2">
-            <TrendingUp />
-            <span className="ml-2">Performance over time</span>
-          </div>
-          <PerformanceChart data={performanceData} />
-        </div>
-      )}
-      {type === 'Project' && projectData && (
-        <div>
-          <div className="flex items-center mb-2">
-            <Trello />
-            <span className="ml-2">Project Board</span>
-          </div>
-          <ProjectBoard columns={projectData.columns} />
-        </div>
-      )}
-    </CardContent>
-  </Card>
-);
+import { createRoot } from 'react-dom/client';
+import GoalCard from './GoalCard';
+import NewGoalForm from './newGoalForm.js';
+import { Goal, Milestone } from './goal.js';
+import { Button, PlusCircle } from '../UIComponents.js';
 
 const GoalsPage = () => {
   const [goals, setGoals] = useState([
-    { id: 1, title: 'Become Physically Fit', type: 'Transformation', progress: 65 },
-    { id: 2, title: 'Complete a Marathon', type: 'Challenge', milestones: [
-      { completed: true },
-      { completed: true },
-      { completed: false },
-      { completed: false },
-    ]},
-    { id: 3, title: 'Workout 5 times a week', type: 'Habit', habitData: {
-      frequency: '5 times a week',
-      currentStreak: 12,
-    }},
-    { id: 4, title: 'Improve Bench Press', type: 'Performance', performanceData: [
-      { date: '2023-01', value: 135 },
-      { date: '2023-02', value: 145 },
-      { date: '2023-03', value: 155 },
-      { date: '2023-04', value: 160 },
-      { date: '2023-05', value: 170 },
-    ]},
-    { id: 5, title: 'Launch Personal Website', type: 'Project', projectData: {
-      columns: [
-        { title: 'To Do', tasks: ['Design homepage', 'Set up hosting'] },
-        { title: 'In Progress', tasks: ['Create About Me page'] },
-        { title: 'Done', tasks: ['Domain registration', 'Content planning'] },
-      ]
-    }},
+    (() => {
+      const challengeGoal1 = new Goal("Complete a Marathon", "🏃‍♂️", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
+      challengeGoal1.milestones = [
+        new Milestone("Run 5K", "🏃", true, new Date("2024-01-01"), new Date("2024-03-31"), true, new Date("2024-03-15")),
+        new Milestone("Run 10K", "🏃", true, new Date("2024-04-01"), new Date("2024-06-30"), true, new Date("2024-06-15")),
+        new Milestone("Run Half Marathon", "🏃", false, new Date("2024-07-01"), new Date("2024-09-30")),
+        new Milestone("Run Full Marathon", "🏅", false, new Date("2024-10-01"), new Date("2024-12-31")),
+      ];
+      challengeGoal1.goal_lastUpdated = new Date("2024-02-15");
+      return challengeGoal1;
+    })(),
+    (() => {
+      const challengeGoal2 = new Goal("Write a Novel", "📚", "challenge", new Date("2024-01-01"));
+      challengeGoal2.milestones = [
+        new Milestone("Outline Story", "✍️", true, new Date("2024-01-01"), new Date("2024-02-29"), true, new Date("2024-02-20")),
+        new Milestone("Write First Draft", "📝", true, new Date("2024-03-01"), new Date("2024-08-31")),
+        new Milestone("Edit and Revise", "📖", false, new Date("2024-09-01"), new Date("2024-11-30")),
+        new Milestone("Publish", "🎉", false, new Date("2024-12-01"), new Date("2024-12-31")),
+      ];
+      challengeGoal2.goal_lastUpdated = new Date("2024-02-20");
+      return challengeGoal2;
+    })(),
+    new Goal("Learn Spanish", "🗣️", "challenge", new Date("2024-01-01"), new Date("2024-12-31")),
+    (() => {
+      const challengeGoal3 = new Goal("Improve Coding Skills", "💻", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
+      challengeGoal3.milestones = [
+        new Milestone("Complete Python Course", "🐍", true, new Date("2024-01-01"), new Date("2024-04-30"), false, null, true),
+        new Milestone("Build Web Application", "🌐", false, new Date("2024-05-01")),
+        new Milestone("Contribute to Open Source", "🤝", false, new Date("2024-09-01"), new Date("2024-12-31")),
+      ];
+      challengeGoal3.goal_lastUpdated = new Date("2024-02-25");
+      return challengeGoal3;
+    })(),
+    (() => {
+      const habitGoal = new Goal("Workout 5 times a week", "🏋️‍♀️", "habit", new Date(), null, 40);
+      habitGoal.habbit_action = "Workout";
+      habitGoal.habbit_frequencyNum = 5;
+      habitGoal.habbit_frequencyPeriod = "weekly";
+      habitGoal.habbit_current_streakNum = 3;
+      habitGoal.habbit_goal_streakNum = 12;
+      habitGoal.habbit_streakPeriod = "weeks";
+      return habitGoal;
+    })(),
+    (() => {
+      const performanceGoal = new Goal("Improve Bench Press", "🏋️‍♂️", "performance", new Date(), new Date("2024-12-31"), 60);
+      performanceGoal.performance_metric = "Bench Press Weight";
+      performanceGoal.performance_unit = "lbs";
+      performanceGoal.performance_startingValue = 135;
+      performanceGoal.performance_targetValue = 225;
+      performanceGoal.performance_valueHistory = [
+        { date: '2024-01', value: 135 },
+        { date: '2024-02', value: 145 },
+        { date: '2024-03', value: 155 },
+        { date: '2024-04', value: 165 },
+        { date: '2024-05', value: 175 },
+      ];
+      return performanceGoal;
+    })(),
+    (() => {
+      const projectGoal = new Goal("Launch Personal Website", "🌐", "project", new Date(), new Date("2024-12-31"), 30);
+      projectGoal.project_tasks = {
+        "To Do": [
+          { name: "Design homepage", description: "Create a mockup for the homepage", contributingPercentage: 20 },
+          { name: "Set up hosting", description: "Choose and set up web hosting", contributingPercentage: 10 },
+        ],
+        "In Progress": [
+          { name: "Develop backend", description: "Implement server-side logic", contributingPercentage: 30 },
+        ],
+        "Done": [
+          { name: "Domain registration", description: "Register a domain name", contributingPercentage: 5 },
+          { name: "Create sitemap", description: "Plan out the structure of the website", contributingPercentage: 5 },
+        ],
+      };
+      projectGoal.percentTodo = 30;
+      projectGoal.percentInProgress = 30;
+      projectGoal.percentComplete = 10;
+      return projectGoal;
+    })(),
+    new Goal("Become Physically Fit", "💪", "transformation", new Date(), new Date("2024-12-31"), 65),
   ]);
 
   const [showNewGoalForm, setShowNewGoalForm] = useState(false);
 
-  const addNewGoal = () => {
-    // Implement new goal addition logic here
-    setShowNewGoalForm(true);
+  const addNewGoal = (goalData) => {
+    const newGoal = new Goal(
+      goalData.goal_name,
+      goalData.goal_emoji,
+      goalData.goal_type,
+      new Date(),
+      goalData.goal_deadline,
+      0,
+      goalData.milestones || [],
+      goalData.goal_habitData || {},
+      goalData.goal_performanceData || [],
+      goalData.goal_projectData || {},
+      goalData.goal_subGoals || []
+    );
+    setGoals([...goals, newGoal]);
+    setShowNewGoalForm(false);
+  };
+
+  const cancelNewGoal = () => {
+    setShowNewGoalForm(false);
   };
 
   return (
     <div className="p-4">
+      <div className="mb-4">
+        <Button onClick={() => setShowNewGoalForm(true)} className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded">
+          <PlusCircle /> Add New Goal
+        </Button>
+        {showNewGoalForm && (
+          <div className="mt-4">
+            <NewGoalForm onSubmit={addNewGoal} onCancel={cancelNewGoal} existingGoals={goals} />
+          </div>
+        )}
+      </div>
       <h1 className="text-2xl font-bold mb-4">Your Goals</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((goal) => (
-          <GoalCard key={goal.id} {...goal} />
+        {goals.map((goal, index) => (
+          <GoalCard key={index} goal={goal} />
         ))}
       </div>
-      <Button onClick={addNewGoal} className="mt-4">
-        <PlusCircle /> Add New Goal
-      </Button>
-      {showNewGoalForm && (
-        <div className="mt-4">
-          {/* Implement new goal form here */}
-          <p>New goal form placeholder</p>
-        </div>
-      )}
     </div>
   );
 };
 
 function drawGoals() {
   const goalsContainer = document.getElementById('dashboard-goals');
-  ReactDOM.render(<GoalsPage />, goalsContainer);
+  if (goalsContainer) {
+    const root = createRoot(goalsContainer);
+    root.render(<GoalsPage />);
+  } else {
+    console.error("Could not find 'dashboard-goals' element.");
+  }
 }
 
 export { drawGoals };

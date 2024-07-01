@@ -540,4 +540,4 @@ class CanvasManager {
     }
 }
 
-module.exports = { CanvasManager };
+export default CanvasManager;

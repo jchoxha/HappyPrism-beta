@@ -145,21 +145,6 @@ button {
 #toggle-node-position-fixed:disabled {
     color: #666;
 }
-
-#node-color-picker {
-    pointer-events: auto;
-    color: transparent;
-    background: transparent;
-    border: none;
-    width: 0px; /* Adjust accordingly */
-    height: 20px; /* Adjust accordingly */
-    cursor: pointer;
-    padding: 0px 0px 0px 20px !important;
-}
-#node-color-picker:focus {
-    outline: none; /* Removes focus outline if still visible */
-}
-
 #orbit-details-menu {
     left: 150px; 
     top: 10px;

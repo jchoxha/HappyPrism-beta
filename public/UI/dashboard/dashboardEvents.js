@@ -33,7 +33,6 @@ function handleAllButtonClick(event) {
             }
         });
        
-        
     }
 }
 
@@ -44,7 +43,6 @@ function showPage(page) {
     }
     document.getElementById(page).style.display = "block";
 }
-
 
 function handleCloseDashboardButtonClick(event) {
     handleAllButtonClick(event);

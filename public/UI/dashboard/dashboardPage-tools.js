@@ -6,17 +6,17 @@ function drawTools() {
             <div class="goal-update">
                 <label for="goal1">Exercise</label>
                 <input type="number" id="goal1" name="goal1" placeholder="Minutes">
-                <button type="button">Update</button>
+                <button type="button" class="dimension-theme-colored">Update</button>
             </div>
             <div class="goal-update">
                 <label for="goal2">Reading</label>
                 <input type="number" id="goal2" name="goal2" placeholder="Pages">
-                <button type="button">Update</button>
+                <button type="button" class="dimension-theme-colored">Update</button>
             </div>
             <div class="goal-update">
                 <label for="goal3">Meditation</label>
                 <input type="number" id="goal3" name="goal3" placeholder="Minutes">
-                <button type="button">Update</button>
+                <button type="button" class="dimension-theme-colored">Update</button>
             </div>
         </form>
         <div class="recently-updated">

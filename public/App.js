@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadDependencies } from './Dependencies/loadDependencies.js';
-import { CanvasManager } from './UI/canvasManager/canvasManager.js';
+import  CanvasManager  from './UI/canvasManager/canvasManager.js';
 import { initializeEventListeners } from './UI/eventManager.js';
 import { physicsUpdate } from './UI/canvasManager/Physics/physics.js';
 import { Theme } from './UI/theme.js';
@@ -25,7 +25,6 @@ const App = () => {
 
   useEffect(() => {
     const theme = new Theme();
-    theme.initTheme();
 
     if (canvasRef.current) {
       const newCanvasManager = new CanvasManager(canvasRef);
