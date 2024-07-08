@@ -1,9 +1,11 @@
-
 // eventManager.js
 
 let CanvasManager = null;
+let setupIteration = 0;
 
 export function setupEventListeners(canvasManager) {
+    console.log("Setting up event listeners, iteration number: ", setupIteration);
+    setupIteration++;
     CanvasManager = canvasManager;
     
     if (!canvasManager.canvas) {
@@ -27,135 +29,11 @@ export function setupEventListeners(canvasManager) {
             handleMouseLeave(canvasManager);
         }
     });
-
-    // Set up button event listeners
-    setupButtonListeners();
 }
-
-function setupButtonListeners() {
-    const buttons = {
-        'home-button': handleHomeButtonClick,
-        'search-button': handleSearchButtonClick,
-        'options-menu-button': handleOptionsMenuButtonClick,
-        'profile-button': handleProfileButtonClick,
-        'dashboard-button': handleDashboardButtonClick,
-        'chat-button': handleChatButtonClick,
-        'prev-node-button': handlePrevNodeButtonClick,
-        'next-node-button': handleNextNodeButtonClick
-    };
-
-    Object.entries(buttons).forEach(([id, clickHandler]) => {
-        const button = document.getElementById(id);
-        if (button) {
-            if (id !== 'home-button') {
-                button.addEventListener('mousedown', handleButtonMouseDown);
-                button.addEventListener('mouseup', handleButtonMouseUp);
-                button.addEventListener('mouseover', handleButtonMouseOver);
-                button.addEventListener('mouseout', handleButtonMouseOut);
-            } else {
-                handleHomeButtonHover();
-            }
-            button.addEventListener('click', clickHandler);
-        }
-    });
-}
-
-function handleHomeButtonHover(){
-    //Custom Hover For Home Button
-    const homeButton = document.getElementById('home-button');
-    const letters = document.querySelectorAll('.app-name-letter');
-
-    if (!homeButton || letters.length === 0) {
-        console.error('Home button or letters not found');
-        return;
-    }
-
-    let letterAnimation;
-    let logoAnimation;
-
-    function animateLogo() {
-    if (logoAnimation) logoAnimation.pause();
-    logoAnimation = anime({
-        targets: '#home-button-logo',
-        translateY: [
-            { value: -2.5, duration: 500 },
-            { value: 0, duration: 500 },
-            { value: 2.5, duration: 500 },
-            { value: 0, duration: 500 }
-        ],
-        easing: 'linear',
-        loop: true,
-        
-    });
-    }
-
-    function animateLogoBackToDefault() {
-    if (logoAnimation) logoAnimation.pause();
-    logoAnimation = anime({
-        targets: '#home-button-logo',
-        translateY: 0,
-        easing: 'spring(1, 80, 10, 0)',
-        duration: 500,
-        complete: () => {
-            anime.remove('#home-button-logo');
-        }
-    });
-}
-
-const animateLetters = () => {
-if (letterAnimation) letterAnimation.pause();
-letterAnimation = anime({
-    targets: letters,
-    color: [
-        { value: '#FF0000' }, // Red
-        { value: '#FF7F00' }, // Orange
-        { value: '#FFFF00' }, // Yellow
-        { value: '#00FF00' }, // Green
-        { value: '#0000FF' }, // Blue
-        { value: '#4B0082' }, // Indigo
-        { value: '#9400D3' }, // Violet
-        { value: '#f0f0f0' }, // BG Color
-    ],
-    easing: 'linear',
-    duration: 2500,
-    loop: 1,
-    delay: anime.stagger(100, { start: 0, direction: 'normal' }),
-    complete: function() {
-        animateLetters();
-    },
-});
-};
-
-const animateBackToBlack = () => {
-if (letterAnimation) letterAnimation.pause();
-letterAnimation = anime({
-    targets: letters,
-    color:  '#000000',
-    easing: 'linear',
-    duration: 500,
-    delay: anime.stagger(100, { start: 0, direction: 'normal' }),
-    complete: () => {
-        anime.remove(letters);
-    }
-});
-};
-
-homeButton.addEventListener('mouseover', () => {
-animateLogo();
-animateLetters();
-});
-
-homeButton.addEventListener('mouseout', () => {
-animateLogoBackToDefault()
-animateBackToBlack();
-});
-}
-
 
 function handleButtonMouseDown(event) {
     const button = event.currentTarget;
     button.classList.add('button-overlay');
-    
 }
 
 function handleButtonMouseUp(event) {
@@ -167,7 +45,7 @@ function handleButtonMouseOver(event) {
     const button = event.currentTarget;
     if (!button.classList.contains('button-disabled') && !CanvasManager.isMobile) {
         button.classList.add('button-hover');
-    } 
+    }
 }
 
 function handleButtonMouseOut(event) {
@@ -177,68 +55,19 @@ function handleButtonMouseOut(event) {
 
 function handleAllButtonClick(event) {
     console.log("Button clicked: ", event.currentTarget.id);
-    let buttons = null;
-        buttons = document.querySelectorAll('.activatable-button');
-        
-    
-    if (buttons != null) {
+    let buttons = document.querySelectorAll('.activatable-button');
+    if (buttons) {
         buttons.forEach(btn => {
-            if(btn != event.currentTarget){
+            if (btn !== event.currentTarget) {
                 btn.classList.remove('button-active');
-            }
-            else{
+            } else {
                 btn.classList.add('button-active');
             }
         });
-       
-        
     }
 }
 
-function handlePrevNodeButtonClick (event) {
-    handleAllButtonClick(event);
-    const button = event.currentTarget;
-    if(!CanvasManager.changeCentralNodeMode){
-        button.classList.add('button-active');
-        const defaultNodes = CanvasManager.defaultNodes;
-        const orbit = CanvasManager.orbits[0];
-        const centralNode = orbit.centralNode;
-        const indexOfCentralNode = defaultNodes.indexOf(centralNode);
-        let prevNode = null;
-        if(indexOfCentralNode == 0){
-            prevNode = defaultNodes[defaultNodes.length - 1];
-        }
-        else{  
-            prevNode = defaultNodes[indexOfCentralNode - 1];
-        }
-        CanvasManager.changeCentralNode(orbit, centralNode, prevNode);
-    }
-
-}
-
-function handleNextNodeButtonClick (event) {
-    handleAllButtonClick(event);
-    const button = event.currentTarget;
-    if(!CanvasManager.changeCentralNodeMode){
-        button.classList.add('button-active');
-        const defaultNodes = CanvasManager.defaultNodes;
-        const orbit = CanvasManager.orbits[0];
-        const centralNode = orbit.centralNode;
-        const indexOfCentralNode = defaultNodes.indexOf(centralNode);
-        let nextNode = null;
-        if(indexOfCentralNode == defaultNodes.length - 1){
-            nextNode = defaultNodes[0];
-        }
-        else{
-            nextNode = defaultNodes[indexOfCentralNode + 1];
-        }
-        CanvasManager.changeCentralNode(orbit, centralNode, nextNode);
-    }
-}
-
-
-function handleHomeButtonClick(event) {
-}
+function handleHomeButtonClick(event) {}
 
 function handleDashboardButtonClick(event) {
     handleAllButtonClick(event);
@@ -246,9 +75,8 @@ function handleDashboardButtonClick(event) {
     if (CanvasManager) {
         CanvasManager.toggleDashboard();
         button.classList.add('button-active');
-    } 
+    }
 }
-
 
 function handleChatButtonClick(event) {
     handleAllButtonClick(event);
@@ -256,24 +84,20 @@ function handleChatButtonClick(event) {
         CanvasManager.toggleChat();
         const button = event.currentTarget;
         button.classList.remove('button-active');
-    } 
+    }
 }
 
-
-function handleSearchButtonClick (event) {
+function handleSearchButtonClick(event) {
     handleAllButtonClick(event);
 }
 
-function handleOptionsMenuButtonClick (event) {
+function handleOptionsMenuButtonClick(event) {
     handleAllButtonClick(event);
 }
 
-function handleProfileButtonClick (event) {
+function handleProfileButtonClick(event) {
     handleAllButtonClick(event);
 }
-
-
-
 
 let initialPinchDistance = null;
 let lastScale = 1;
@@ -334,15 +158,11 @@ function handleEvent(event, canvasManager) {
             break;
     }
 }
-``
 
 function handleStart(event, canvasManager) {
-
-    //Deactivate all activatble buttons
-    let buttons = null;
-    buttons = document.querySelectorAll('.activatable-button');
-    
-    if (buttons != null) {
+    // Deactivate all activatable buttons
+    let buttons = document.querySelectorAll('.activatable-button');
+    if (buttons) {
         buttons.forEach(btn => {
             btn.classList.remove('button-active');
         });
@@ -351,37 +171,33 @@ function handleStart(event, canvasManager) {
     const { clientX, clientY } = event;
     const { offsetX, offsetY } = getOffsets(clientX, clientY, canvasManager.canvas);
     let nodeFound = false;
-    canvasManager.mousePositionOnDown = { x: canvasManager.currentmousePos.x, y: canvasManager.currentmousePos.y }
-    console.log("Mouse down at: ", canvasManager.mousePositionOnDown);
+    canvasManager.mousePositionOnDown = { x: canvasManager.currentmousePos.x, y: canvasManager.currentmousePos.y };
+    //console.log("Mouse down at: ", canvasManager.mousePositionOnDown);
 
-    
     for (let i = canvasManager.nodes.length - 1; i >= 0; i--) {
         const node = canvasManager.nodes[i];
         if (isMouseOver(offsetX, offsetY, node, canvasManager)) {
-        if (canvasManager.highlightedNode != node) {
+            if (canvasManager.highlightedNode !== node) {
                 canvasManager.highlightedNode = node;
-                console.log("Node highlighted: ", node);
-
+                //console.log("Node highlighted: ", node);
             }
             node.grabbed = true;
             canvasManager.mousePositionOnMoveStart.x = canvasManager.currentmousePos.x;
             canvasManager.mousePositionOnMoveStart.y = canvasManager.currentmousePos.y;
             nodeFound = true;
-            return;  // Stop searching once a node is found
+            return; // Stop searching once a node is found
         }
     }
 
-
     // Log the state if no nodes are selected
     if (!nodeFound) {
-        console.log("No node was selected");
+        //console.log("No node was selected");
         canvasManager.selectedNode = null;
         canvasManager.highlightedNode = null;
     }
 }
 
 function handleMove(event, canvasManager) {
-
     const { clientX, clientY } = event;
     const { offsetX, offsetY } = getOffsets(clientX, clientY, canvasManager.canvas);
 
@@ -397,7 +213,7 @@ function handleMove(event, canvasManager) {
                 node.inMovementAfterDragging = false;
                 node.inMovementAfterCollision = false;
                 node.inMovementAfterBeingAdded = false;
-                if(node.orbits.length > 0){
+                if (node.orbits.length > 0) {
                     node.orbits.forEach(orbit => {
                         orbit.orbitingNodes.forEach(orbitingNode => {
                             orbitingNode.inMovementAfterDragging = false;
@@ -440,10 +256,10 @@ function handleEnd(event, canvasManager) {
     const now = canvasManager.currentTime;
 
     canvasManager.nodes.forEach(node => {
-        node.grabbed = false;  
+        node.grabbed = false;
         if (node.dragging) {
             if (canvasManager.currentTime > canvasManager.mouseLastMoveTime) {
-                console.log("Node velocity canceled because " + (canvasManager.currentTime - canvasManager.mouseLastMoveTime) + " < 300");
+                // console.log("Node velocity canceled because " + (canvasManager.currentTime - canvasManager.mouseLastMoveTime) + " < 300");
                 node.vx = 0;
                 node.vy = 0;
             }
@@ -453,19 +269,11 @@ function handleEnd(event, canvasManager) {
     });
 }
 
-
-
-
-
-
-
 function updateMouseProperties(event, canvasManager) {
     const rect = canvasManager.canvas.getBoundingClientRect();
     canvasManager.currentmousePos.x = (event.clientX - rect.left - canvasManager.translateX) / canvasManager.scale;
     canvasManager.currentmousePos.y = (event.clientY - rect.top - canvasManager.translateY) / canvasManager.scale;
-    
 }
-
 
 function isMouseOver(mouseX, mouseY, node, canvasManager) {
     // Check if the mouse is over a node, assuming circular nodes for simplicity
@@ -479,9 +287,8 @@ function isMouseOver(mouseX, mouseY, node, canvasManager) {
 
 function handleWheel(event, canvasManager) {
     if (shouldPreventDefault(event, canvasManager)) {
-        event.preventDefault();  // Prevent the page from scrolling
+        event.preventDefault(); // Prevent the page from scrolling
     }
-
 }
 
 // This function decides when to call preventDefault based on your specific logic
@@ -511,7 +318,7 @@ export function initializeEventListeners(canvasManager) {
 }
 
 function handleMouseLeave(canvasManager) {
-    console.log('Mouse left the window bounds');
+    //console.log('Mouse left the window bounds');
 
     // Reset or stop any dragging or node movements
     canvasManager.nodes.forEach(node => {
@@ -530,6 +337,3 @@ function handleMouseLeave(canvasManager) {
     canvasManager.highlightedNode = null;
     canvasManager.draw();
 }
-
-
-

@@ -3,45 +3,45 @@
   <defs>
     <style>
       .cls-1 {
-        stroke: #fff200;
+        fill: #f47d27;
       }
 
       .cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7 {
-        fill: none;
+        stroke: #231f20;
         stroke-miterlimit: 133.3;
-        stroke-width: 41px;
+        stroke-width: 9px;
       }
 
       .cls-2 {
-        stroke: #d31920;
+        fill: #853b96;
       }
 
       .cls-3 {
-        stroke: #853b96;
+        fill: #939598;
       }
 
       .cls-4 {
-        stroke: #1a5caa;
+        fill: #fff200;
       }
 
       .cls-5 {
-        stroke: #939598;
+        fill: #33669a;
       }
 
       .cls-6 {
-        stroke: #f47d27;
+        fill: #d31920;
       }
 
       .cls-7 {
-        stroke: #33b44a;
+        fill: #33b44a;
       }
     </style>
   </defs>
-  <circle class="cls-3" cx="266.7" cy="169.1" r="66.7"/>
-  <circle class="cls-1" cx="533.3" cy="630.9" r="66.7"/>
-  <circle class="cls-4" cx="131.3" cy="401.2" r="66.7"/>
+  <circle class="cls-2" cx="266.7" cy="169.1" r="66.7"/>
+  <circle class="cls-4" cx="533.3" cy="630.9" r="66.7"/>
+  <circle class="cls-5" cx="131.3" cy="401.2" r="66.7"/>
   <circle class="cls-7" cx="264.6" cy="632.1" r="66.7"/>
-  <circle class="cls-2" cx="535.4" cy="167.9" r="66.7"/>
-  <circle class="cls-6" cx="668.7" cy="398.8" r="66.7"/>
-  <circle class="cls-5" cx="402" cy="400" r="66.7"/>
+  <circle class="cls-6" cx="535.4" cy="167.9" r="66.7"/>
+  <circle class="cls-1" cx="668.7" cy="398.8" r="66.7"/>
+  <circle class="cls-3" cx="402" cy="400" r="66.7"/>
 </svg>

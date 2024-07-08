@@ -19,7 +19,7 @@ export const CardContent = ({ children }) => (
 export const Button = ({ children, onClick, className }) => (
   <button
     onClick={onClick}
-    className={`dimension-theme-colored ${className}`}
+    // className={`dimension-theme-colored ${className}`}
   >
     {children}
   </button>

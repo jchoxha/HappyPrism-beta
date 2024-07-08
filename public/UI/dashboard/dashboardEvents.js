@@ -1,4 +1,8 @@
+import { clearDashboard } from './dashboard.js';
+import { showCanvasUI } from '../canvas/CanvasUI.js';
+
 let canvasManager = null;
+
 function setupDashboardEvents(CanvasManager) {
     canvasManager = CanvasManager;
     const buttons = {
@@ -20,19 +24,16 @@ function setupDashboardEvents(CanvasManager) {
 function handleAllButtonClick(event) {
     console.log("Button clicked: ", event.currentTarget.id);
     let buttons = null;
-        buttons = document.querySelectorAll('.activatable-button');
-        
+    buttons = document.querySelectorAll('.activatable-button');
     
     if (buttons != null) {
         buttons.forEach(btn => {
-            if(btn != event.currentTarget){
+            if (btn !== event.currentTarget) {
                 btn.classList.remove('button-active');
-            }
-            else{
+            } else {
                 btn.classList.add('button-active');
             }
         });
-       
     }
 }
 
@@ -47,7 +48,8 @@ function showPage(page) {
 function handleCloseDashboardButtonClick(event) {
     handleAllButtonClick(event);
     document.getElementById('dashboard-button').classList.remove('button-active');
-    canvasManager.toggleDashboard();
+    clearDashboard();
+    showCanvasUI();
 }
 
 module.exports = { setupDashboardEvents };

@@ -38,7 +38,18 @@ Code
 -start committing to repo
 
 Dashboard
--start the dashboard
+
+    Goals Page
+    -Update how the goals are displayed / filtered / organized
+        New Goal from
+        -Add Goal descriptions
+        -Add Goal dimension check boxes
+        -Add Goal Update Journals
+        -Add Goal Associated Tools
+        -Finish All Goal Type Submissions
+        -Allow the user to submit / save their new goal
+        -Add are you sure modal for deleting challenge milestones
+    
 
 Info
 -Set up dynamic info page that explains the app to users
