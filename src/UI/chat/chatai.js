@@ -60,7 +60,7 @@ class ChatAI {
         /*HTML*/
         `
             <button id="close-chat-button" class="activatable-button">
-                <img src="./Images/UI/close.svg" alt="close">
+                <img src="/public/Images/UI/close.svg" alt="close">
             </button>
             ${this._sidebarTemplate()}
             <div class="content" id="chat-content">
@@ -778,7 +778,7 @@ class ChatAI {
             <div class="welcome">
                 <h1>
                 <div id="chat-logo-and-name">
-                    <img id="chat-logo" src="../Images/UI/LogoDarkLargeNoBG.svg">                        
+                    <img id="chat-logo" src="/Images/UI/LogoDarkLargeNoBG.svg">                        
                     <span id="app-name">
                         <span class="chat-app-name-letter">H</span><!--
                         --><span class="chat-app-name-letter">a</span><!--
@@ -889,7 +889,7 @@ class ChatAI {
     _sidebarTemplate() {
         /*HTML*/
         return `
-            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="../../Images/UI/menu.svg" alt="Conversation Menu"></a>
+            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="/public/Images/UI/menu.svg" alt="Conversation Menu"></a>
             <nav class="conversations">
                 <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i>New Conversation</a>
                 <div class="list"></div>

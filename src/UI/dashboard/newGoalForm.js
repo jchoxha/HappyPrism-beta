@@ -444,16 +444,16 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
                               <span className="title">#{index + 1}</span>
                               <div className="rearrange-buttons">
                                 <button type="button" onClick={() => handleRemoveMilestone(index)} className="remove-button">
-                                  <img src="../../Images/UI/trashcan.svg" alt="Remove" />
+                                  <img src="/public/Images/UI/trashcan.svg" alt="Remove" />
                                 </button>
                                 {index > 0 && (
                                   <button type="button" onClick={() => handleMoveMilestoneUp(index)} className="rearrange-button">
-                                    <img src="../../Images/UI/up_small.svg" alt="Move Up" />
+                                    <img src="/public/Images/UI/up_small.svg" alt="Move Up" />
                                   </button>
                                 )}
                                 {index < milestones.length - 1 && (
                                   <button type="button" onClick={() => handleMoveMilestoneDown(index)} className="rearrange-button">
-                                    <img src="../../Images/UI/down_small.svg" alt="Move Down" />
+                                    <img src="/public/Images/UI/down_small.svg" alt="Move Down" />
                                   </button>
                                 )}
                               </div>

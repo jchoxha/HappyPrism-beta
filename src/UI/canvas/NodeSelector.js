@@ -45,7 +45,7 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
         <div class="modal-header">
           <h3 class="modal-title">Select an AI Agent</h3>
           <button id="close-button" class="close-button">
-            <img src="/Images/UI/close.svg" alt="Close" />
+            <img src="/public/Images/UI/close.svg" alt="Close" />
           </button>
         </div>
         <div class="modal-body">
@@ -105,7 +105,7 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
                 }
               }}
             >
-              <img src="/Images/UI/left.svg" alt="Previous Node" />
+              <img src="/public/Images/UI/left.svg" alt="Previous Node" />
             </button>
             <span id="current-node" className={`current-node-text ${canvasManager.changeCentralNodeMode ? 'changing-node' : ''}`}>
               {currentNode.name}
@@ -122,7 +122,7 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
                 }
               }}
             >
-              <img src="/Images/UI/right.svg" alt="Next Node" />
+              <img src="/public/Images/UI/right.svg" alt="Next Node" />
             </button>
           </div>
           <button 
@@ -133,7 +133,7 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
             }} 
             id="view-ai-agents-button"
           >
-            <img src="/Images/UI/nodes_color.svg" alt="View All AI Agents" className="ai-agents-icon" />
+            <img src="/public/Images/UI/nodes_color.svg" alt="View All AI Agents" className="ai-agents-icon" />
           </button>
         </>
       )}

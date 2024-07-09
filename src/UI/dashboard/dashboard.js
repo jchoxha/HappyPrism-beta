@@ -11,7 +11,7 @@ function drawDashboard(canvasManager) {
         /*HTML*/
         `
         <button id="close-dashboard-button" class="activatable-button">
-            <img src="./Images/UI/close.svg" alt="close">
+            <img src="/public/Images/UI/close.svg" alt="close">
         </button>
         <div id="dashboard-content">
             <div id="dashboard-sidebar">
