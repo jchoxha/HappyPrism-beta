@@ -416,4 +416,4 @@ function lerpAngle(start, end, amt) {
     return start;
   }
 
-module.exports = { physicsUpdate };
+export { physicsUpdate };
