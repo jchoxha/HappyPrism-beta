@@ -15,4 +15,4 @@ function drawProgress() {
     `;
 }
 
-module.exports = { drawProgress };
+export { drawProgress };

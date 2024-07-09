@@ -13,4 +13,4 @@ class Theme {
     }
 }
 
-module.exports = { Theme };
+export { Theme };

@@ -1220,5 +1220,3 @@ function updateChatRender() {
 }
 
 
-
-module.exports = { drawChat };

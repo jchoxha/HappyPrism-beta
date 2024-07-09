@@ -10,4 +10,4 @@ const ShapeType = {
     NONAGON: { name: 'nonagon', numSides: 9, isPolygon: true }
 };
 
-module.exports = { ShapeType };
+export { ShapeType };

@@ -19,4 +19,4 @@ function loadAnimeJS() {
 }
 
 
-module.exports = { loadDependencies };
+export { loadDependencies };

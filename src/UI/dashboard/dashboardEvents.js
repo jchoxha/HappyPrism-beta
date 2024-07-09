@@ -52,4 +52,3 @@ function handleCloseDashboardButtonClick(event) {
     showCanvasUI();
 }
 
-module.exports = { setupDashboardEvents };

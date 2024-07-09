@@ -220,4 +220,4 @@ function isValidRGB(color) {
 }
 
 // Export all functions
-module.exports = { colorToHex, hexToColor, rgbToColor, colorToRGB, isValidColor, isValidRGB, getRandomColor };
+export { colorToHex, hexToColor, rgbToColor, colorToRGB, isValidColor, isValidRGB, getRandomColor };

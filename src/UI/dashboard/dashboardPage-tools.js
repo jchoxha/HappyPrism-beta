@@ -39,4 +39,4 @@ function drawTools() {
     `;
 }
 
-module.exports = { drawTools };
+export { drawTools };
