@@ -15,10 +15,17 @@
     "npm": "10.x"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@google/generative-ai": "^0.14.1",
+    "@mui/material": "^5.16.0",
+    "emoji-picker-react": "^4.11.1",
     "express": "^4.19.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "recharts": "^2.12.7",
+    "sentiment": "^5.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
@@ -45,5 +52,17 @@
     ]
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }
