@@ -5,9 +5,7 @@ const app = express();
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'client/build')));
 
-// Serve static files from the public directory
-app.use('/static', express.static(path.join(__dirname, 'client/public')));
-
+// Handle any requests that don't match the ones above
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
