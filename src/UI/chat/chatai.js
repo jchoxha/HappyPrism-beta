@@ -1,6 +1,7 @@
 // chatai.js
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold} = require('@google/generative-ai');
-const { ca } = require('date-fns/locale');
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 const Sentiment = require('sentiment');
 import { showCanvasUI } from '../canvas/CanvasUI.js';
 
