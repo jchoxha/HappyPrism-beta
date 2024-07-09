@@ -10,7 +10,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "concurrently \"npm run start\" \"npm run start-client\"",
-    "start-client": "react-scripts start"
+    "start-client": "react-scripts start",
+    "deploy": "npm run build && git add . && git commit -m 'deploy' && git push heroku main && heroku open"
   },
   "engines": {
     "node": "20.x",

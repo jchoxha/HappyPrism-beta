@@ -2,8 +2,11 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// Serve static files from the React app build directory
+// Serve static files from the 'build' directory
 app.use(express.static(path.join(__dirname, 'build')));
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Handle any requests that don't match the ones above
 app.get('*', (req, res) => {
