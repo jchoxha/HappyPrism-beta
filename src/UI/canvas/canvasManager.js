@@ -381,7 +381,7 @@ class CanvasManager {
             centralSize,
             "rgba(210, 209, 205, 0.5)",
             null,
-            "/Images/Nodes/HappyPrism/static.png",
+            "/Images/Nodes/Sol/static.png",
             true,
             "Spectrum"
           );
