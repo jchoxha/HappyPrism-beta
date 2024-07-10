@@ -233,7 +233,7 @@ class CanvasManager {
     if (node.image.src) {
       this.ctx.save();
       this.ctx.clip();
-      console.log("Attempting to draw image: ", node.image.src, " for node: ", node.name);
+      console.log("Attempting to draw image: ", node.image, " for node: ", node.name);
       this.ctx.drawImage(node.image, x - radius + 5, y - radius, size, size);
       this.ctx.restore();
     }
