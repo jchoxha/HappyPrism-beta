@@ -26,11 +26,11 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\UI
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Web
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Amber
-C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\HappyPrism
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Ivy
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Jean
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Red
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Sol
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Spectrum
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Violet
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\bundle
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\Dependencies
