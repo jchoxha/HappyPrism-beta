@@ -161,7 +161,7 @@ const CanvasUI = ({ canvasManager }) => {
       <div id="top-bar" style={{ background: theme.default_menu_background }}>
         <div id="top-left" className="menuDiv">
           <button id="home-button" className="no-select">
-            <img id="home-button-logo" src="../Images/UI/LogoDarkLargeNoBG.svg" alt="Home" />
+            <img id="home-button-logo" src="/Images/UI/LogoDarkLargeNoBG.svg" alt="Home" />
             <span id="app-name">
               {'HappyPrism'.split('').map((letter, index) => (
                 <span key={index} className="app-name-letter">{letter}</span>
@@ -172,13 +172,13 @@ const CanvasUI = ({ canvasManager }) => {
         <div id="top-center"></div>
         <div id="top-right" className="menuDiv">
           <button id="search-button" className="activatable-button">
-            <img src="../Images/UI/search.svg" alt="Search" />
+            <img src="/Images/UI/search.svg" alt="Search" />
           </button>
           <button id="options-menu-button" className="activatable-button">
-            <img src="../Images/UI/menu.svg" alt="Options Menu" />
+            <img src="/Images/UI/menu.svg" alt="Options Menu" />
           </button>
           <button id="profile-button" className="activatable-button">
-            <img src="../Images/UI/profile-circle.svg" alt="User Profile" className="circle-image" />
+            <img src="/Images/UI/profile-circle.svg" alt="User Profile" className="circle-image" />
           </button>
         </div>
       </div>
@@ -188,7 +188,7 @@ const CanvasUI = ({ canvasManager }) => {
       <div id="lower-bar">
         <div id="lower-left">
           <button id="dashboard-button" className="activatable-button">
-            <img src="../Images/UI/dashboard.svg" alt="Dashboard" />
+            <img src="/Images/UI/dashboard.svg" alt="Dashboard" />
           </button>
         </div>
         <div id="lower-center">
@@ -203,7 +203,7 @@ const CanvasUI = ({ canvasManager }) => {
         </div>
         <div id="lower-right">
           <button id="chat-button" className="activatable-button">
-            <img src="../Images/UI/chat-sparkle.svg" alt="Chat" />
+            <img src="/Images/UI/chat-sparkle.svg" alt="Chat" />
           </button>
         </div>
       </div>
