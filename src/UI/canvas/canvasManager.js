@@ -331,7 +331,7 @@ class CanvasManager {
 
           if (Date.now() - lastInitializedTime >= 500) {
             if (numNodesInitialized === 0) {
-              const centralNode = addNode(canvasManager, centralSize, "rgba(210, 209, 205, 0.5)", null, "/Images/Nodes/HappyPrism/", true, "Spectrum");
+              const centralNode = addNode(canvasManager, centralSize, "rgba(210, 209, 205, 0.5)", null, "/Images/Nodes/HappyPrism/static.png", true, "Spectrum");
               defaultNodes.push(centralNode);
               defaultNodes[0].dimension = "HappyPrism";
               defaultNodes[0].job = "Expert";
@@ -340,27 +340,27 @@ class CanvasManager {
               }
             } else {
                 if (numNodesInitialized == 1) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(255, 225, 0, 0.5)",  defaultNodes[0].orbits[0], "/Images/Nodes/Sol/", true, "Sol"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(255, 225, 0, 0.5)",  defaultNodes[0].orbits[0], "/Images/Nodes/Sol/static.png", true, "Sol"));
                     defaultNodes[1].dimension = "Spiritual";
                     defaultNodes[1].job = "Guide";
                 } else if (numNodesInitialized == 2) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(255, 154, 0, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Amber/", true, "Amber"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(255, 154, 0, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Amber/static.png", true, "Amber"));
                     defaultNodes[2].dimension = "Mental";
                     defaultNodes[2].job = "Mentor";
                 } else if (numNodesInitialized == 3) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(240, 1, 1, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Red/", true, "Red"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(240, 1, 1, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Red/static.png", true, "Red"));
                     defaultNodes[3].dimension = "Physical";
                     defaultNodes[3].job = "Coach";
                 } else if (numNodesInitialized == 4) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(182, 50, 206, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Violet/", true, "Violet"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(182, 50, 206, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Violet/static.png", true, "Violet"));
                     defaultNodes[4].dimension = "Social";
                     defaultNodes[4].job = "Specialist";
                 } else if (numNodesInitialized == 5) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(50, 50, 255, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Jean/", true, "Jean"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(50, 50, 255, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Jean/static.png", true, "Jean"));
                     defaultNodes[5].dimension = "Vocational";
                     defaultNodes[5].job = "Consultant";
                 } else if (numNodesInitialized == 6) {
-                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(50, 153, 50, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Ivy/", true, "Ivy"));
+                    defaultNodes.push(addNode(canvasManager, outerSize, "rgba(50, 153, 50, 0.5)", defaultNodes[0].orbits[0], "/Images/Nodes/Ivy/static.png", true, "Ivy"));
                     defaultNodes[6].dimension = "Environmental";
                     defaultNodes[6].job = "Enthusiast";
                     this.defaultNodesInitialized = true;

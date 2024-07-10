@@ -73,7 +73,7 @@ class Node {
     // Image
     this.image = new Image();
     if (imageSrc) {
-      this.image.src = imageSrc+"static.png";
+      this.image.src = imageSrc;
     }
   }
   

@@ -6,6 +6,7 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\Images
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\static
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\styles
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\Images\BG
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\Images\Nodes
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\Images\UI
@@ -133,6 +134,7 @@ autoprefixer
 available-typed-arrays
 axe-core
 axobject-query
+babel
 babel-jest
 babel-loader
 babel-plugin-istanbul
@@ -274,6 +276,7 @@ data-view-byte-length
 data-view-byte-offset
 date-fns
 debug
+decamelize
 decimal.js
 decimal.js-light
 dedent
@@ -403,6 +406,7 @@ fraction.js
 fresh
 fs-extra
 fs-monkey
+fs-readdir-recursive
 fs.realpath
 function-bind
 function.prototype.name
@@ -602,6 +606,7 @@ lodash.uniq
 loose-envify
 lower-case
 lru-cache
+lucide-react
 magic-string
 make-dir
 makeerror
@@ -825,6 +830,7 @@ relateurl
 renderkid
 require-directory
 require-from-string
+require-main-filename
 requires-port
 resolve
 resolve-cwd
@@ -857,6 +863,7 @@ sentiment
 serialize-javascript
 serve-index
 serve-static
+set-blocking
 set-function-length
 set-function-name
 setprototypeof
@@ -865,6 +872,7 @@ shasum-object
 shebang-command
 shebang-regex
 shell-quote
+showdown
 side-channel
 signal-exit
 simple-concat
@@ -1015,6 +1023,7 @@ which
 which-boxed-primitive
 which-builtin-type
 which-collection
+which-module
 which-typed-array
 word-wrap
 workbox-background-sync
