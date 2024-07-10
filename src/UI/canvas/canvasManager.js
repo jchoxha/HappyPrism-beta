@@ -231,12 +231,17 @@ class CanvasManager {
       this.ctx.fill();
     }
     if (node.image.src) {
-      this.ctx.save();
-      this.ctx.clip();
-      console.log("Attempting to draw image: ", node.image, " for node: ", node.name);
-      this.ctx.drawImage(node.image, x - radius + 5, y - radius, size, size);
-      this.ctx.restore();
+        try {
+            this.ctx.save();
+            this.ctx.clip();
+            console.log("Attempting to draw image: ", node.image, " for node: ", node.name);
+            this.ctx.drawImage(node.image, x - radius + 5, y - radius, size, size);
+            this.ctx.restore();
+        } catch (error) {
+            console.error("Error drawing image for node: ", node.name, error);
+        }
     }
+    
   }
 
   drawPolygon(x, y, numSides, radius) {
