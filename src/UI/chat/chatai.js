@@ -1,11 +1,10 @@
 // chatai.js
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold} = require('@google/generative-ai');
-const { ca } = require('date-fns/locale');
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 const Sentiment = require('sentiment');
-import { response } from 'express';
 import { showCanvasUI } from '../canvas/CanvasUI.js';
 import agentPrompts from './prompts.js';
-
 const genAI = new GoogleGenerativeAI("AIzaSyB2JPYGICXfdp3uKJ3xve0Wp-zJh2cdulM");
 const safety_settings = [
     {
@@ -62,7 +61,7 @@ class ChatAI {
         /*HTML*/
         `
             <button id="close-chat-button" class="activatable-button">
-                <img src="./Images/UI/close.svg" alt="close">
+                <img src="/Images/UI/close.svg" alt="close">
             </button>
             ${this._sidebarTemplate()}
             <div class="content" id="chat-content">
@@ -602,6 +601,7 @@ class ChatAI {
         return text;
       }
 
+
     async createNewInteraction(agentName = null) {
         //Set default values for first time running the program
         agentName = agentName != null ? agentName : 'Spectrum';
@@ -789,7 +789,7 @@ class ChatAI {
             <div class="welcome">
                 <h1>
                 <div id="chat-logo-and-name">
-                    <img id="chat-logo" src="../Images/UI/LogoDarkLargeNoBG.svg">                        
+                    <img id="chat-logo" src="/Images/UI/LogoDarkLargeNoBG.svg">                        
                     <span id="app-name">
                         <span class="chat-app-name-letter">H</span><!--
                         --><span class="chat-app-name-letter">a</span><!--
@@ -900,7 +900,7 @@ class ChatAI {
     _sidebarTemplate() {
         /*HTML*/
         return `
-            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="../../Images/UI/menu.svg" alt="Conversation Menu"></a>
+            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="/Images/UI/menu.svg" alt="Conversation Menu"></a>
             <nav class="conversations">
                 <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i>New Conversation</a>
                 <div class="list"></div>
@@ -1240,5 +1240,3 @@ function updateChatRender() {
 }
 
 
-
-module.exports = { drawChat };
