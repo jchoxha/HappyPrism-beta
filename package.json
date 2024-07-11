@@ -3,18 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "build": "browserify src/index.js -o public/bundle.js -t babelify",
-    "heroku-postbuild": "npm install --include=dev && npm run build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "dev": "concurrently \"npm run watch\" \"nodemon\"",
-    "watch": "watchify src/index.js -o public/bundle.js -t babelify --debug --verbose",
-    "build:prod": "browserify src/index.js | uglifyjs -cm > public/bundle.min.js",
-    "start-client": "react-scripts start",
-    "deploy": "npm run build && git add . && git commit -m 'deploy' && git push origin main && heroku open"
-  },
+"scripts": {
+  "start": "node server.js",
+  "build": "browserify src/index.js -o public/bundle.js -t babelify --ignore async_hooks",
+  "heroku-postbuild": "npm install --include=dev && npm run build",
+  "test": "react-scripts test",
+  "eject": "react-scripts eject",
+  "dev": "concurrently \"npm run watch\" \"nodemon\"",
+  "watch": "watchify src/index.js -o public/bundle.js -t babelify --debug --verbose --ignore async_hooks",
+  "build:prod": "browserify src/index.js --ignore async_hooks | uglifyjs -cm > public/bundle.min.js",
+  "start-client": "react-scripts start",
+  "deploy": "npm run build && git add . && git commit -m 'deploy' && git push origin main && heroku open"
+},
   "engines": {
     "node": "20.x",
     "npm": "10.x"
@@ -24,6 +24,7 @@
     "@emotion/styled": "^11.11.5",
     "@google/generative-ai": "^0.14.1",
     "@mui/material": "^5.16.0",
+    "async_hooks": "^1.0.0",
     "babel": "^6.23.0",
     "date-fns": "^3.6.0",
     "emoji-picker-react": "^4.11.1",

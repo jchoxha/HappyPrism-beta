@@ -1,9 +1,10 @@
 // chatai.js
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold} = require('@google/generative-ai');
-import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+const { ca } = require('date-fns/locale');
 const Sentiment = require('sentiment');
+import { response } from 'express';
 import { showCanvasUI } from '../canvas/CanvasUI.js';
+import agentPrompts from './prompts.js';
 
 const genAI = new GoogleGenerativeAI("AIzaSyB2JPYGICXfdp3uKJ3xve0Wp-zJh2cdulM");
 const safety_settings = [
@@ -61,7 +62,7 @@ class ChatAI {
         /*HTML*/
         `
             <button id="close-chat-button" class="activatable-button">
-                <img src="/Images/UI/close.svg" alt="close">
+                <img src="./Images/UI/close.svg" alt="close">
             </button>
             ${this._sidebarTemplate()}
             <div class="content" id="chat-content">
@@ -583,14 +584,23 @@ class ChatAI {
     }
 
     async getSystemInstruction(agentName, promptName, contextSummary) {
-            let promptsPath = `./Prompts/${agentName}/`;
-            const response = await fetch(promptsPath + promptName + ".txt");
-            const text = await response.text();
-            if(contextSummary.length > 0){
-                return text + "\n\n" + contextSummary;
-            }
-            return text;
-    }
+        const agent = agentPrompts.find(agent => agent.agentName === agentName);
+        if (!agent) {
+          throw new Error(`Agent ${agentName} not found`);
+        }
+    
+        const prompt = agent.prompts.find(prompt => prompt.promptName === promptName);
+        if (!prompt) {
+          throw new Error(`Prompt ${promptName} not found for agent ${agentName}`);
+        }
+    
+        let text = prompt.promptText;
+        console.log("System Instruction: ", text);
+        if (contextSummary.length > 0) {
+          return text + "\n\n" + contextSummary;
+        }
+        return text;
+      }
 
     async createNewInteraction(agentName = null) {
         //Set default values for first time running the program
@@ -779,7 +789,7 @@ class ChatAI {
             <div class="welcome">
                 <h1>
                 <div id="chat-logo-and-name">
-                    <img id="chat-logo" src="/Images/UI/LogoDarkLargeNoBG.svg">                        
+                    <img id="chat-logo" src="../Images/UI/LogoDarkLargeNoBG.svg">                        
                     <span id="app-name">
                         <span class="chat-app-name-letter">H</span><!--
                         --><span class="chat-app-name-letter">a</span><!--
@@ -890,7 +900,7 @@ class ChatAI {
     _sidebarTemplate() {
         /*HTML*/
         return `
-            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="/Images/UI/menu.svg" alt="Conversation Menu"></a>
+            <a href="#" class="open-sidebar" id ="chat-open-sidebar" title="Open Sidebar" ><img src="../../Images/UI/menu.svg" alt="Conversation Menu"></a>
             <nav class="conversations">
                 <a class="new-conversation" href="#"><i class="fa-solid fa-plus"></i>New Conversation</a>
                 <div class="list"></div>
@@ -1198,17 +1208,26 @@ export function closeChat() {
 
 function updateChatRender() {
     const messageForm = document.querySelector('.message-form');
-    const responseButtons = document.querySelector('.response-buttons-container');
+    const responseButtonsContainer = document.querySelector('.response-buttons-container');
+    const responseButtons = document.querySelector('.response-buttons');
     const chatSpacer = document.querySelector('.chat-spacer');
 
     if (messageForm) {
         let referenceTop;
-        if (responseButtons && responseButtons.offsetHeight > 0) {
+        if (responseButtonsContainer) {
+            if(responseButtons){
+                    const leftArrow = document.querySelector('#left-arrow');
+                    const rightArrow = document.querySelector('#right-arrow');
+                    if (leftArrow && rightArrow) {
+                        const totalWidth = responseButtonsContainer.clientWidth;
+                        const scrollButtonsWidth = leftArrow.clientWidth + rightArrow.clientWidth;
+                        responseButtons.style.width = `${totalWidth - scrollButtonsWidth}px`;
+                    }
+            }
             const messageFormTop = messageForm.getBoundingClientRect().top;
-            responseButtons.style.bottom = `${window.innerHeight - messageFormTop + 10}px`;
-            referenceTop = responseButtons.getBoundingClientRect().top;
+            responseButtonsContainer.style.bottom = `${window.innerHeight - messageFormTop + 10}px`;
+            referenceTop = responseButtonsContainer.getBoundingClientRect().top;
         } else {
-            console.log("using message form for bounding rect");
             referenceTop = messageForm.getBoundingClientRect().top;
         }
         console.log(referenceTop);
@@ -1221,3 +1240,5 @@ function updateChatRender() {
 }
 
 
+
+module.exports = { drawChat };

@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins');
+@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css);
 
 body {
   margin: 0;
@@ -186,7 +187,7 @@ button {
   background-color: none;
   border: none;
 }
-@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css);
+
 
 html, body {
   background-color: #FFFFFF;
@@ -205,7 +206,7 @@ html, body {
   flex-flow: row;
   flex-wrap: wrap;
   z-index: 1007;
-  width: 80%;
+  width: 100%;
   border-radius: 10px;
   position: absolute; /* Change to absolute for positioning with bottom */
   justify-content: center;
@@ -218,8 +219,8 @@ div#chat-response-buttons {}
   display: flex;
   align-items: center;
   position: absolute;
-  width: 90%;
-  max-width: 1000px;
+  width: 81vw;
+  max-width: 900px;
   z-index: 1005;
 }
 
@@ -232,6 +233,7 @@ div#chat-response-buttons {}
   flex-grow: 1;
   flex-direction: row;
   justify-content: space-evenly;
+  background: #ededed;
 }
 
 .response-buttons::-webkit-scrollbar {
@@ -244,7 +246,7 @@ div#chat-response-buttons {}
   border: none;
   cursor: pointer;
   padding: 10px;
-  z-index: 1004;
+  z-index: 1008;
   transition: background-color 0.2s ease;
 }
 
@@ -526,7 +528,7 @@ div#chat-response-buttons {}
   z-index: 1000;
   margin-top: 10px;
   margin-bottom: 10px;
-  width: 81%;
+  width: 81vw;
   max-width: 900px;
 }
 .chat-ai .content .messages .message.user {
