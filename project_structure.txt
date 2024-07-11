@@ -50,8 +50,16 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\canvas
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\dashboard
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\canvas\Physics
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Amber
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Ivy
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Jean
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Red
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Sol
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Spectrum
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Summarizer
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Violet
 .bin
-.cache
 .package-lock.json
 @alloc
 @ampproject
