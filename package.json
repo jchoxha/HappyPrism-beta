@@ -13,7 +13,7 @@
     "watch": "watchify src/index.js -o public/bundle.js -t babelify --debug --verbose",
     "build:prod": "browserify src/index.js | uglifyjs -cm > public/bundle.min.js",
     "start-client": "react-scripts start",
-    "deploy": "deploy.cmd"
+    "deploy": "npm run build && git add . && git commit -m 'deploy' && git push origin main && heroku open"
   },
   "engines": {
     "node": "20.x",
