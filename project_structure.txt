@@ -1,8 +1,13 @@
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\.git
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\.vscode
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\config
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\migrations
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\models
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\node_modules
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\routes
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\seeders
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\Images
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\build\static
@@ -32,7 +37,9 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Red
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Sol
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Spectrum
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Violet
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\public\Images\Nodes\Sol\Spiritual
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\bundle
+C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\components
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\Dependencies
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\Misc
 C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\old
@@ -76,6 +83,7 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Violet
 @istanbuljs
 @jest
 @jridgewell
+@kurkle
 @leichtgewicht
 @mui
 @nicolo-ribaudo
@@ -83,6 +91,7 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Violet
 @pkgjs
 @pmmmwh
 @popperjs
+@remix-run
 @rollup
 @rushstack
 @sinclair
@@ -160,6 +169,7 @@ babelify
 balanced-match
 base64-js
 batch
+bcryptjs
 bfj
 big.js
 binary-extensions
@@ -200,6 +210,7 @@ caniuse-lite
 case-sensitive-paths-webpack-plugin
 chalk
 char-regex
+chart.js
 check-types
 chokidar
 chrome-trace-event
@@ -228,6 +239,7 @@ concat-stream
 concurrently
 confusing-browser-globals
 connect-history-api-fallback
+connect-session-sequelize
 console-browserify
 constants-browserify
 content-disposition
@@ -323,6 +335,7 @@ domutils
 dot-case
 dotenv
 dotenv-expand
+dottie
 duplexer
 duplexer2
 eastasianwidth
@@ -383,6 +396,7 @@ execa
 exit
 expect
 express
+express-session
 fast-deep-equal
 fast-equals
 fast-glob
@@ -483,6 +497,7 @@ immer
 import-fresh
 import-local
 imurmurhash
+inflection
 inflight
 inherits
 ini
@@ -641,6 +656,8 @@ minipass
 mkdirp
 mkdirp-classic
 module-deps
+moment
+moment-timezone
 ms
 multicast-dns
 mz
@@ -695,6 +712,9 @@ parse-json
 parse5
 parseurl
 pascal-case
+passport
+passport-local
+passport-strategy
 path-browserify
 path-exists
 path-is-absolute
@@ -704,8 +724,17 @@ path-platform
 path-scurry
 path-to-regexp
 path-type
+pause
 pbkdf2
 performance-now
+pg
+pg-cloudflare
+pg-connection-string
+pg-int8
+pg-pool
+pg-protocol
+pg-types
+pgpass
 picocolors
 picomatch
 pify
@@ -784,6 +813,10 @@ postcss-selector-parser
 postcss-svgo
 postcss-unique-selectors
 postcss-value-parser
+postgres-array
+postgres-bytea
+postgres-date
+postgres-interval
 prelude-ls
 pretty-bytes
 pretty-error
@@ -804,17 +837,22 @@ querystring-es3
 querystringify
 queue-microtask
 raf
+random-bytes
 randombytes
 randomfill
 range-parser
 raw-body
 react
 react-app-polyfill
+react-chartjs-2
 react-dev-utils
 react-dom
 react-error-overlay
+react-intersection-observer
 react-is
 react-refresh
+react-router
+react-router-dom
 react-scripts
 react-smooth
 react-transition-group
@@ -846,6 +884,7 @@ resolve-from
 resolve-url-loader
 resolve.exports
 retry
+retry-as-promised
 reusify
 rimraf
 ripemd160
@@ -868,6 +907,8 @@ selfsigned
 semver
 send
 sentiment
+sequelize
+sequelize-pool
 serialize-javascript
 serve-index
 serve-static
@@ -897,6 +938,7 @@ sourcemap-codec
 spawn-command
 spdy
 spdy-transport
+split2
 sprintf-js
 stable
 stack-utils
@@ -958,6 +1000,7 @@ tmpl
 to-fast-properties
 to-regex-range
 toidentifier
+toposort-class
 touch
 tough-cookie
 tr46
@@ -980,6 +1023,7 @@ typedarray
 typedarray-to-buffer
 typescript
 uglify-js
+uid-safe
 umd
 unbox-primitive
 undeclared-identifiers
@@ -1006,6 +1050,7 @@ utila
 utils-merge
 uuid
 v8-to-istanbul
+validator
 vary
 victory-vendor
 vm-browserify
@@ -1033,6 +1078,7 @@ which-builtin-type
 which-collection
 which-module
 which-typed-array
+wkx
 word-wrap
 workbox-background-sync
 workbox-broadcast-update
