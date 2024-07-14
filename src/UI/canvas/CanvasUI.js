@@ -38,27 +38,41 @@ const CanvasUI = ({ canvasManager }) => {
   }, [canvasManager, currentNode, theme]);
 
   useEffect(() => {
-    const handleDashboardClick = () =>{ 
+    const handleDashboardClick = (e) => {
+      e.preventDefault(); // Prevent default touch behavior
       drawDashboard(canvasManager);
       hideCanvasUI();
-    }
-    const handleChatClick = () => {
+    };
+    const handleChatClick = (e) => {
+      e.preventDefault(); // Prevent default touch behavior
       drawChat(canvasManager);
       hideCanvasUI();
-    }
-
+    };
+  
     const dashboardButton = document.getElementById('dashboard-button');
     const chatButton = document.getElementById('chat-button');
-
-    if (initializedNodeCount > 0) {
+  
+    const addListeners = () => {
       dashboardButton?.addEventListener('click', handleDashboardClick);
+      dashboardButton?.addEventListener('touchstart', handleDashboardClick, { passive: true });
       chatButton?.addEventListener('click', handleChatClick);
-      return () => {
-        dashboardButton?.removeEventListener('click', handleDashboardClick);
-        chatButton?.removeEventListener('click', handleChatClick);
-      };
+      chatButton?.addEventListener('touchstart', handleChatClick, { passive: true });
+    };
+  
+    const removeListeners = () => {
+      dashboardButton?.removeEventListener('click', handleDashboardClick);
+      dashboardButton?.removeEventListener('touchstart', handleDashboardClick);
+      chatButton?.removeEventListener('click', handleChatClick);
+      chatButton?.removeEventListener('touchstart', handleChatClick);
+    };
+  
+    if (initializedNodeCount > 0) {
+      addListeners();
+      return () => removeListeners();
     }
   }, [initializedNodeCount, canvasManager]);
+  
+  
 
   const handleSelectNode = (node) => {
     setCurrentNode(node);

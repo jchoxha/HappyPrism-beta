@@ -1,0 +1,40 @@
+{
+  "development": {
+    "username": "u4tv9prlpkbvps",
+    "password": "p1ed03639cf055001c67a6d8a4e08b85a599426ce183fdaeb70c93abe135532e7",
+    "database": "dcthqashpiksj",
+    "host": "c9mq4861d16jlm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
+    "port": 5432,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "test": {
+    "username": "u4tv9prlpkbvps",
+    "password": "p1ed03639cf055001c67a6d8a4e08b85a599426ce183fdaeb70c93abe135532e7",
+    "database": "dcthqashpiksj",
+    "host": "c9mq4861d16jlm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
+    "port": 5432,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}

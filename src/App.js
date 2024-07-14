@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { loadDependencies } from './Dependencies/loadDependencies.js';
 import CanvasManager from './UI/canvas/canvasManager.js';
 import { initializeEventListeners } from './UI/eventManager.js';
 import { physicsUpdate } from './UI/canvas/Physics/physics.js';
@@ -10,16 +9,16 @@ const App = () => {
   const canvasRef = useRef(null);
   const [canvasManager, setCanvasManager] = useState(null);
   const [showChat, setShowChat] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
+  const [showApp, setShowApp] = useState(false);
 
   const toggleChat = () => {
     console.log('toggleChat');
     setShowChat(prevState => !prevState);
   };
 
-  const toggleDashboard = () => {
-    console.log('toggleDashboard');
-    setShowDashboard(prevState => !prevState);
+  const toggleApp = () => {
+    console.log('toggleApp');
+    setShowApp(prevState => !prevState);
   };
 
   useEffect(() => {
@@ -27,12 +26,11 @@ const App = () => {
 
     if (canvasRef.current) {
       const newCanvasManager = new CanvasManager(canvasRef);
-      newCanvasManager.toggleDashboard = toggleDashboard;
+      newCanvasManager.toggleApp = toggleApp;
       newCanvasManager.toggleChat = toggleChat;
       setCanvasManager(newCanvasManager);
 
       newCanvasManager.initCanvas(theme);
-      loadDependencies();
 
       const animate = () => {
         physicsUpdate(newCanvasManager);
@@ -59,9 +57,9 @@ const App = () => {
 
   return (
     <div>
-      <canvas ref={canvasRef} />
+      <canvas className="app-canvas" ref={canvasRef} />
       {canvasManager && <CanvasUI canvasManager={canvasManager} />}
-      <div id="dashboard-popup"></div>
+      <div id="app-popup"></div>
       <div id="chat-popup" className="chat-ai"></div>
     </div>
   );

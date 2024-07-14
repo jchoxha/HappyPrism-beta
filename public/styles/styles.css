@@ -5,14 +5,91 @@ body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden;
-  /* Prevents scrollbars from appearing */
-    position: absolute;
+  overflow: auto; /* Change this line */
+  position: absolute;
   background-color: #f0f0f0;
-  /* Sets background color for visibility */
-    box-sizing: border-box;
+  box-sizing: border-box;
+  font-size: calc(15px + 0.390625vw);
 }
-canvas {
+
+.orange-bg {
+  background-color: #FFA500; /* Orange */
+}
+
+
+.custom-gradient {
+  background: linear-gradient(
+    -45deg,
+    #ffd900 0%,    /* Yellow (Spiritual) */
+    #FFA500 16.67%,/* Orange (Mental) */
+    #FF4500 33.33%,/* Red (Physical) */
+    #8A2BE2 50%,   /* Purple (Social) */
+    #4169E1 66.67%,/* Blue (Vocational) */
+    #2E8B57 83.33%,/* Green (Environmental) */
+    #ffd900 100%   /* Back to Yellow */
+  );
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.custom-gradient::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  background-size: 400% 400%;
+  animation: gradient-overlay 15s ease infinite;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes gradient-overlay {
+  0%, 100% {
+    background-position: 100% 0%;
+  }
+  25% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+  75% {
+    background-position: 100% 100%;
+  }
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.shadow-text {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.app-canvas {
   position: absolute;
   top: 0;
   left: 0;
@@ -1498,6 +1575,7 @@ main {
   width: 8vh;
   height: 8vh;
   display: flex;
+  z-index: 1000;
 }
 #lower-left button img {
   width: 7.5vh;
@@ -1517,6 +1595,7 @@ main {
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
+  z-index: 1;
 }
 #current-node-div {
   display: flex;
@@ -1827,6 +1906,7 @@ select {
   flex-direction: column;
   align-items: center;
   margin-bottom: 2vh;
+  z-index: 1;
 }
 /* Modal Overlay */
 .modal-overlay {
@@ -1955,7 +2035,7 @@ select {
   font-family: 'Poppins', sans-serif;
   font-weight: 100;
   font-style: italic;
-  font-size: 5vh;
+  /* font-size: 5vh; */
   color: #000000;
   margin-right: 5px;
 }
@@ -2064,4 +2144,46 @@ select {
 
 .changing-node {
   animation: pulse 1s infinite;
+}
+
+.carousel-button {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  border-radius: 50%;
+}
+
+.carousel-button:focus {
+  outline: none;
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5%);
+  }
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  @keyframes wave {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(3%);
+    }
+  }
 }

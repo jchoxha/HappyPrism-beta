@@ -6,17 +6,20 @@
     //Chat Name & Logo
     let chatNameAndLogoAnimating = false;
 
-function loadDependencies() {
-    loadAnimeJS();
-}
-
-function loadAnimeJS() {
-    // Load Anime.js
-    const animeScript = document.createElement('script');
-    animeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js';
-    animeScript.async = false;
-    document.head.appendChild(animeScript);
-}
+    async function loadDependencies() {
+        await loadAnimeJS();
+    }
+    
+    function loadAnimeJS() {
+        return new Promise((resolve, reject) => {
+            const animeScript = document.createElement('script');
+            animeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js';
+            animeScript.async = true;
+            animeScript.onload = () => resolve();
+            animeScript.onerror = () => reject(new Error('Failed to load Anime.js'));
+            document.head.appendChild(animeScript);
+        });
+    }
 
 
 export { loadDependencies };
