@@ -13,7 +13,8 @@
     "watch": "watchify src/index.js -o public/bundle.js -t babelify --debug --verbose",
     "build:prod": "browserify src/index.js | uglifyjs -cm > public/bundle.min.js",
     "start-client": "react-scripts start",
-    "deploy": "npm run build && git add . && git commit -m 'deploy' && git push origin main && heroku open"
+    "deploy": "npm run build && git add . && git commit -m 'deploy' && git push origin main && heroku open",
+    "pstruct": "cmd /c \"(dir /s /b /ad | findstr /v /i \"\\\\node_modules\\\\\" | findstr /i /v \"\\\\.git\\\\\" & if exist node_modules dir /b node_modules) > project_structure.txt\""
   },
   "engines": {
     "node": "20.x",

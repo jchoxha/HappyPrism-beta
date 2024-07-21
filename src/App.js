@@ -4,6 +4,7 @@ import { initializeEventListeners } from './UI/eventManager.js';
 import { physicsUpdate } from './UI/canvas/Physics/physics.js';
 import { Theme } from './UI/theme.js';
 import CanvasUI from './UI/canvas/CanvasUI.js';
+import { DimensionProvider } from './UI/DimensionContext.js';
 
 const App = () => {
   const canvasRef = useRef(null);
@@ -56,12 +57,15 @@ const App = () => {
   }, [canvasManager]);
 
   return (
-    <div>
-      <canvas className="app-canvas" ref={canvasRef} />
-      {canvasManager && <CanvasUI canvasManager={canvasManager} />}
-      <div id="app-popup"></div>
-      <div id="chat-popup" className="chat-ai"></div>
-    </div>
+    <DimensionProvider>
+      <div>
+        <canvas className="app-canvas" ref={canvasRef} />
+        {canvasManager && <CanvasUI canvasManager={canvasManager} />}
+        <div id="app-popup"></div>
+        <div id="dashboard-popup"></div>
+        <div id="chat-popup" className="chat-ai"></div>
+      </div>
+    </DimensionProvider>
   );
 };
 

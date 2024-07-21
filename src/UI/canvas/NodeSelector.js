@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useDimension } from '../DimensionContext';
+import { Theme } from '../theme.js';
 
 const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNodeCount }) => {
+  const { currentDimension, setCurrentDimension, dimensionColors } = useDimension();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(currentNode);
   const [isDisabled, setIsDisabled] = useState(true);
   const nodes = canvasManager.defaultNodes;
+  const theme = new Theme();
 
   useEffect(() => {
     setSelectedNode(currentNode);
@@ -20,9 +24,9 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
 
   useEffect(() => {
     const checkDisabledState = () => {
-      const newIsDisabled = !canvasManager.defaultNodesInitialized || 
-                            canvasManager.changeCentralNodeMode || 
-                            initializedNodeCount < 2;
+      const newIsDisabled = !canvasManager.defaultNodesInitialized ||
+        canvasManager.changeCentralNodeMode ||
+        initializedNodeCount < 2;
       setIsDisabled(newIsDisabled);
     };
 
@@ -33,14 +37,18 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
 
   const handleNodeSelect = (e) => {
     const selectedName = e.target.value;
-      const node = nodes.find(n => n.name === selectedName);
-      setSelectedNode(node);
-      onSelectNode(node);
+    const node = nodes.find(n => n.name === selectedName);
+    setSelectedNode(node);
+    onSelectNode(node);
+    setCurrentDimension(node.name); // Update the current dimension when a new node is selected
+    if (node && node.dimensionName) {
+      theme.updateThemeForNode(node);
+    }
   };
 
   const openModal = () => {
-    const modalContent = 
-    /* HTML */`
+    const modalContent =
+      /* HTML */`
       <div class="modal-content">
         <div class="modal-header">
           <h3 class="modal-title">Select an AI Agent</h3>
@@ -93,15 +101,20 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
       {initializedNodeCount > 0 && (
         <>
           <div id="current-node-div" className="mb-4">
-            <button 
-              id="prev-node-button" 
-              className="node-nav-button" 
+            <button
+              id="prev-node-button"
+              className="node-nav-button"
               disabled={isDisabled}
               onClick={() => {
                 if (!isDisabled) {
                   const currentIndex = nodes.findIndex(n => n.name === currentNode.name);
                   const prevIndex = (currentIndex - 1 + nodes.length) % nodes.length;
-                  onSelectNode(nodes[prevIndex]);
+                  const prevNode = nodes[prevIndex];
+                  onSelectNode(prevNode);
+                  setCurrentDimension(prevNode.name); // Update the current dimension when a new node is selected
+                  if (prevNode && prevNode.dimensionName) {
+                    theme.updateThemeForNode(prevNode);
+                  }
                 }
               }}
             >
@@ -110,27 +123,32 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
             <span id="current-node" className={`current-node-text ${canvasManager.changeCentralNodeMode ? 'changing-node' : ''}`}>
               {currentNode.name}
             </span>
-            <button 
-              id="next-node-button" 
-              className="node-nav-button" 
+            <button
+              id="next-node-button"
+              className="node-nav-button"
               disabled={isDisabled}
               onClick={() => {
                 if (!isDisabled) {
                   const currentIndex = nodes.findIndex(n => n.name === currentNode.name);
                   const nextIndex = (currentIndex + 1) % nodes.length;
-                  onSelectNode(nodes[nextIndex]);
+                  const nextNode = nodes[nextIndex];
+                  onSelectNode(nextNode);
+                  setCurrentDimension(nextNode.name); // Update the current dimension when a new node is selected
+                  if (nextNode && nextNode.dimensionName) {
+                    theme.updateThemeForNode(nextNode);
+                  }
                 }
               }}
             >
               <img src="/Images/UI/right.svg" alt="Next Node" />
             </button>
           </div>
-          <button 
+          <button
             disabled={!canvasManager.defaultNodesInitialized}
             onClick={() => {
               console.log('view ai agents');
               setIsOpen(true);
-            }} 
+            }}
             id="view-ai-agents-button"
           >
             <img src="/Images/UI/nodes_color.svg" alt="View All AI Agents" className="ai-agents-icon" />

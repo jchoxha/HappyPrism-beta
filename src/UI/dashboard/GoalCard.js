@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import MilestonePopup from './MilestonePopup';
 import {
@@ -20,6 +20,8 @@ import {
   Trello
 } from '../UIComponents';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { Theme } from '../theme.js';
+import { useDimension } from '../DimensionContext';
 
 const PerformanceChart = ({ data }) => (
   <ResponsiveContainer width="100%" height={200}>
@@ -49,44 +51,49 @@ const ProjectBoard = ({ columns }) => (
 
 const GoalCard = ({ goal, showUpdateButton = true }) => {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
+  const { currentDimension } = useDimension();
+  const theme = new Theme();
+
+  useEffect(() => {
+    theme.updateThemeForNode({ dimensionName: currentDimension });
+  }, [currentDimension]);
 
   const formatDate = (date) => {
     return format(new Date(date), 'PP');
   };
 
-  const renderMilestones = (milestones) => {
-    return (
-      <div className="flex items-center space-x-2 mt-2">
-        {milestones.map((milestone, index) => (
-          <React.Fragment key={index}>
-            {index > 0 && <ArrowRight />}
-            {milestone.isPreExisting ? (
-              <GoalCard key={milestone.linkedGoalId} goal={milestone} showUpdateButton={false} />
-            ) : (
-              <div 
-                className="flex flex-col items-center cursor-pointer"
-                onClick={() => setSelectedMilestone(milestone)}
-              >
-                <div className="mb-1">
-                  {milestone.completed ? (
-                    <CheckCircle />
-                  ) : milestone.pre_existing_goal ? (
-                    <Star />
-                  ) : milestone.milestone_started ? (
-                    <PlayButton /> ) : (
-                    <Circle />
-                  )}
-                </div>
-                {!milestone.completed && milestone.deadline && (
-                  <Clock className="text-xs" />
+  const renderMilestones = (milestones) => (
+    <div className="flex items-center space-x-2 mt-2">
+      {milestones.map((milestone, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && <ArrowRight />}
+          {milestone.isPreExisting ? (
+            <GoalCard key={milestone.linkedGoalId} goal={milestone} showUpdateButton={false} />
+          ) : (
+            <div
+              className="flex flex-col items-center cursor-pointer"
+              onClick={() => setSelectedMilestone(milestone)}
+            >
+              <div className="mb-1">
+                {milestone.completed ? (
+                  <CheckCircle />
+                ) : milestone.pre_existing_goal ? (
+                  <Star />
+                ) : milestone.milestone_started ? (
+                  <PlayButton />
+                ) : (
+                  <Circle />
                 )}
               </div>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  };
+              {!milestone.completed && milestone.deadline && (
+                <Clock className="text-xs" />
+              )}
+            </div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
 
   return (
     <Card className="w-full mb-4">
@@ -125,11 +132,11 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
           <div className="mt-2">
             <div className="flex items-center mb-2">
               <Calendar />
-              <span className="ml-2">{`${goal.habbit_frequencyNum || 0} times ${goal.habbit_frequencyPeriod || 'N/A'}`}</span>
+              <span className="ml-2">{`${goal.habit_frequencyNum || 0} times ${goal.habit_frequencyPeriod || 'N/A'}`}</span>
             </div>
             <div className="flex items-center">
               <span className="mr-2">Current streak:</span>
-              <span className="font-bold">{goal.habbit_current_streakNum || 0} {goal.habbit_streakPeriod || 'days'}</span>
+              <span className="font-bold">{goal.habit_current_streakNum || 0} {goal.habit_streakPeriod || 'days'}</span>
             </div>
           </div>
         )}

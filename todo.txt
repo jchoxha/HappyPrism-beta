@@ -58,3 +58,14 @@ Chat
 -Look into crewAI
 -create a x button at top of chat
 -add current node name to top of chat, add left and right buttons that let you switch current node
+
+
+
+
+
+7/20/2024
+-Need to add the trello board to the new goal form for project tasks, 
+    only have one task's details visible at a time, maybe make a seperate section for modifying percentages so 
+    you can see all the sliders move at once.
+-Make sections of the new goal form minimizable
+-If in progress, add start date for tasks, if done, add completion date and remove possibility of deadline

@@ -16,6 +16,72 @@ body {
   background-color: #FFA500; /* Orange */
 }
 
+.light-orange-bg {
+  background-color: #fdba74; /* Light Orange */
+
+}
+
+
+:root {
+  --dimension-bg-color: linear-gradient(
+      -45deg,
+      #ffd900 0%,    /* Yellow (Spiritual) */
+      #FFA500 16.67%,/* Orange (Mental) */
+      #FF4500 33.33%,/* Red (Physical) */
+      #8A2BE2 50%,   /* Purple (Social) */
+      #4169E1 66.67%,/* Blue (Vocational) */
+      #2E8B57 83.33%,/* Green (Environmental) */
+      #ffd900 100%   /* Back to Yellow */
+  );
+  --dimension-hover-bg-color: #f8a8a8;
+  --dimension-text-color: white;
+  --dimension-bg-animation: none;
+  --dimension-bg-size: initial;
+}
+
+.dimension-theme-colored {
+  background: var(--dimension-bg-color);
+  color: var(--dimension-text-color);
+  background-size: var(--dimension-bg-size);
+  animation: var(--dimension-bg-animation);
+}
+
+.dimension-theme-colored button {
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  background: var(--dimension-bg-color);
+  color: var(--dimension-text-color);
+}
+
+.dimension-theme-colored svg {
+  fill: var(--dimension-text-color);
+  stroke: var(--dimension-text-color); 
+}
+
+
+.dimension-theme-colored button:hover {
+  background: var(--dimension-hover-bg-color);
+}
+
+@keyframes gradient {
+  0%, 100% {
+      background-position: 0% 0%;
+  }
+  25% {
+      background-position: 100% 0%;
+  }
+  50% {
+      background-position: 100% 100%;
+  }
+  75% {
+      background-position: 0% 100%;
+  }
+}
 
 .custom-gradient {
   background: linear-gradient(
@@ -1035,22 +1101,11 @@ div#chat-response-buttons {}
 .button-overlay::before #close-chat-button {
   background-color: rgba(0, 0, 0, 0.3);
 }
-.dimension-theme-colored {
-  background-color: #6200ea;
-  color: white;
+:root {
+  --dimension-bg-color: #6200ea;
+  --dimension-hover-bg-color: #3700b3;
 }
-.dimension-theme-colored button {
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: center;
-}
-.dimension-theme-colored button:hover {
-  background-color: #3700b3;
-}
+
 #dashboard-popup {
   position: fixed;
   width: -webkit-fill-available;
@@ -1090,8 +1145,6 @@ div#chat-response-buttons {}
 }
 #sidebar-nav {
   width: 200px;
-  background-color: #6200ea;
-  color: white;
   padding: 20px;
   height: 100vh;
   position: fixed;
@@ -1101,12 +1154,13 @@ div#chat-response-buttons {}
   padding: 0;
 }
 #sidebar-nav ul li {
+  background: none;
   margin: 20px 0;
 }
 #sidebar-nav ul li a {
-  color: white;
   text-decoration: none;
   font-size: 18px;
+  background: none;
 }
 #sidebar-nav ul li a:hover {
   text-decoration: underline;
@@ -1276,7 +1330,6 @@ main {
   margin-bottom: 20px;
 }
 .option-button {
-  color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
@@ -1284,9 +1337,6 @@ main {
   font-size: 16px;
   font-weight: bold;
   text-align: center;
-}
-.option-button:hover {
-  background-color: #3700b3;
 }
 .hidden {
   display: none;
@@ -1304,7 +1354,6 @@ main {
 }
 .cancel-button,
 .back-button {
-  color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
@@ -1366,7 +1415,7 @@ main {
   box-sizing: border-box;
 }
 .form-control:focus {
-  border-color: #6200ea;
+  border-color: #4b5563;
   outline: none;
 }
 .emoji-button {

@@ -9,55 +9,69 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const LandingPage = () => {
   const dimensions = [
     { name: 'Spiritual', emoji: '✨', color: 'bg-yellow-300', description: 'Explore your inner self and connect with your beliefs and values.' },
-    { name: 'Mental', emoji: '🧠', color: `orange-bg`, description: 'Enhance your cognitive abilities and emotional wellbeing.' },
-    { name: 'Physical', emoji: '💪', color: 'bg-red-400', description: "Improve your body's health and fitness through exercise and nutrition." },
-    { name: 'Social', emoji: '👥', color: 'bg-purple-400', description: 'Build and maintain meaningful relationships with others.' },
-    { name: 'Vocational', emoji: '💼', color: 'bg-blue-400', description: 'Develop your career and find purpose in your work.' },
-    { name: 'Environmental', emoji: '🌍', color: 'bg-green-400', description: 'Create harmony with your surroundings and the planet.' },
+    { name: 'Mental', emoji: '🧠', color: 'orange-bg', description: 'Enhance your cognitive abilities and emotional wellbeing.' },
+    { name: 'Physical', emoji: '💪', color: 'bg-red-500', description: "Improve your body's health and fitness through exercise and nutrition." },
+    { name: 'Social', emoji: '👥', color: 'bg-purple-500', description: 'Build and maintain meaningful relationships with others.' },
+    { name: 'Vocational', emoji: '💼', color: 'bg-blue-500', description: 'Develop your career and find purpose in your work.' },
+    { name: 'Environmental', emoji: '🌍', color: 'bg-green-500', description: 'Create harmony with your surroundings and the planet.' },
   ];
+
+  const defaultDimension = {
+    name: "Every Dimension Matters",
+    emoji: "🌈",
+    color: "custom-gradient",
+    description: "HappyPrism helps you balance your pursuits across all aspects of your life!"
+  };
 
   const aiAgents = [
     { 
       name: 'Spectrum', 
       image: '/Images/Nodes/Spectrum/static.png',
       description: 'Spectrum is your primary guide and the overseer of your entire wellness journey. As an AI Agent designed to improve the wellbeing of all humans, Spectrum helps you navigate the app and understand the key concepts of HappyPrism.',
-      dimension: null
+      dimension: null,
+      color: 'custom-gradient' // This will use the default rainbow gradient
     },
     { 
       name: 'Sol', 
       image: '/Images/Nodes/Sol/static.png',
       description: 'Sol is a wise, spiritual being deeply connected with all things. Well-versed in the teachings of all faiths, Sol guides users in their spiritual dimension, helping them follow their own truth and achieve inner peace.',
-      dimension: 'Spiritual'
+      dimension: 'Spiritual',
+      color: 'bg-yellow-300'
     },
     { 
       name: 'Amber', 
       image: '/Images/Nodes/Amber/static.png',
       description: 'Amber is a wise and insightful guide for the mental dimension. With a deep understanding of human emotions and intellect, Amber supports users in enhancing their mental and emotional wellbeing.',
-      dimension: 'Mental'
+      dimension: 'Mental',
+      color: 'orange-bg'
     },
     { 
       name: 'Red', 
       image: '/Images/Nodes/Red/static.png',
       description: 'Red is dynamic and energetic, focusing on the physical dimension. Always ready to inspire and motivate, Red helps users reach their fitness goals and improve their overall physical health.',
-      dimension: 'Physical'
+      dimension: 'Physical',
+      color: 'bg-red-500'
     },
     { 
       name: 'Violet', 
       image: '/Images/Nodes/Violet/static.png',
       description: 'Violet is a warm and friendly figure specializing in the social dimension. With a charismatic and empathetic nature, Violet assists users in building and maintaining strong, healthy relationships.',
-      dimension: 'Social'
+      dimension: 'Social',
+      color: 'bg-purple-500'
     },
     { 
       name: 'Jean', 
       image: '/Images/Nodes/Jean/static.png',
       description: 'Jean is a dedicated and industrious guide for the vocational dimension. Committed to helping users discover their passions and develop skills, Jean supports professional growth and meaningful work pursuits.',
-      dimension: 'Vocational'
+      dimension: 'Vocational',
+      color: 'bg-blue-500'
     },
     { 
       name: 'Ivy', 
       image: '/Images/Nodes/Ivy/static.png',
       description: 'Ivy is nurturing and eco-conscious, focused on the environmental dimension. Deeply connected with nature, Ivy guides users in understanding and improving their interactions with various environmental contexts.',
-      dimension: 'Environmental'
+      dimension: 'Environmental',
+      color: 'bg-green-500'
     },
   ];
 
@@ -68,6 +82,8 @@ const LandingPage = () => {
   const headerRef = useRef(null);
   const navRef = useRef(null);
   const [selectedStep, setSelectedStep] = useState(null);
+  const [backgroundColor, setBackgroundColor] = useState('custom-gradient');
+  const stepDescriptionRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   useEffect(() => {
@@ -79,27 +95,23 @@ const LandingPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [selectedDimension, setSelectedDimension] = useState({
-    name: "Every Dimension Matters",
-    emoji: "🌈",
-    description: "HappyPrism helps you balance your pursuits across all aspects of your life!"
-  });
+  const [selectedDimension, setSelectedDimension] = useState(defaultDimension);
 
   const handleDimensionSelect = (dimension) => {
     setSelectedDimension(dimension);
     setSelectedAgent(aiAgents.find(a => a.dimension === dimension.name) || aiAgents[0]);
+    setBackgroundColor(dimension.color);
   };
-
+  
   const handleAgentSelect = (agent) => {
     setSelectedAgent(agent);
     if (agent.name === "Spectrum") {
-      setSelectedDimension({
-        name: "Every Dimension Matters",
-        emoji: "🌈",
-        description: "HappyPrism helps you balance your pursuits across all aspects of your life!"
-      });
+      setSelectedDimension(defaultDimension);
+      setBackgroundColor('custom-gradient');
     } else {
-      setSelectedDimension(agent.dimension ? dimensions.find(d => d.name === agent.dimension) : null);
+      const dimension = dimensions.find(d => d.name === agent.dimension);
+      setSelectedDimension(dimension);
+      setBackgroundColor(agent.color);
     }
   };
   const SmartAcronym = ({ words }) => {
@@ -459,13 +471,13 @@ const LandingPage = () => {
   
     const wellnessTools = [
       { name: "Meditation Timer", emoji: "⏲️", color: "bg-yellow-200", dimension: "Spiritual" },
-      { name: "Mood Tracker", emoji: "📊", color: "bg-orange-200", dimension: "Mental" },
+      { name: "Mood Tracker", emoji: "📊", color: "light-orange-bg", dimension: "Mental" },
       { name: "Workout Planner", emoji: "🏋️", color: "bg-red-200", dimension: "Physical" },
       { name: "Social Calendar", emoji: "🗓️", color: "bg-purple-200", dimension: "Social" },
       { name: "Career Roadmap", emoji: "🗺️", color: "bg-blue-200", dimension: "Vocational" },
       { name: "Eco-Challenge", emoji: "🌱", color: "bg-green-200", dimension: "Environmental" },
       { name: "Gratitude Journal", emoji: "📓", color: "bg-yellow-200", dimension: "Spiritual" },
-      { name: "Stress Relief", emoji: "😌", color: "bg-orange-200", dimension: "Mental" },
+      { name: "Stress Relief", emoji: "😌", color: "light-orange-bg", dimension: "Mental" },
       { name: "Nutrition Log", emoji: "🥗", color: "bg-red-200", dimension: "Physical" },
       { name: "Friend Finder", emoji: "👥", color: "bg-purple-200", dimension: "Social" },
       { name: "Skill Builder", emoji: "🛠️", color: "bg-blue-200", dimension: "Vocational" },
@@ -804,7 +816,25 @@ const LandingPage = () => {
     }
   }, [selectedAgent]);
 
+  const handleStepClick = (step) => {
+    setSelectedStep(step);
+    setTimeout(() => {
+      if (stepDescriptionRef.current) {
+        const navHeight = getNavHeight();
+        const elementPosition = stepDescriptionRef.current.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navHeight;
+  
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  };
 
+  const getNavHeight = () => {
+    return navRef.current ? navRef.current.getBoundingClientRect().height : 0;
+  };
   return (
     <div className="min-h-screen flex flex-col">
       <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 shadow-md">
@@ -825,14 +855,17 @@ const LandingPage = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Link to="/login" className="text-gray-800 hover:text-gray-600">Login</Link>
-              <Link to="/signup" className="custom-gradient text-white font-bold p-2 rounded">
+              <Link 
+                to="/signup" 
+                className={`font-bold p-2 rounded transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg ${backgroundColor} ${backgroundColor === 'bg-yellow-300' ? 'text-black' : 'text-white'}`}
+              >
                 <span className='relative z-20'>Sign Up</span>
               </Link>
             </div>
           </div>
         </div>
       </nav>
-      <div className="flex-grow custom-gradient overflow-y-auto z-10">
+      <div className={`flex-grow ${backgroundColor} overflow-y-auto z-10`}>
         <div className="container mx-auto px-4 py-8 flex flex-col items-center mt-16 z-20 relative">
           <header ref={headerRef} className="bg-white bg-opacity-90 rounded-lg shadow-lg p-6 mb-16 inline-flex flex-col items-center mx-auto">
             <div className={`flex items-center justify-center mb-4 transition-all duration-300 ${showHomeInNav ? 'opacity-0 translate-y-full' : 'opacity-100 translate-y-0'}`}>
@@ -849,30 +882,32 @@ const LandingPage = () => {
           </header>
 
           <main className="bg-white bg-opacity-90 rounded-lg shadow-2xl p-8 max-w-4xl mx-auto mb-16 w-full md:w-auto md:max-w-4xl">
-            <section className="mb-12">
-              <h2 className="text-3xl font-semibold mb-4">Unlock Your Full Potential with Dimensional Wellness</h2>
-              <p className="text-gray-700 mb-4">
-                HappyPrism is a tool designed to help you achieve balance and fulfillment across all dimensions of your life. Our innovative approach combines the power of AI with the concept of dimensional wellness.
-              </p>
-              <p className="text-sm text-gray-500 italic text-center mb-4">Click a dimension below to learn more about it.</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {dimensions.map((dimension) => (
-                  <button
-                    key={dimension.name}
-                    onClick={() => handleDimensionSelect(dimension)}
-                    className={`${dimension.color} rounded-lg p-4 text-center transition-all duration-300 ${selectedDimension?.name === dimension.name ? 'scale-105 shadow-lg' : 'scale-100 opacity-70'}`}
-                  >
-                    <p className="font-medium">{dimension.name} <span className='shadow-text'>{dimension.emoji}</span></p>
-                  </button>
-                ))}
-              </div>
-              {selectedDimension && (
-                <div className="bg-gray-100 rounded-lg p-4 mb-6">
-                  <h3 className="text-xl font-semibold mb-2 text-center">{selectedDimension.name} <span className='shadow-text'>{selectedDimension.emoji}</span></h3>
-                  <p className="text-center">{selectedDimension.description}</p>
-                </div>
-              )}
-            </section>
+          <section className="mb-12">
+            <h2 className="text-3xl font-semibold mb-4">Unlock Your Full Potential with Dimensional Wellness</h2>
+            <p className="text-gray-700 mb-4">
+              HappyPrism is a tool designed to help you achieve balance and fulfillment across all dimensions of your life. Our innovative approach combines the power of AI with the concept of dimensional wellness.
+            </p>
+            <p className="text-sm text-gray-500 italic text-center mb-4">Click a dimension below to learn more about it.</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              {dimensions.map((dimension) => (
+                <button
+                  key={dimension.name}
+                  onClick={() => handleDimensionSelect(dimension)}
+                  className={`${dimension.color} rounded-lg p-4 text-center transition-all duration-300 ${
+                    selectedAgent.name === "Spectrum" || selectedDimension?.name === dimension.name
+                      ? 'scale-105 shadow-lg'
+                      : 'scale-100 opacity-70'
+                  }`}
+                >
+                  <p className="font-medium">{dimension.name} <span className='shadow-text'>{dimension.emoji}</span></p>
+                </button>
+              ))}
+            </div>
+            <div className="bg-gray-100 rounded-lg p-4 mb-6">
+              <h3 className="text-xl font-semibold mb-2 text-center">{selectedDimension.name} <span className='shadow-text'>{selectedDimension.emoji}</span></h3>
+              <p className="text-center">{selectedDimension.description}</p>
+            </div>
+          </section>
 
             <section className="mb-12">
               <h2 className="text-3xl font-semibold mb-4">Meet Your AI Companions</h2>
@@ -906,7 +941,6 @@ const LandingPage = () => {
               {features.map((feature, index) => (
                 <div key={feature.title} className="mb-8">
                   {feature.title === 'The HappyPrism Process' && isMobile ? (
-                    // Mobile layout for HappyPrism Process (unchanged)
                     <div className="flex flex-col">
                       <div className="mb-4">
                         <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
@@ -914,10 +948,10 @@ const LandingPage = () => {
                         <p className="text-sm text-gray-500 italic mt-2">Click a step to learn more about it.</p>
                       </div>
                       <div className="w-full bg-gray-100 rounded-lg flex items-center justify-center py-4">
-                        <feature.animation onStepClick={setSelectedStep} />
+                        <feature.animation onStepClick={handleStepClick} />
                       </div>
                       {selectedStep && (
-                        <div className="mt-4 bg-white rounded-lg shadow-md p-4">
+                        <div ref={stepDescriptionRef} className="mt-4 bg-white rounded-lg shadow-md p-4">
                           <h4 className="font-semibold mb-2">
                             {selectedStep.step} {selectedStep.emoji}
                           </h4>
@@ -926,7 +960,6 @@ const LandingPage = () => {
                       )}
                     </div>
                   ) : (
-                    // Desktop layout for all features and mobile layout for non-HappyPrism Process features
                     <div className={`flex items-start ${index % 2 !== 0 ? 'flex-row' : 'flex-row-reverse'}`}>
                       <div className={`w-1/2 ${index % 2 !== 0 ? 'pr-4' : 'pl-4'}`}>
                         <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
@@ -935,7 +968,7 @@ const LandingPage = () => {
                           <>
                             <p className="text-sm text-gray-500 italic mt-2 mb-4">Click a step to learn more about it.</p>
                             {selectedStep && (
-                              <div className="bg-white rounded-lg shadow-md p-4 mt-4">
+                              <div ref={stepDescriptionRef} className="bg-white rounded-lg shadow-md p-4 mt-4">
                                 <h4 className="font-semibold mb-2">
                                   {selectedStep.step} {selectedStep.emoji}
                                 </h4>
@@ -947,7 +980,7 @@ const LandingPage = () => {
                       </div>
                       <div className="w-1/2 bg-gray-100 rounded-lg flex items-center justify-center py-4">
                         {feature.title === 'The HappyPrism Process' 
-                          ? <feature.animation onStepClick={setSelectedStep} />
+                          ? <feature.animation onStepClick={handleStepClick} />
                           : <feature.animation words={feature.smartWords} />
                         }
                       </div>
@@ -960,15 +993,15 @@ const LandingPage = () => {
             <div className="flex justify-center space-x-4">
               <Link 
                 to="/signup" 
-                className="custom-gradient text-white text-xl font-bold py-4 px-8 rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg"
+                className={`text-xl font-bold py-4 px-8 rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg ${backgroundColor} ${backgroundColor === 'bg-yellow-300' ? 'text-black' : 'text-white'}`}
               >
-              <span className='relative z-20'>Get Started Now</span>
+                <span className='relative z-20'>Get Started Now</span>
               </Link>
             </div>
           </main>
 
-          <footer className="text-center text-white pb-8">
-            <p className="shadow-text">&copy; 2024 HappyPrism. All rights reserved.</p>
+          <footer className={`text-center pb-8 ${backgroundColor === 'bg-yellow-300' ? 'text-black' : 'text-white'}`}>
+            <p className={backgroundColor === 'bg-yellow-300' ? '' : 'shadow-text'}>&copy; 2024 HappyPrism. All rights reserved.</p>
           </footer>
         </div>
       </div>
