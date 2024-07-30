@@ -1,6 +1,6 @@
 // CanvasUI.js
 import React, { useState, useEffect } from 'react';
-import Dashboard from '../dashboard/Dashboard';
+import Dashboard from '../dashboard/dashboard';
 import { drawChat } from '../chat/chatai.js';
 import NodeSelector from './NodeSelector.js';
 import { Theme } from '../theme.js';

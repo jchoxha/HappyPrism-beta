@@ -77,6 +77,7 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Violet
 @eslint
 @eslint-community
 @floating-ui
+@fullcalendar
 @google
 @humanwhocodes
 @isaacs
@@ -98,6 +99,7 @@ C:\Users\jchox\Projects\Coding\ResponseBot\HappyPrism\src\UI\chat\Prompts\Violet
 @sinonjs
 @surma
 @svgr
+@tanstack
 @tootallnate
 @trysound
 @types
@@ -147,7 +149,9 @@ ast-types-flow
 async
 asynckit
 at-least-node
+atoa
 autoprefixer
+autosize
 available-typed-arrays
 axe-core
 axobject-query
@@ -205,6 +209,7 @@ callsites
 camel-case
 camelcase
 camelcase-css
+camelize
 caniuse-api
 caniuse-lite
 case-sensitive-paths-webpack-plugin
@@ -217,6 +222,7 @@ chrome-trace-event
 ci-info
 cipher-base
 cjs-module-lexer
+classnames
 clean-css
 cliui
 clsx
@@ -244,6 +250,7 @@ console-browserify
 constants-browserify
 content-disposition
 content-type
+contra
 convert-source-map
 cookie
 cookie-signature
@@ -256,9 +263,12 @@ create-ecdh
 create-hash
 create-hmac
 cross-spawn
+crossvent
 crypto-browserify
 crypto-random-string
 css-blank-pseudo
+css-box-model
+css-color-keywords
 css-declaration-sorter
 css-has-pseudo
 css-loader
@@ -266,6 +276,7 @@ css-minimizer-webpack-plugin
 css-prefers-color-scheme
 css-select
 css-select-base-adapter
+css-to-react-native
 css-tree
 css-what
 cssdb
@@ -277,6 +288,7 @@ csso
 cssom
 cssstyle
 csstype
+custom-event
 d3-array
 d3-color
 d3-ease
@@ -300,6 +312,7 @@ decamelize
 decimal.js
 decimal.js-light
 dedent
+deep-diff
 deep-equal
 deep-is
 deepmerge
@@ -336,9 +349,12 @@ dot-case
 dotenv
 dotenv-expand
 dottie
+dragula
 duplexer
 duplexer2
 eastasianwidth
+echarts
+echarts-for-react
 ee-first
 ejs
 electron-to-chromium
@@ -466,6 +482,7 @@ hash-base
 hash.js
 hasown
 he
+highlight-words
 hmac-drbg
 hoist-non-react-statics
 hoopy
@@ -494,6 +511,7 @@ ieee754
 ignore
 ignore-by-default
 immer
+immutability-helper
 import-fresh
 import-local
 imurmurhash
@@ -505,6 +523,7 @@ inline-source-map
 insert-module-globals
 internal-slot
 internmap
+invariant
 ipaddr.js
 is-arguments
 is-array-buffer
@@ -589,6 +608,7 @@ jest-watch-typeahead
 jest-watcher
 jest-worker
 jiti
+jkanban
 js-tokens
 js-yaml
 jsdom
@@ -605,6 +625,7 @@ jsonpath
 jsonpointer
 JSONStream
 jsx-ast-utils
+just-curry-it
 keyv
 kind-of
 kleur
@@ -633,10 +654,12 @@ lucide-react
 magic-string
 make-dir
 makeerror
+material-react-table
 md5.js
 mdn-data
 media-typer
 memfs
+memoize-one
 merge-descriptors
 merge-stream
 merge2
@@ -675,6 +698,7 @@ normalize-path
 normalize-range
 normalize-url
 npm-run-path
+npm-watch
 nth-check
 nwsapi
 object-assign
@@ -817,6 +841,7 @@ postgres-array
 postgres-bytea
 postgres-date
 postgres-interval
+preact
 prelude-ls
 pretty-bytes
 pretty-error
@@ -837,6 +862,7 @@ querystring-es3
 querystringify
 queue-microtask
 raf
+raf-schd
 random-bytes
 randombytes
 randomfill
@@ -844,18 +870,24 @@ range-parser
 raw-body
 react
 react-app-polyfill
+react-beautiful-dnd
 react-chartjs-2
 react-dev-utils
 react-dom
 react-error-overlay
+react-icons
 react-intersection-observer
 react-is
+react-lifecycles-compat
+react-popopo
+react-redux
 react-refresh
 react-router
 react-router-dom
 react-scripts
 react-smooth
 react-transition-group
+react-trello
 read-cache
 read-only-stream
 readable-stream
@@ -863,6 +895,10 @@ readdirp
 recharts
 recharts-scale
 recursive-readdir
+reduce-reducers
+redux
+redux-actions
+redux-logger
 reflect.getprototypeof
 regenerate
 regenerate-unicode-properties
@@ -873,6 +909,7 @@ regexp.prototype.flags
 regexpu-core
 regjsparser
 relateurl
+remove-accents
 renderkid
 require-directory
 require-from-string
@@ -888,6 +925,7 @@ retry-as-promised
 reusify
 rimraf
 ripemd160
+rodal
 rollup
 rollup-plugin-terser
 run-parallel
@@ -917,6 +955,7 @@ set-function-length
 set-function-name
 setprototypeof
 sha.js
+shallowequal
 shasum-object
 shebang-command
 shebang-regex
@@ -927,6 +966,7 @@ signal-exit
 simple-concat
 simple-update-notifier
 sisteransi
+size-sensor
 slash
 sockjs
 source-list-map
@@ -968,6 +1008,7 @@ strip-comments
 strip-final-newline
 strip-json-comments
 style-loader
+styled-components
 stylehacks
 stylis
 subarg
@@ -994,17 +1035,22 @@ throat
 through
 through2
 thunky
+ticky
 timers-browserify
 tiny-invariant
 tmpl
+to-camel-case
 to-fast-properties
+to-no-case
 to-regex-range
+to-space-case
 toidentifier
 toposort-class
 touch
 tough-cookie
 tr46
 tree-kill
+trello-smooth-dnd
 tryer
 ts-interface-checker
 tsconfig-paths
@@ -1043,6 +1089,8 @@ update-browserslist-db
 uri-js
 url
 url-parse
+use-memo-one
+use-sync-external-store
 util
 util-deprecate
 util.promisify
@@ -1111,3 +1159,5 @@ yaml
 yargs
 yargs-parser
 yocto-queue
+zrender
+zustand

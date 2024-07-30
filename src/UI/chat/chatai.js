@@ -5,7 +5,9 @@ import { enUS } from 'date-fns/locale';
 const Sentiment = require('sentiment');
 import { showCanvasUI } from '../canvas/CanvasUI.js';
 import agentPrompts from './prompts.js';
-const genAI = new GoogleGenerativeAI("AIzaSyB2JPYGICXfdp3uKJ3xve0Wp-zJh2cdulM");
+const config = require('../../config.js');
+
+const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
 const safety_settings = [
     {
     category: HarmCategory.HARM_CATEGORY_HARASSMENT,

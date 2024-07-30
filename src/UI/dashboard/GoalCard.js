@@ -17,7 +17,8 @@ import {
   Clock,
   Calendar,
   TrendingUp,
-  Trello
+  Trello,
+  ProjectBoard
 } from '../UIComponents';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { Theme } from '../theme.js';
@@ -32,21 +33,6 @@ const PerformanceChart = ({ data }) => (
       <Line type="monotone" dataKey="value" stroke="#8884d8" />
     </LineChart>
   </ResponsiveContainer>
-);
-
-const ProjectBoard = ({ columns }) => (
-  <div className="flex space-x-4 overflow-x-auto pb-4">
-    {columns.map((column, index) => (
-      <div key={index} className="flex-shrink-0 w-64 bg-gray-100 rounded p-2">
-        <h3 className="font-bold mb-2">{column.title}</h3>
-        {column.tasks.map((task, taskIndex) => (
-          <div key={taskIndex} className="bg-white p-2 mb-2 rounded shadow">
-            {task}
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
 );
 
 const GoalCard = ({ goal, showUpdateButton = true }) => {
@@ -94,6 +80,10 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
       ))}
     </div>
   );
+
+  const handleCardClick = (task) => {
+    console.log('Card clicked:', task);
+  };
 
   return (
     <Card className="w-full mb-4">
@@ -157,11 +147,14 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
               <Trello />
               <span className="ml-2">Project Board</span>
             </div>
-            <ProjectBoard columns={[
-              { title: 'To Do', tasks: goal.project_tasks['To Do']?.map(task => task.name) || [] },
-              { title: 'In Progress', tasks: goal.project_tasks['In Progress']?.map(task => task.name) || [] },
-              { title: 'Done', tasks: goal.project_tasks['Done']?.map(task => task.name) || [] },
-            ]} />
+            {/* <ProjectBoard
+              columns={[
+                { title: 'To Do', tasks: goal.project_tasks['To Do']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
+                { title: 'In Progress', tasks: goal.project_tasks['In Progress']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
+                { title: 'Done', tasks: goal.project_tasks['Done']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
+              ]}
+              onCardClick={handleCardClick}
+            /> */}
           </div>
         )}
 
@@ -177,9 +170,9 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
         )}
         {showUpdateButton && (
           <div className="mt-4 flex justify-center">
-            <Button onClick={() => console.log('Update goal:', goal.goal_name)} className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded">
+            <button onClick={() => console.log('Update goal:', goal.goal_name)} className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded">
               Update
-            </Button>
+            </button>
           </div>
         )}
       </CardContent>

@@ -69,3 +69,7 @@ Chat
     you can see all the sliders move at once.
 -Make sections of the new goal form minimizable
 -If in progress, add start date for tasks, if done, add completion date and remove possibility of deadline
+
+7/23/2024
+-Make trello board interactable.
+-Make transformation goals require at least one subgoal and projects require at least one task.

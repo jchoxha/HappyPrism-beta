@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import {
   createBrowserRouter, 
   RouterProvider
@@ -13,7 +13,7 @@ import { loadDependencies } from './Dependencies/loadDependencies.js';
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
+    element: <App />,
   },
   {
     path: "/login",
@@ -32,11 +32,9 @@ const router = createBrowserRouter([
 async function initializeApp() {
   try {
     await loadDependencies();
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    const root = createRoot(document.getElementById('root'));
     root.render(
-      <React.StrictMode>
-        <RouterProvider router={router} />
-      </React.StrictMode>
+      <RouterProvider router={router} />
     );
   } catch (error) {
     console.error('Failed to load dependencies:', error);

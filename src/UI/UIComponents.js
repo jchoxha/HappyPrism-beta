@@ -1,4 +1,5 @@
 import React from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 export const Card = ({ children, className }) => (
   <div className={`bg-white shadow rounded-lg ${className}`}>{children}</div>
@@ -65,6 +66,84 @@ export const DialogTitle = ({ children }) => (
   </h2>
 );
 
+export const ProjectBoard = ({ lists, onCardClick }) => {
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+
+    if (source.droppableId !== destination.droppableId) {
+      const sourcelistIndex = lists.findIndex(col => col.title === source.droppableId);
+      const destlistIndex = lists.findIndex(col => col.title === destination.droppableId);
+
+      const sourcelist = lists[sourcelistIndex];
+      const destlist = lists[destlistIndex];
+
+      const sourceTasks = Array.from(sourcelist.tasks);
+      const [movedTask] = sourceTasks.splice(source.index, 1);
+
+      const destTasks = Array.from(destlist.tasks);
+      destTasks.splice(destination.index, 0, movedTask);
+
+      const newlists = [...lists];
+      newlists[sourcelistIndex].tasks = sourceTasks;
+      newlists[destlistIndex].tasks = destTasks;
+
+      if (onCardClick) {
+        onCardClick(newlists);
+      }
+    } else {
+      const listIndex = lists.findIndex(col => col.title === source.droppableId);
+      const list = lists[listIndex];
+
+      const copiedTasks = Array.from(list.tasks);
+      const [movedTask] = copiedTasks.splice(source.index, 1);
+      copiedTasks.splice(destination.index, 0, movedTask);
+
+      const newlists = [...lists];
+      newlists[listIndex].tasks = copiedTasks;
+
+      if (onCardClick) {
+        onCardClick(newlists);
+      }
+    }
+  };
+
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="flex space-x-4 overflow-x-auto pb-4">
+        {lists.map((list, index) => (
+          <Droppable key={list.title} droppableId={list.title}>
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex-shrink-0 w-64 bg-gray-100 rounded p-2"
+              >
+                <h3 className="font-bold mb-2">{list.title}</h3>
+                {list.tasks.map((task, taskIndex) => (
+                  <Draggable key={task.name} draggableId={task.name} index={taskIndex}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="bg-white p-2 mb-2 rounded shadow cursor-pointer"
+                        onClick={() => onCardClick(task)}
+                      >
+                        <div className="task-name">{task.name} {task.emoji}</div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        ))}
+      </div>
+    </DragDropContext>
+  );
+};
 
 // Simple icon components
 export const PlusCircle = () => <span>+</span>;

@@ -1378,12 +1378,9 @@ main {
   padding: 20px;
   border-radius: 10px;
   text-align: center;
-  /* max-width: 400px; */
-  height: 90%;
   z-index: 2001;
   margin: auto;
   border: 1px solid #888;
-  /* width: 80%; */
   max-width: 600px;
   display: flex;
   flex-direction: column;
@@ -2235,4 +2232,289 @@ select {
       transform: translateX(3%);
     }
   }
+}
+
+
+
+/* kanban */
+.react-kanban-board {
+  padding: 5px;
+}
+.react-kanban-card {
+  border-radius: 3px;
+  background-color: #fff;
+  padding: 10px;
+  margin-bottom: 7px;
+}
+.react-kanban-card-skeleton,
+.react-kanban-card,
+.react-kanban-card-adder-form {
+  box-sizing: border-box;
+  max-width: 250px;
+  min-width: 250px;
+}
+.react-kanban-card--dragging {
+  box-shadow: 2px 2px grey;
+}
+.react-kanban-card__description {
+  padding-top: 10px;
+}
+.react-kanban-card__title {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+.react-kanban-column {
+  padding: 15px;
+  border-radius: 2px;
+  background-color: #eee;
+  margin: 5px;
+}
+.react-kanban-column input:focus {
+  outline: none;
+}
+.react-kanban-card-adder-form {
+  border-radius: 3px;
+  background-color: #fff;
+  padding: 10px;
+  margin-bottom: 7px;
+}
+.react-kanban-card-adder-form input {
+  border: 0px;
+  font-family: inherit;
+  font-size: inherit;
+}
+.react-kanban-card-adder-button {
+  width: 100%;
+  margin-top: 5px;
+  background-color: transparent;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  transition: 0.3s;
+  border-radius: 3px;
+  font-size: 20px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+.react-kanban-card-adder-button:hover {
+  background-color: #ccc;
+}
+.react-kanban-card-adder-form__title {
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0px;
+}
+.react-kanban-card-adder-form__title:focus {
+  outline: none;
+}
+.react-kanban-card-adder-form__description {
+  width: 100%;
+  margin-top: 10px;
+}
+.react-kanban-card-adder-form__description:focus {
+  outline: none;
+}
+.react-kanban-card-adder-form__button {
+  background-color: #eee;
+  border: none;
+  padding: 5px;
+  width: 45%;
+  margin-top: 5px;
+  border-radius: 3px;
+}
+.react-kanban-card-adder-form__button:hover {
+  transition: 0.3s;
+  cursor: pointer;
+  background-color: #ccc;
+}
+.react-kanban-column-header {
+  padding-bottom: 10px;
+  font-weight: bold;
+}
+.react-kanban-column-header input:focus {
+  outline: none;
+}
+.react-kanban-column-header__button {
+  color: #333333;
+  background-color: #ffffff;
+  border-color: #cccccc;
+}
+.react-kanban-column-header__button:hover,
+.react-kanban-column-header__button:focus,
+.react-kanban-column-header__button:active {
+  background-color: #e6e6e6;
+}
+.react-kanban-column-adder-button {
+  border: 2px dashed #eee;
+  height: 132px;
+  margin: 5px;
+}
+.react-kanban-column-adder-button:hover {
+  cursor: pointer;
+}
+
+.kanban-container {
+  position: relative;
+  box-sizing: border-box;
+  width: auto;
+}
+
+.kanban-container * {
+  box-sizing: border-box;
+}
+
+.kanban-container:after {
+  clear: both;
+  display: block;
+  content: "";
+}
+
+.kanban-board {
+  position: relative;
+  float: left;
+  background: #e2e4e6;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.kanban-board.disabled-board {
+  opacity: 0.3;
+}
+
+.kanban-board.is-moving.gu-mirror {
+  transform: rotate(3deg);
+}
+
+.kanban-board.is-moving.gu-mirror .kanban-drag {
+  overflow: hidden;
+  padding-right: 50px;
+}
+
+.kanban-board header {
+  font-size: 16px;
+  padding: 15px;
+}
+
+.kanban-board header .kanban-title-board {
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+  display: inline;
+}
+
+.kanban-board header .kanban-title-button {
+  float: right;
+}
+
+.kanban-board .kanban-drag {
+  min-height: 200px;
+  padding: 20px;
+}
+
+.kanban-board:after {
+  clear: both;
+  display: block;
+  content: "";
+}
+
+.kanban-item {
+  background: #fff;
+  padding: 15px;
+  margin-bottom: 20px;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: append-animate 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes append-animate {
+	from {
+		transform: translateY(-20px);
+	}
+	to {
+		transform: translateY(0px);
+	}
+}
+
+.kanban-item:hover {
+  cursor: move;
+}
+
+.kanban-item:last-child {
+  margin: 0;
+}
+
+.kanban-item.is-moving.gu-mirror {
+  transform: rotate(3deg);
+  height: auto !important;
+}
+
+/* Dragula CSS  */
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+}
+
+.gu-hide {
+  display: none !important;
+}
+
+.gu-unselectable {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.gu-transit {
+  opacity: 0.2 !important;
+  transform: rotate(0deg) !important;
+}
+
+.drag_handler {
+    background: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    position: relative;
+    float: left;
+    top: -3px;
+    margin-right: 4px;
+}
+
+.drag_handler:hover {
+  cursor: move;
+}
+
+.drag_handler_icon {
+    position: relative;
+    display: block;
+    background: #000;
+    width: 24px;
+    height: 2px;
+    top: 12px;
+    transition: .5s ease-in-out;
+}
+
+.drag_handler_icon:before,
+.drag_handler_icon:after {
+    background: #000;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transition: .5s ease-in-out;
+}
+
+ .drag_handler_icon:before {
+    top: 6px;
+}
+
+.drag_handler_icon:after {
+    bottom: 6px;
 }

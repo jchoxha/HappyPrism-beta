@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useRef  } from 'react';
-import { Goal, Milestone, ProjectTask } from './goal.js'; // Import ProjectTask
+import React, { useState, useEffect, useRef } from 'react';
+import { Goal, Milestone, ProjectTask, SubGoal } from './goal.js';
 import { Switch } from '@mui/material';
 import EmojiPicker from 'emoji-picker-react';
 import GoalPicker from './GoalPicker.js';
-import GoalCard from './GoalCard.js'; 
+import GoalCard from './GoalCard.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useDimension } from '../DimensionContext.js';
 import { getRandomExample } from './goalExamples.js';
 import { Theme } from '../theme.js';
+import KanbanBoard from './KanbanBoard';
+import dotenv from 'dotenv';
+const config = require('../../config.js');
 
-const genAI = new GoogleGenerativeAI("AIzaSyB2JPYGICXfdp3uKJ3xve0Wp-zJh2cdulM");
+const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
 
 const goalDescriptions = {
   challenge: {
@@ -50,7 +53,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     goal_startDate: new Date().toISOString().slice(0, 16),
     goal_deadline: null,
     milestones: [],
-    project_tasks: [] // Add project_tasks
+    project_tasks: [],
+    subGoals: [] // Add subGoals
   });
   const [isLoadingEmoji, setIsLoadingEmoji] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -58,7 +62,16 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const [hasDeadline, setHasDeadline] = useState(false);
   const [hasMilestones, setHasMilestones] = useState(false);
   const [milestones, setMilestones] = useState([]);
-  const [projectTasks, setProjectTasks] = useState([]); // Add projectTasks state
+  const [projectTasks, setProjectTasks] = useState([]);
+  const [projectLists, setProjectLists] = useState({
+    lists: [
+      { id: 'list-1', title: 'To Do', cardIds: [], statusOfTasks: 'Not Yet Started' },
+      { id: 'list-2', title: 'In Progress', cardIds: [], statusOfTasks: 'In Progress' },
+      { id: 'list-3', title: 'Done', cardIds: [], statusOfTasks: 'Completed' },
+    ],
+    cards: {}
+  });
+  const [subGoals, setSubGoals] = useState([]); 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
   const lastSuggestedNames = useRef({});
@@ -81,7 +94,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     performance_metric: '',
     performance_unit: '',
     performance_startingValue: '',
-    performance_targetValue: '',
+    performance_targetValue: ''
   });
   const [goalNameExample, setGoalNameExample] = useState('');
   const theme = new Theme();
@@ -95,7 +108,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     const rootStyles = getComputedStyle(document.documentElement);
     const textColor = rootStyles.getPropertyValue('--dimension-text-color').trim();
     setSvgPathSparkles(theme.getSvgPathBasedOnTextColorAndName(textColor, 'Sparkles'));
-}, [currentDimension, theme]);
+  }, [currentDimension, theme]);
 
   useEffect(() => {
     if (goalType) {
@@ -198,18 +211,40 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+
+    // Check for sub-goals if the goal type is transformation
+    if (goalType === 'transformation' && subGoals.length === 0) {
+        setFormError('Transformation goals must have at least one sub-goal.');
+        setShowFormErrorModal(true);
+        return;
+    }
+
+    // Check for tasks if the goal type is project
+    if (goalType === 'project' && projectTasks.length === 0) {
+        setFormError('Project goals must have at least one task.');
+        setShowFormErrorModal(true);
+        return;
+    }
+
     let newGoal;
     if (goalType === 'habit') {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        null,
-        [],
-        habitData
-      );
+        newGoal = new Goal(
+            goalData.goal_name,
+            goalData.goal_emoji,
+            goalData.goal_type,
+            goalData.goal_startDate,
+            null,
+            [],
+            habitData
+        );
     } else if (goalType === 'project') {
+      const allTasks = projectLists.flatMap(list => list.tasks);
+      if (allTasks.length === 0) {
+        setFormError('Project goals must have at least one task.');
+        setShowFormErrorModal(true);
+        return;
+      }
+
       newGoal = new Goal(
         goalData.goal_name,
         goalData.goal_emoji,
@@ -219,21 +254,38 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         [],
         {},
         {},
-        {tasks: projectTasks, percentComplete: 0}
+        { tasks: allTasks, lists: projectLists }
       );
+    } else if (goalType === 'transformation') {
+        newGoal = new Goal(
+            goalData.goal_name,
+            goalData.goal_emoji,
+            goalData.goal_type,
+            goalData.goal_startDate,
+            goalData.goal_deadline,
+            [],
+            {},
+            {},
+            {},
+            { subGoals: subGoals, totalPercentComplete: 0 }
+        );
     } else {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        goalData.goal_deadline,
-        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal))
-      );
+        newGoal = new Goal(
+            goalData.goal_name,
+            goalData.goal_emoji,
+            goalData.goal_type,
+            goalData.goal_startDate,
+            goalData.goal_deadline,
+            goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal))
+        );
     }
+
     onSubmit(newGoal);
     clearForm();
   };
+
+
+
 
   const handleOptionClick = (selectedOption) => {
     setOption(selectedOption);
@@ -292,7 +344,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
       goal_startDate: new Date(),
       goal_deadline: null,
       milestones: [],
-      project_tasks: [] // Clear project_tasks
+      project_tasks: [] 
     });
     setHabitData({
       habit_action: '',
@@ -305,7 +357,12 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     setHasDeadline(false);
     setHasMilestones(false);
     setMilestones([]);
-    setProjectTasks([]); // Clear projectTasks
+    setProjectTasks([]); 
+    setProjectLists([
+      { id: 1, title: "To-Do", tasks: [] },
+      { id: 2, title: "In Progress", tasks: [] },
+      { id: 3, title: "Completed", tasks: [] }
+    ]);
   };
 
   const toggleEmojiPicker = (index) => {
@@ -334,30 +391,66 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     setMilestones([...milestones, { name: '', hasDeadline: false, deadline: '' }]);
   };
 
-  const handleAddPreExistingGoalAsMilestone = () => {
-    setShowGoalPicker(true);
-  };
 
   const handleGoalPickerSelect = (selectedGoal) => {
-    const newEntry = {
-      name: selectedGoal.goal_name,
-      emoji: selectedGoal.goal_emoji,
-      status: 'To Do', // Default status
-      taskType: 'Pre-Existing Goal',
-      pre_existing_goal: selectedGoal,
-      deadline: selectedGoal.goal_deadline,
-      percentOfProject: 0, // Default percentOfProject
-      hasDeadline: !!selectedGoal.goal_deadline
-    };
     if (goalType === 'challenge') {
-      setMilestones([...milestones, newEntry]);
+      const newMilestone = {
+        name: selectedGoal.goal_name,
+        emoji: selectedGoal.goal_emoji,
+        started: false,
+        startDate: selectedGoal.goal_startDate,
+        deadline: selectedGoal.goal_deadline,
+        completed: false,
+        completedDate: null,
+        pre_existing_goal: selectedGoal
+      };
+      setMilestones([...milestones, newMilestone]);
     } else if (goalType === 'project') {
-      setProjectTasks([...projectTasks, newEntry]);
+      const newCardId = `task-${Date.now()}`;
+      const newCard = {
+        id: newCardId,
+        content: selectedGoal.goal_name,
+        emoji: selectedGoal.goal_emoji,
+        status: 'To Do',
+        taskType: 'Pre-Existing Goal',
+        pre_existing_goal: selectedGoal,
+        deadline: selectedGoal.goal_deadline,
+        description: selectedGoal.goal_description || ""
+      };
+      setProjectLists(prevData => ({
+        ...prevData,
+        lists: prevData.lists.map(list => 
+          list.title === 'To Do' 
+            ? { ...list, cardIds: [...list.cardIds, newCardId] }
+            : list
+        ),
+        cards: {
+          ...prevData.cards,
+          [newCardId]: newCard
+        }
+      }));
+    } else if (goalType === 'transformation') {
+      const newSubGoal = {
+        goal: new Goal(
+          selectedGoal.goal_name,
+          selectedGoal.goal_emoji,
+          selectedGoal.goal_type,
+          selectedGoal.goal_startDate,
+          selectedGoal.goal_deadline,
+          selectedGoal.goal_milestones,
+          selectedGoal.goal_habitData,
+          selectedGoal.goal_performanceData,
+          selectedGoal.goal_projectData,
+          selectedGoal.goal_subGoals,
+          selectedGoal.goal_transformationData
+        ),
+        percentOfTransformation: 100
+      };
+      const updatedSubGoals = distributeTransformationPercentages([...subGoals, newSubGoal]);
+      setSubGoals(updatedSubGoals);
     }
     setShowGoalPicker(false);
   };
-  
-  
   
 
   const handleGoalPickerCancel = () => {
@@ -390,52 +483,6 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     }));
   }, [milestones]);
 
-  const getMaxAllowedPercentage = (tasks) => {
-    const updatedTasks = [...projectTasks];
-    const unlockedTasks = updatedTasks.filter((task, idx) => !task.lockedPercent);
-    const totalLockedPercentage = tasks
-      .filter(task => task.lockedPercent)
-      .reduce((total, task) => total + task.percentOfProject, 0);
-    return 100 - totalLockedPercentage - unlockedTasks.length + 1;
-  };
-  
-  
-  const distributeProjectPercentages = (tasks) => {
-    const totalLockedPercentage = tasks
-      .filter(task => task.lockedPercent)
-      .reduce((total, task) => total + task.percentOfProject, 0);
-    const unlockedTasks = tasks.filter(task => !task.lockedPercent);
-    const totalUnlockedTasks = unlockedTasks.length;
-    const newPercentage = totalUnlockedTasks ? (100 - totalLockedPercentage) / totalUnlockedTasks : 0;
-  
-    return tasks.map(task => task.lockedPercent ? task : { ...task, percentOfProject: newPercentage });
-  };
-  
-  const handleAddNewProjectTask = () => {
-    const newTask = { 
-      name: '', 
-      emoji: '', 
-      status: 'To Do', 
-      taskType: 'New Task', 
-      pre_existing_goal: null, 
-      deadline: '', 
-      percentOfProject: 100, // Default for the first task
-      hasDeadline: false,
-      lockedPercent: false // New property to lock the percentage
-    };
-    const updatedTasks = distributeProjectPercentages([...projectTasks, newTask]);
-    setProjectTasks(updatedTasks);
-  };
-  
-
-  const handleAddPreExistingGoalAsProjectTask = () => {
-    setShowGoalPicker(true);
-  };
-
-  const handleRemoveProjectTask = (index) => {
-    const updatedTasks = projectTasks.filter((_, i) => i !== index);
-    setProjectTasks(updatedTasks);
-  };
 
   const handleMoveProjectTaskUp = (index) => {
     if (index === 0) return;
@@ -605,632 +652,824 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   };
 
   const renderMaxPercentageMessage = (maxValue, totalLocked) => (
-    <small className="max-percentage-message">
+    <small className="description-example">
       Max value: {maxValue}%
     </small>
   );
   
-  const handleProjectTaskChange = (index, key, value) => {
-    const updatedTasks = [...projectTasks];
-    updatedTasks[index] = { ...updatedTasks[index], [key]: value };
-
-    if (key === 'percentOfProject') {
-        const lockedPercentage = updatedTasks.filter(task => task.lockedPercent).reduce((sum, task) => sum + task.percentOfProject, 0);
-        const remainingPercentage = 100 - lockedPercentage - value;
-        const unlockedTasks = updatedTasks.filter((task, idx) => !task.lockedPercent && idx !== index);
-
-        if (remainingPercentage >= 0) {
-            const distributedPercentage = unlockedTasks.length > 0 ? remainingPercentage / unlockedTasks.length : 0;
-            updatedTasks.forEach((task, idx) => {
-                if (!task.lockedPercent && idx !== index) {
-                    task.percentOfProject = Math.round(distributedPercentage);
-                }
-            });
-        }
-    }
-    setProjectTasks(updatedTasks);
-    setIsDirty(true);
-};
-
 
 const renderProjectTask = (task, index) => {
+
   const updatedTasks = [...projectTasks];
-  const maxAllowedPercentage = getMaxAllowedPercentage(projectTasks);
-  const unlockedTasks = updatedTasks.filter((task, idx) => !task.lockedPercent);
-  let minAllowedPercentage = 1;
-  if(unlockedTasks.length == 1){
-      minAllowedPercentage = maxAllowedPercentage;
-  }
-  const totalLockedPercentage = 100 - maxAllowedPercentage;
 
   return (
-      <div key={index} className="task">
-          <div className="task-header">
-              <span className="title">#{index + 1}</span>
-              <div className="rearrange-buttons">
-                  <button type="button" onClick={() => handleRemoveProjectTask(index)} className="remove-button">
-                      <img src="/Images/UI/trashcan.svg" alt="Remove" />
-                  </button>
-                  {index > 0 && (
-                      <button type="button" onClick={() => handleMoveProjectTaskUp(index)} className="rearrange-button">
-                          <img src="/Images/UI/up_small.svg" alt="Move Up" />
-                      </button>
-                  )}
-                  {index < projectTasks.length - 1 && (
-                      <button type="button" onClick={() => handleMoveProjectTaskDown(index)} className="rearrange-button">
-                          <img src="/Images/UI/down_small.svg" alt="Move Down" />
-                      </button>
-                  )}
-              </div>
-          </div>
-          {task.taskType === 'Pre-Existing Goal' ? (
-              <GoalCard goal={task.pre_existing_goal} showUpdateButton={false} />
-          ) : (
-              <>
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_name`}>Task Name:</label>
-                      <input
-                          type="text"
-                          id={`task_${index}_name`}
-                          name={`task_${index}_name`}
-                          value={task.name}
-                          onChange={(e) => handleProjectTaskChange(index, 'name', e.target.value)}
-                      />
-                  </div>
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_emoji`}>Task Emoji:</label>
-                      {renderEmojiPicker(index, 'task')}
-                  </div>
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_status`}>Status:</label>
-                      <select
-                          id={`task_${index}_status`}
-                          name={`task_${index}_status`}
-                          value={task.status}
-                          onChange={(e) => handleProjectTaskChange(index, 'status', e.target.value)}
-                      >
-                          <option value="To Do">To Do</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Done">Done</option>
-                      </select>
-                  </div>
-                  <div className="toggle-switch">
-                      <Switch
-                          checked={task.hasDeadline}
-                          onChange={() => handleProjectTaskChange(index, 'hasDeadline', !task.hasDeadline)}
-                          color="primary"
-                      />
-                      <label htmlFor={`task_${index}_hasDeadline`}>Has Deadline</label>
-                  </div>
-                  {task.hasDeadline && (
-                      <div className="form-group">
-                          <label htmlFor={`task_${index}_deadline`}>Deadline Date & Time:</label>
-                          <input
-                              type="datetime-local"
-                              id={`task_${index}_deadline`}
-                              name={`task_${index}_deadline`}
-                              value={task.deadline}
-                              onChange={(e) => handleProjectTaskChange(index, 'deadline', e.target.value)}
-                          />
-                      </div>
-                  )}
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_percentOfProject`}>Percent of Project:</label>
-                      <div className="slider-container">
-                        <span>{Number(task.percentOfProject.toFixed(2))}%</span>
-                        {!task.lockedPercent && (
-                          <>
-                            <input
-                                type="range"
-                                id={`task_${index}_percentOfProject`}
-                                name={`task_${index}_percentOfProject`}
-                                value={minAllowedPercentage === maxAllowedPercentage ? 100 : task.percentOfProject}
-                                onChange={minAllowedPercentage === maxAllowedPercentage ? null : (e) => handleProjectTaskChange(index, 'percentOfProject', parseInt(e.target.value))}
-                                min={minAllowedPercentage === maxAllowedPercentage ? 1 : minAllowedPercentage}
-                                max={minAllowedPercentage === maxAllowedPercentage ? 100 : maxAllowedPercentage}
-                                style={{ width: '100%' }} // Ensure slider looks full when at max
-                            />
-                          </>
-                        )}
-                        {task.lockedPercent && (
-                          <>
-                            <input
-                                type="range"
-                                id={`task_${index}_percentOfProject`}
-                                name={`task_${index}_percentOfProject`}
-                                value={task.percentOfProject}
-                                onChange={(e) => handleProjectTaskChange(index, 'percentOfProject', parseInt(e.target.value))}
-                                min="1"
-                                max={100}
-                                disabled={task.lockedPercent}
-                                style={{ width: '100%' }} // Ensure slider looks full when at max
-                            />
-                          </>
-                        )}
-                        {!task.lockedPercent && totalLockedPercentage > 0 && minAllowedPercentage != maxAllowedPercentage && (
-                            renderMaxPercentageMessage(maxAllowedPercentage, totalLockedPercentage)
-                        )}
-                      </div>
-                  </div>
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_lockPercent`}>Lock Project Percentage</label>
-                      <Switch
-                          checked={task.lockedPercent}
-                          onChange={() => handleProjectTaskChange(index, 'lockedPercent', !task.lockedPercent)}
-                          color="primary"
-                          id={`task_${index}_lockPercent`}
-                      />
-                  </div>
-                  <div className="form-group">
-                      <label htmlFor={`task_${index}_description`}>Task Description:</label>
-                      <textarea
-                          id={`task_${index}_description`}
-                          name={`task_${index}_description`}
-                          rows="3"
-                          className="form-control"
-                          value={task.description}
-                          onChange={(e) => handleProjectTaskChange(index, 'description', e.target.value)}
-                      />
-                  </div>
-              </>
+    <div key={index} className="task">
+      <div className="task-header">
+        <span className="title">#{index + 1}</span>
+        <div className="rearrange-buttons">
+          <button type="button" onClick={() => handleRemoveProjectTask(index)} className="remove-button">
+            <img src="/Images/UI/trashcan.svg" alt="Remove" />
+          </button>
+          {index > 0 && (
+            <button type="button" onClick={() => handleMoveProjectTaskUp(index)} className="rearrange-button">
+              <img src="/Images/UI/up_small.svg" alt="Move Up" />
+            </button>
           )}
-      </div>
-  );
-};
-
-
-const [allProjectTasksLocked, setAllProjectTasksLocked] = useState(false);
-
-useEffect(() => {
-  if(projectTasks.length > 0) {
-    const updatedTasks = [...projectTasks];
-    const unlockedTasks = updatedTasks.filter((task, idx) => !task.lockedPercent);
-    setAllProjectTasksLocked(
-      projectTasks.every(task => task.lockedPercent) || 
-      (unlockedTasks.length == 1 && getMaxAllowedPercentage(projectTasks) <= 1)
-    );
-  } else{
-    setAllProjectTasksLocked(false);
-  }
-}, [projectTasks]);
-  
-
-  return (
-    <div className="form-container">
-      {showErrorPopup && (
-        <ErrorPopup 
-          message="Milestone deadline cannot be changed here. To modify, you must edit the source goal's deadline."
-          onClose={() => setShowErrorPopup(false)}
-        />
-      )}
-      {showModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <p><span className="bold-text">Are you sure you want to {modalAction === 'back' ? 'go back' : 'untoggle this option'}?</span><br />Any changes you have made will be lost.</p>
-            <div className="modal-buttons">
-              <button className="dimension-theme-colored confirm-button" onClick={modalAction === 'back' ? confirmBack : confirmToggle}>Yes</button>
-              <button className="dimension-theme-colored cancel-button" onClick={modalAction === 'back' ? cancelBack : cancelToggle}>No</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showGoalPicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <GoalPicker
-            goals={existingGoals}
-            onSelect={handleGoalPickerSelect}
-            onCancel={handleGoalPickerCancel}
-          />
-        </div>
-      )}
-      <div className="form-header">
-        <div className="form-title">
-          {!option && 'Choose Goal Setting Method'}
-          {option === 'ai' && 'AI Generated Goal'}
-          {option === 'manual' && 'Manual Goal Setting'}
-        </div>
-        <button className={option ? 'dimension-theme-colored back-button' : 'dimension-theme-colored cancel-button'} onClick={option ? handleBackClick : onCancel}>
-          {option ? 'Back' : 'Cancel'}
-        </button>
-      </div>
-      {!option && (
-        <div>
-          <div className="option-buttons">
-            <button
-              className="option-button dimension-theme-colored"
-              onClick={() => handleOptionClick('ai')}
-            >
-              AI Generated
+          {index < projectTasks.length - 1 && (
+            <button type="button" onClick={() => handleMoveProjectTaskDown(index)} className="rearrange-button">
+              <img src="/Images/UI/down_small.svg" alt="Move Down" />
             </button>
-            <button
-              className="option-button dimension-theme-colored"
-              onClick={() => handleOptionClick('manual')}
-            >
-              Manual
-            </button>
-          </div>
-          <p>
-            <strong>AI Generated:</strong> Describe your goal, and HappyPrism will generate the options that best fit your description.
-          </p>
-          <p>
-            <strong>Manual:</strong> Manually input the goal type and its details.
-          </p>
+          )}
         </div>
-      )}
-      {option === 'ai' && (
-        <div>
-          <div className="sub-header">
-            Describe the goal you are trying to set, and HappyPrism will set the options that seem to best fit your description.
+      </div>
+      {task.taskType === 'Pre-Existing Goal' ? (
+        <>
+          <GoalCard goal={task.pre_existing_goal} showUpdateButton={false} />
+        </>
+      ) : (
+        <>
+          <div className="form-group">
+            <label htmlFor={`task_${index}_name`}>Task Name:</label>
+            <input
+              type="text"
+              id={`task_${index}_name`}
+              name={`task_${index}_name`}
+              value={task.name}
+              onChange={(e) => handleProjectTaskChange(index, 'name', e.target.value)}
+            />
           </div>
-          <form onSubmit={handleFormSubmit}>
+          <div className="form-group">
+            <label htmlFor={`task_${index}_emoji`}>Task Emoji:</label>
+            {renderEmojiPicker(index, 'task')}
+          </div>
+          <div className="form-group">
+            <label htmlFor={`task_${index}_status`}>Status:</label>
+            <select
+              id={`task_${index}_status`}
+              name={`task_${index}_status`}
+              value={task.status}
+              onChange={(e) => handleProjectTaskChange(index, 'status', e.target.value)}
+            >
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+          <div className="toggle-switch">
+            <Switch
+              checked={task.hasDeadline}
+              onChange={() => handleProjectTaskChange(index, 'hasDeadline', !task.hasDeadline)}
+              color="primary"
+            />
+            <label htmlFor={`task_${index}_hasDeadline`}>Has Deadline</label>
+          </div>
+          {task.hasDeadline && (
             <div className="form-group">
-              <label htmlFor="ai_description">
-                Description:
-              </label>
-              <textarea
-                id="ai_description"
-                name="ai_description"
-                rows="4"
-                className="form-control"
-                value={goalData.ai_description || ''}
-                onChange={handleInputChange}
-                required
+              <label htmlFor={`task_${index}_deadline`}>Deadline Date & Time:</label>
+              <input
+                type="datetime-local"
+                id={`task_${index}_deadline`}
+                name={`task_${index}_deadline`}
+                value={task.deadline}
+                onChange={(e) => handleProjectTaskChange(index, 'deadline', e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <button type="submit" className="submit-button dimension-theme-colored">Submit</button>
-            </div>
-          </form>
-        </div>
-      )}
-      {option === 'manual' && (
-        <div>
-          <div className="sub-header">
-            Manually input the goal type and its details.
+          )}
+          <div className="form-group">
+            <label htmlFor={`task_${index}_description`}>Task Description:</label>
+            <textarea
+              id={`task_${index}_description`}
+              name={`task_${index}_description`}
+              rows="3"
+              className="form-control"
+              value={task.description}
+              onChange={(e) => handleProjectTaskChange(index, 'description', e.target.value)}
+            />
           </div>
-          <form onSubmit={handleFormSubmit}>
-            <div className="form-group">
-              <label htmlFor="goal_type">Goal Type:</label>
-              <select
-                id="goal_type"
-                name="goal_type"
-                value={goalType}
-                onChange={handleGoalTypeChange}
-                required
-              >
-                <option value="">Select a goal type</option>
-                <option value="challenge">Challenge</option>
-                <option value="habit">Habit</option>
-                <option value="performance">Performance</option>
-                <option value="project">Project</option>
-                <option value="transformation">Transformation</option>
-              </select>
-            </div>
-
-            {goalType && (
-              <div className="description">
-                <div className="description-title">
-                  {goalDescriptions[goalType].title}
-                </div>
-                <div className="description-text">
-                  {goalDescriptions[goalType].description}
-                </div>
-                <div className="description-example">
-                  {goalDescriptions[goalType].example}
-                </div>
-              </div>
-            )}
-
-          {goalType && (
-            <>
-              <div className="form-group">
-                <label htmlFor="goal_name">Goal Name:</label>
-                <input
-                  type="text"
-                  id="goal_name"
-                  name="goal_name"
-                  value={goalData.goal_name}
-                  onChange={handleInputChange}
-                  required
-                />
-                <small className='description-example'>Example: "{goalNameExample}"</small>
-              </div>
-              <div className="form-group">
-                <label htmlFor="goal_emoji">Goal Emoji:</label>
-                {renderEmojiPicker('goal', 'goal')}
-              </div>
-              <div className="form-group">
-                <label htmlFor="goal_startDate">Start Date:</label>
-                <input
-                  type="datetime-local"
-                  id="goal_startDate"
-                  name="goal_startDate"
-                  value={goalData.goal_startDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-                {goalType !== 'habit' && (
-                  <div className="toggle-switch">
-                    <Switch
-                      checked={hasDeadline}
-                      onChange={() => handleToggleChange(setHasDeadline, hasDeadline)}
-                      color="primary"
-                    />
-                    <label htmlFor="hasDeadline">Goal has a Deadline</label>
-                  </div>
-                )}
-                {hasDeadline && goalType !== 'habit' && (
-                  <div className="form-group">
-                    <label htmlFor="goal_deadline">Deadline Date & Time:</label>
-                    <input
-                      type="datetime-local"
-                      id="goal_deadline"
-                      name="goal_deadline"
-                      value={goalData.goal_deadline}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                )}
-                {goalType === 'challenge' && (
-                  <>
-                    <div className="toggle-switch">
-                      <Switch
-                        checked={hasMilestones}
-                        onChange={() => handleToggleChange(setHasMilestones, hasMilestones)}
-                        color="primary"
-                      />
-                      <label htmlFor="hasMilestones">Goal has Milestones</label>
-                    </div>
-                    {hasMilestones && (
-                      <div className="milestones-container">
-                        <div className="form-group add-milestone-buttons-div">
-                          <button 
-                            type="button" 
-                            className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded"
-                            onClick={handleAddNewMilestone}
-                          >
-                            Add New Milestone
-                          </button>
-                          <button 
-                            type="button" 
-                            className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded"
-                            onClick={handleAddPreExistingGoalAsMilestone}
-                          >
-                            Add Pre-Existing Goal As Milestone
-                          </button>
-                        </div>
-                        {milestones.map((milestone, index) => (
-                          <div key={index} className="milestone">
-                            <div className="milestone-header">
-                              <span className="title">#{index + 1}</span>
-                              <div className="rearrange-buttons">
-                                <button type="button" onClick={() => handleRemoveMilestone(index)} className="remove-button">
-                                  <img src="/Images/UI/trashcan.svg" alt="Remove" />
-                                </button>
-                                {index > 0 && (
-                                  <button type="button" onClick={() => handleMoveMilestoneUp(index)} className="rearrange-button">
-                                    <img src="/Images/UI/up_small.svg" alt="Move Up" />
-                                  </button>
-                                )}
-                                {index < milestones.length - 1 && (
-                                  <button type="button" onClick={() => handleMoveMilestoneDown(index)} className="rearrange-button">
-                                    <img src="/Images/UI/down_small.svg" alt="Move Down" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            {milestone.isPreExisting ? (
-                              <GoalCard goal={milestone} showUpdateButton={false} />
-                            ) : (
-                              <>
-                                <div className="form-group">
-                                  <label htmlFor={`milestone_${index}_name`}>Milestone Name:</label>
-                                  <input
-                                    type="text"
-                                    id={`milestone_${index}_name`}
-                                    name={`milestone_${index}_name`}
-                                    value={milestone.name}
-                                    onChange={(e) => handleMilestoneChange(index, 'name', e.target.value)}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label htmlFor={`milestone_${index}_emoji`}>Milestone Emoji:</label>
-                                  {renderEmojiPicker(index, 'milestone')}
-                                </div>
-                                <div className="toggle-switch">
-                                  <Switch
-                                    checked={milestone.hasDeadline}
-                                    onChange={() => handleMilestoneChange(index, 'hasDeadline', !milestone.hasDeadline)}
-                                    color="primary"
-                                  />
-                                  <label htmlFor={`milestone_${index}_hasDeadline`}>Has Deadline</label>
-                                </div>
-                                {milestone.hasDeadline && (
-                                  <div className="form-group">
-                                    <label htmlFor={`milestone_${index}_deadline`}>Deadline Date & Time:</label>
-                                    <input
-                                      type="datetime-local"
-                                      id={`milestone_${index}_deadline`}
-                                      name={`milestone_${index}_deadline`}
-                                      value={milestone.deadline}
-                                      onChange={(e) => handleMilestoneChange(index, 'deadline', e.target.value)}
-                                    />
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-                {goalType === 'habit' && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor="habit_action">Habit Action:</label>
-                      <small>What action, activity or behavior does your habit consist of?</small>
-                      <input
-                        type="text"
-                        id="habit_action"
-                        name="habit_action"
-                        value={habitData.habit_action}
-                        onChange={handleHabitInputChange}
-                        required
-                      />
-                      <small className='description-example'>Example: "Exercise" or "Read"</small>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="habit_frequencyNum">Frequency:</label>
-                      <small>How often do you want to try to do your habit?</small>
-                      <div className="frequency-input">
-                        <input
-                          type="number"
-                          id="habit_frequencyNum"
-                          name="habit_frequencyNum"
-                          value={habitData.habit_frequencyNum}
-                          onChange={handleHabitInputChange}
-                          min="1"
-                          required
-                        />
-                        <select
-                          id="habit_frequencyPeriod"
-                          name="habit_frequencyPeriod"
-                          value={habitData.habit_frequencyPeriod}
-                          onChange={handleHabitInputChange}
-                          required
-                        >
-                          <option value="daily">{getFrequencyPeriodText('daily')}</option>
-                          <option value="weekly">{getFrequencyPeriodText('weekly')}</option>
-                          <option value="monthly">{getFrequencyPeriodText('monthly')}</option>
-                        </select>
-                      </div>
-                      {habitErrors.habit_frequencyNum && (
-                        <small className="error">{habitErrors.habit_frequencyNum}</small>
-                      )}
-                      <small className='description-example'>Example: "3 times per week" or "1 time per day"</small>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="habit_goal_streakNum">Streak Goal:</label>
-                      <small>How many days/weeks/months in a row do you want to try to keep your habit going?</small>
-                      <div className="streak-input">
-                        <input
-                          type="number"
-                          id="habit_goal_streakNum"
-                          name="habit_goal_streakNum"
-                          value={habitData.habit_goal_streakNum}
-                          onChange={handleHabitInputChange}
-                          min="1"
-                          required
-                        />
-                        <select
-                          id="habit_streakPeriod"
-                          name="habit_streakPeriod"
-                          value={habitData.habit_streakPeriod}
-                          onChange={handleHabitInputChange}
-                          required
-                        >
-                          {getValidStreakPeriods().map(period => (
-                            <option key={period} value={period}>{getStreakPeriodText(period)}</option>
-                          ))}
-                        </select>
-                      </div>
-                      {habitErrors.habit_goal_streakNum && (
-                        <small className="error">{habitErrors.habit_goal_streakNum}</small>
-                      )}
-                      <small className='description-example'>Example: "For 30 days in a row" or "For 1 week straight"</small>
-                    </div>
-                  </>
-                )}
-                {goalType === 'performance' && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor="performance_metric">Performance Metric:</label>
-                      <input
-                        type="text"
-                        id="performance_metric"
-                        name="performance_metric"
-                        value={performanceData.performance_metric}
-                        onChange={handlePerformanceInputChange}
-                        required
-                      />
-                      <small className='description-example'>Example: "Bench Press Weight" or "Running Speed"</small>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="performance_unit">Unit of Measurement:</label>
-                      <input
-                        type="text"
-                        id="performance_unit"
-                        name="performance_unit"
-                        value={performanceData.performance_unit}
-                        onChange={handlePerformanceInputChange}
-                        required
-                      />
-                      <small className='description-example'>Example: "lbs" or "mph"</small>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="performance_startingValue">Starting Value:</label>
-                      <input
-                        type="number"
-                        id="performance_startingValue"
-                        name="performance_startingValue"
-                        value={performanceData.performance_startingValue}
-                        onChange={handlePerformanceInputChange}
-                        required
-                      />
-                      <small className='description-example'>Example: "100" (for 100 lbs) or "6" (for 6 mph)</small>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="performance_targetValue">Target Value:</label>
-                      <input
-                        type="number"
-                        id="performance_targetValue"
-                        name="performance_targetValue"
-                        value={performanceData.performance_targetValue}
-                        onChange={handlePerformanceInputChange}
-                        required
-                      />
-                      <small className='description-example'>Example: "200" (for 200 lbs) or "8" (for 8 mph)</small>
-                    </div>
-                  </>
-                )}
-              {goalType === 'project' && (
-                <div className="project-tasks-container">
-                  <div className="form-group add-task-buttons-div">
-                    <button 
-                      type="button" 
-                      className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded"
-                      onClick={handleAddNewProjectTask}
-                      disabled={allProjectTasksLocked} // Disable if all tasks are locked
-                    >
-                      Add New Task
-                    </button>
-                    <button 
-                      type="button" 
-                      className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded"
-                      onClick={handleAddPreExistingGoalAsProjectTask}
-                      disabled={allProjectTasksLocked} // Disable if all tasks are locked
-                    >
-                      Add Pre-Existing Goal As Task
-                    </button>
-                  </div>
-                  {projectTasks.map((task, index) => renderProjectTask(task, index))}
-                </div>
-              )}
-                <div className="form-group">
-                  <div className="form-divider"></div>
-                  <button type="submit" className="submit-button dimension-theme-colored">Review Goal</button>
-                </div>
-              </>
-            )}
-          </form>
-        </div>
+        </>
       )}
     </div>
   );
+};
+
+const [selectedTask, setSelectedTask] = useState(null);
+
+const handleTaskSelect = (task) => {
+  setSelectedTask(task);
+};
+
+
+
+const handleRemoveSubGoal = (index) => {
+  const updatedSubGoals = subGoals.filter((_, i) => i !== index);
+  setSubGoals(updatedSubGoals);
+};
+
+const handleMoveSubGoalUp = (index) => {
+  if (index === 0) return;
+  const updatedSubGoals = [...subGoals];
+  [updatedSubGoals[index - 1], updatedSubGoals[index]] = [updatedSubGoals[index], updatedSubGoals[index - 1]];
+  setSubGoals(updatedSubGoals);
+};
+
+const handleMoveSubGoalDown = (index) => {
+  if (index === subGoals.length - 1) return;
+  const updatedSubGoals = [...subGoals];
+  [updatedSubGoals[index + 1], updatedSubGoals[index]] = [updatedSubGoals[index], updatedSubGoals[index + 1]];
+  setSubGoals(updatedSubGoals);
+};
+
+const renderSubGoal = (subGoal, index) => {
+  const getMaxAllowedPercentage = (subGoals) => {
+    const updatedSubGoals = [...subGoals];
+    const unlockedSubGoals = updatedSubGoals.filter((subGoal, idx) => !subGoal.lockedPercent);
+    const totalLockedPercentage = subGoals
+      .filter(subGoal => subGoal.lockedPercent)
+      .reduce((total, subGoal) => total + subGoal.percentOfTransformation, 0);
+    return 100 - totalLockedPercentage - unlockedSubGoals.length + 1;
+  };
+
+  const maxAllowedPercentage = getMaxAllowedPercentage(subGoals);
+  const unlockedSubGoals = subGoals.filter(sg => !sg.lockedPercent);
+  const minAllowedPercentage = unlockedSubGoals.length === 1 ? maxAllowedPercentage : 1;
+  const totalLockedPercentage = 100 - maxAllowedPercentage;
+
+  const handleSubGoalChange = (index, key, value) => {
+    const updatedSubGoals = [...subGoals];
+    updatedSubGoals[index] = { ...updatedSubGoals[index], [key]: value };
+
+    if (key === 'percentOfTransformation') {
+      const lockedPercentage = updatedSubGoals.filter(sg => sg.lockedPercent).reduce((sum, sg) => sum + sg.percentOfTransformation, 0);
+      const remainingPercentage = 100 - lockedPercentage - value;
+      const unlockedSubGoals = updatedSubGoals.filter((sg, idx) => !sg.lockedPercent && idx !== index);
+
+      if (remainingPercentage >= 0) {
+        const distributedPercentage = unlockedSubGoals.length > 0 ? remainingPercentage / unlockedSubGoals.length : 0;
+        updatedSubGoals.forEach((sg, idx) => {
+          if (!sg.lockedPercent && idx !== index) {
+            sg.percentOfTransformation = Math.round(distributedPercentage);
+          }
+        });
+      }
+    }
+    setSubGoals(updatedSubGoals);
+  };
+
+  return (
+    <div key={index} className="sub-goal">
+      <div className="sub-goal-header">
+        <span className="title">#{index + 1}</span>
+        <div className="rearrange-buttons">
+          <button type="button" onClick={() => handleRemoveSubGoal(index)} className="remove-button">
+            <img src="/Images/UI/trashcan.svg" alt="Remove" />
+          </button>
+          {index > 0 && (
+            <button type="button" onClick={() => handleMoveSubGoalUp(index)} className="rearrange-button">
+              <img src="/Images/UI/up_small.svg" alt="Move Up" />
+            </button>
+          )}
+          {index < subGoals.length - 1 && (
+            <button type="button" onClick={() => handleMoveSubGoalDown(index)} className="rearrange-button">
+              <img src="/Images/UI/down_small.svg" alt="Move Down" />
+            </button>
+          )}
+        </div>
+      </div>
+      <GoalCard goal={subGoal.goal} showUpdateButton={false} />
+      <div className="form-group">
+        <label htmlFor={`subGoal_${index}_percentOfTransformation`}>Percent of Transformation:</label>
+        <small className='description-example'>How much of the total transformation does this Sub-Goal represent?</small>
+        <div className="slider-container">
+          <span>{Number(subGoal.percentOfTransformation.toFixed(2))}%</span>
+          {!subGoal.lockedPercent && (
+            <>
+              <input
+                type="range"
+                id={`subGoal_${index}_percentOfTransformation`}
+                name={`subGoal_${index}_percentOfTransformation`}
+                value={minAllowedPercentage === maxAllowedPercentage ? 100 : subGoal.percentOfTransformation}
+                onChange={minAllowedPercentage === maxAllowedPercentage ? null : (e) => handleSubGoalChange(index, 'percentOfTransformation', parseInt(e.target.value))}
+                min={minAllowedPercentage === maxAllowedPercentage ? 1 : minAllowedPercentage}
+                max={minAllowedPercentage === maxAllowedPercentage ? 100 : maxAllowedPercentage}
+                style={{ width: '100%' }} // Ensure slider looks full when at max
+              />
+            </>
+          )}
+          {subGoal.lockedPercent && (
+            <>
+              <input
+                type="range"
+                id={`subGoal_${index}_percentOfTransformation`}
+                name={`subGoal_${index}_percentOfTransformation`}
+                value={subGoal.percentOfTransformation}
+                onChange={(e) => handleSubGoalChange(index, 'percentOfTransformation', parseInt(e.target.value))}
+                min="1"
+                max={100}
+                disabled={true}
+                style={{ width: '100%' }} // Ensure slider looks full when at max
+              />
+            </>
+          )}
+          {!subGoal.lockedPercent && totalLockedPercentage > 0 && minAllowedPercentage != maxAllowedPercentage && (
+            renderMaxPercentageMessage(maxAllowedPercentage, totalLockedPercentage)
+          )}
+        </div>
+      </div>
+      <div className="form-group">
+        <label htmlFor={`subGoal_${index}_lockPercent`}>Lock Percentage</label>
+        <Switch
+          checked={subGoal.lockedPercent}
+          onChange={() => handleSubGoalChange(index, 'lockedPercent', !subGoal.lockedPercent)}
+          color="primary"
+          id={`subGoal_${index}_lockPercent`}
+        />
+      </div>
+    </div>
+  );
+};
+
+
+const [allSubGoalsLocked, setAllSubGoalsLocked] = useState(false);
+
+useEffect(() => {
+  const getMaxAllowedPercentage = (subGoals) => {
+    const updatedSubGoals = [...subGoals];
+    const unlockedSubGoals = updatedSubGoals.filter((subGoal, idx) => !subGoal.lockedPercent);
+    const totalLockedPercentage = subGoals
+      .filter(subGoal => subGoal.lockedPercent)
+      .reduce((total, subGoal) => total + subGoal.percentOfProject, 0);
+    return 100 - totalLockedPercentage - unlockedSubGoals.length + 1;
+  };
+
+  if(subGoals.length > 0) {
+    const updatedSubGoals = [...subGoals];
+    const unlockedSubGoals = updatedSubGoals.filter((subGoal, idx) => !subGoal.lockedPercent);
+    setAllSubGoalsLocked(
+      subGoals.every(subGoal => subGoal.lockedPercent) || 
+      (unlockedSubGoals.length == 1 && getMaxAllowedPercentage(subGoals) <= 1)
+    );
+  } else{
+    setAllSubGoalsLocked(false);
+  }
+}, [projectTasks]);
+
+const distributeTransformationPercentages = (subGoals) => {
+  const totalLockedPercentage = subGoals
+    .filter(subGoal => subGoal.lockedPercent)
+    .reduce((total, subGoal) => total + subGoal.percentOfTransformation, 0);
+  
+  const unlockedSubGoals = subGoals.filter(subGoal => !subGoal.lockedPercent);
+  const totalUnlockedSubGoals = unlockedSubGoals.length;
+  
+  const newPercentage = totalUnlockedSubGoals > 0 ? (100 - totalLockedPercentage) / totalUnlockedSubGoals : 0;
+
+  return subGoals.map(subGoal => subGoal.lockedPercent ? subGoal : { ...subGoal, percentOfTransformation: newPercentage });
+};
+
+const [goalPickerList, setGoalPickerList] = useState([]);
+
+const getAlreadyAddedGoalIds = () => {
+  if (goalType === 'challenge') {
+    console.log(milestones);
+    return milestones.map(m => m.pre_existing_goal?.id).filter(id => id);
+  } else if (goalType === 'project') {
+    return projectTasks.map(t => t.pre_existing_goal?.id).filter(id => id);
+  } else if (goalType === 'transformation') {
+    return subGoals.map(sg => sg.goal.id).filter(id => id);
+  }
+  return [];
+};
+
+const handleAddPreExistingGoalAsMilestone = () => {
+  const alreadyAddedGoalIds = getAlreadyAddedGoalIds();
+  const availableGoals = existingGoals.filter(goal => !alreadyAddedGoalIds.includes(goal.id));
+  setGoalPickerList(availableGoals);
+  setShowGoalPicker(true);
+};
+
+const handleAddPreExistingGoalAsProjectTask = () => {
+  const alreadyAddedGoalIds = getAlreadyAddedGoalIds();
+  const availableGoals = existingGoals.filter(goal => !alreadyAddedGoalIds.includes(goal.id));
+  setGoalPickerList(availableGoals);
+  setShowGoalPicker(true);
+};
+
+const handleAddSubGoal = () => {
+  const alreadyAddedGoalIds = getAlreadyAddedGoalIds();
+  const availableGoals = existingGoals.filter(goal => !alreadyAddedGoalIds.includes(goal.id));
+  setGoalPickerList(availableGoals);
+  setShowGoalPicker(true);
+};
+
+const [formError, setFormError] = useState('');
+
+const [showFormErrorModal, setShowFormErrorModal] = useState(false);
+
+const ErrorModal = ({ message, onClose }) => (
+  <div className="modal">
+      <div className="modal-content">
+          <p>{message}</p>
+          <button onClick={onClose} className="dimension-theme-colored confirm-button">Close</button>
+      </div>
+  </div>
+);
+
+const handleAddNewProjectTask = () => {
+  const newCardId = `task-${Date.now()}`;
+  const newCard = {
+    id: newCardId,
+    content: 'New Task',
+    emoji: '📌',
+    status: 'To Do',
+    taskType: 'New Task',
+    deadline: null,
+    description: '',
+  };
+  setProjectLists(prevData => ({
+    ...prevData,
+    lists: prevData.lists.map(list => 
+      list.title === 'To Do' 
+        ? { ...list, cardIds: [...list.cardIds, newCardId] }
+        : list
+    ),
+    cards: {
+      ...prevData.cards,
+      [newCardId]: newCard
+    }
+  }));
+};
+
+const handleProjectTaskChange = (updatedCard) => {
+  setProjectLists(prevData => ({
+    ...prevData,
+    cards: {
+      ...prevData.cards,
+      [updatedCard.id]: updatedCard
+    }
+  }));
+  setIsDirty(true);
+};
+
+const handleRemoveTask = (taskId) => {
+  setProjectLists(prevData => {
+    const { [taskId]: removedCard, ...remainingCards } = prevData.cards;
+    return {
+      lists: prevData.lists.map(list => ({
+        ...list,
+        cardIds: list.cardIds.filter(id => id !== taskId)
+      })),
+      cards: remainingCards
+    };
+  });
+};
+
+const renderProjectGoal = () => (
+  <KanbanBoard
+    data={projectLists}
+    onCardUpdate={handleProjectTaskChange}
+    onAddNewCard={handleAddNewProjectTask}
+    onDeleteCard={handleRemoveTask}
+    onAddPreExistingGoal={handleAddPreExistingGoalAsProjectTask}
+  />
+);
+
+
+return (
+  <div className="form-container">
+      {showErrorPopup && (
+          <ErrorPopup 
+              message="Milestone deadline cannot be changed here. To modify, you must edit the source goal's deadline."
+              onClose={() => setShowErrorPopup(false)}
+          />
+      )}
+      {showFormErrorModal && (
+          <ErrorModal 
+              message={formError}
+              onClose={() => setShowFormErrorModal(false)}
+          />
+      )}
+      {showModal && (
+          <div className="modal">
+              <div className="modal-content">
+                  <p><span className="bold-text">Are you sure you want to {modalAction === 'back' ? 'go back' : 'untoggle this option'}?</span><br />Any changes you have made will be lost.</p>
+                  <div className="modal-buttons">
+                      <button className="dimension-theme-colored confirm-button" onClick={modalAction === 'back' ? confirmBack : confirmToggle}>Yes</button>
+                      <button className="dimension-theme-colored cancel-button" onClick={modalAction === 'back' ? cancelBack : cancelToggle}>No</button>
+                  </div>
+              </div>
+          </div>
+      )}
+      {showGoalPicker && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <GoalPicker
+                  goals={goalPickerList}
+                  onSelect={handleGoalPickerSelect}
+                  onCancel={handleGoalPickerCancel}
+              />
+          </div>
+      )}
+      <div className="form-header">
+          <div className="form-title">
+              {!option && 'Choose Goal Setting Method'}
+              {option === 'ai' && 'AI Generated Goal'}
+              {option === 'manual' && 'Manual Goal Setting'}
+          </div>
+          <button className={option ? 'dimension-theme-colored back-button' : 'dimension-theme-colored cancel-button'} onClick={option ? handleBackClick : onCancel}>
+              {option ? 'Back' : 'Cancel'}
+          </button>
+      </div>
+      {!option && (
+          <div>
+              <div className="option-buttons">
+                  <button
+                      className="option-button dimension-theme-colored"
+                      onClick={() => handleOptionClick('ai')}
+                  >
+                      AI Generated
+                  </button>
+                  <button
+                      className="option-button dimension-theme-colored"
+                      onClick={() => handleOptionClick('manual')}
+                  >
+                      Manual
+                  </button>
+              </div>
+              <p>
+                  <strong>AI Generated:</strong> Describe your goal, and HappyPrism will generate the options that best fit your description.
+              </p>
+              <p>
+                  <strong>Manual:</strong> Manually input the goal type and its details.
+              </p>
+          </div>
+      )}
+      {option === 'ai' && (
+          <div>
+              <div className="sub-header">
+                  Describe the goal you are trying to set, and HappyPrism will set the options that seem to best fit your description.
+              </div>
+              <form onSubmit={handleFormSubmit}>
+                  <div className="form-group">
+                      <label htmlFor="ai_description">
+                          Description:
+                      </label>
+                      <textarea
+                          id="ai_description"
+                          name="ai_description"
+                          rows="4"
+                          className="form-control"
+                          value={goalData.ai_description || ''}
+                          onChange={handleInputChange}
+                          required
+                      />
+                  </div>
+                  <div className="form-group">
+                      <button type="submit" className="submit-button dimension-theme-colored">Submit</button>
+                  </div>
+              </form>
+          </div>
+      )}
+      {option === 'manual' && (
+          <div>
+              <div className="sub-header">
+                  Manually input the goal type and its details.
+              </div>
+              <form onSubmit={handleFormSubmit}>
+                  <div className="form-group">
+                      <label htmlFor="goal_type">Goal Type:</label>
+                      <select
+                          id="goal_type"
+                          name="goal_type"
+                          value={goalType}
+                          onChange={handleGoalTypeChange}
+                          required
+                      >
+                          <option value="">Select a goal type</option>
+                          <option value="challenge">Challenge</option>
+                          <option value="habit">Habit</option>
+                          <option value="performance">Performance</option>
+                          <option value="project">Project</option>
+                          <option value="transformation">Transformation</option>
+                      </select>
+                  </div>
+
+                  {goalType && (
+                      <div className="description">
+                          <div className="description-title">
+                              {goalDescriptions[goalType].title}
+                          </div>
+                          <div className="description-text">
+                              {goalDescriptions[goalType].description}
+                          </div>
+                          <div className="description-example">
+                              {goalDescriptions[goalType].example}
+                          </div>
+                      </div>
+                  )}
+
+                  {goalType && (
+                      <>
+                          <div className="form-group">
+                              <label htmlFor="goal_name">Goal Name:</label>
+                              <input
+                                  type="text"
+                                  id="goal_name"
+                                  name="goal_name"
+                                  value={goalData.goal_name}
+                                  onChange={handleInputChange}
+                                  required
+                              />
+                              <small className='description-example'>Example: "{goalNameExample}"</small>
+                          </div>
+                          <div className="form-group">
+                              <label htmlFor="goal_emoji">Goal Emoji:</label>
+                              {renderEmojiPicker('goal', 'goal')}
+                          </div>
+                          <div className="form-group">
+                              <label htmlFor="goal_startDate">Start Date:</label>
+                              <input
+                                  type="datetime-local"
+                                  id="goal_startDate"
+                                  name="goal_startDate"
+                                  value={goalData.goal_startDate}
+                                  onChange={handleInputChange}
+                                  required
+                              />
+                          </div>
+                          {goalType !== 'habit' && (
+                              <div className="toggle-switch">
+                                  <Switch
+                                      checked={hasDeadline}
+                                      onChange={() => handleToggleChange(setHasDeadline, hasDeadline)}
+                                      color="primary"
+                                  />
+                                  <label htmlFor="hasDeadline">Goal has a Deadline</label>
+                              </div>
+                          )}
+                          {hasDeadline && goalType !== 'habit' && (
+                              <div className="form-group">
+                                  <label htmlFor="goal_deadline">Deadline Date & Time:</label>
+                                  <input
+                                      type="datetime-local"
+                                      id="goal_deadline"
+                                      name="goal_deadline"
+                                      value={goalData.goal_deadline}
+                                      onChange={handleInputChange}
+                                  />
+                              </div>
+                          )}
+                          {goalType === 'challenge' && (
+                              <>
+                                  <div className="toggle-switch">
+                                      <Switch
+                                          checked={hasMilestones}
+                                          onChange={() => handleToggleChange(setHasMilestones, hasMilestones)}
+                                          color="primary"
+                                      />
+                                      <label htmlFor="hasMilestones">Goal has Milestones</label>
+                                  </div>
+                                  {hasMilestones && (
+                                      <div className="milestones-container">
+                                          <div className="form-group add-milestone-buttons-div flex flex justify-evenly">
+                                              <button 
+                                                  type="button" 
+                                                  className="dimension-theme-colored mt-4 font-bold py-2 px-2 rounded"
+                                                  onClick={handleAddNewMilestone}
+                                              >
+                                                  Add New Milestone
+                                              </button>
+                                              <button 
+                                                  type="button" 
+                                                  className="dimension-theme-colored mt-4 font-bold py-2 px-2 rounded"
+                                                  onClick={handleAddPreExistingGoalAsMilestone}
+                                              >
+                                                  Add Pre-Existing Goal<br />As Milestone
+                                              </button>
+                                          </div>
+                                          {milestones.map((milestone, index) => (
+                                              <div key={index} className="milestone">
+                                                  <div className="milestone-header">
+                                                      <span className="title">#{index + 1}</span>
+                                                      <div className="rearrange-buttons">
+                                                          <button type="button" onClick={() => handleRemoveMilestone(index)} className="remove-button">
+                                                              <img src="/Images/UI/trashcan.svg" alt="Remove" />
+                                                          </button>
+                                                          {index > 0 && (
+                                                              <button type="button" onClick={() => handleMoveMilestoneUp(index)} className="rearrange-button">
+                                                                  <img src="/Images/UI/up_small.svg" alt="Move Up" />
+                                                              </button>
+                                                          )}
+                                                          {index < milestones.length - 1 && (
+                                                              <button type="button" onClick={() => handleMoveMilestoneDown(index)} className="rearrange-button">
+                                                                  <img src="/Images/UI/down_small.svg" alt="Move Down" />
+                                                              </button>
+                                                          )}
+                                                      </div>
+                                                  </div>
+                                                  {milestone.isPreExisting ? (
+                                                      <GoalCard goal={milestone} showUpdateButton={false} />
+                                                  ) : (
+                                                      <>
+                                                          <div className="form-group">
+                                                              <label htmlFor={`milestone_${index}_name`}>Milestone Name:</label>
+                                                              <input
+                                                                  type="text"
+                                                                  id={`milestone_${index}_name`}
+                                                                  name={`milestone_${index}_name`}
+                                                                  value={milestone.name}
+                                                                  onChange={(e) => handleMilestoneChange(index, 'name', e.target.value)}
+                                                              />
+                                                          </div>
+                                                          <div className="form-group">
+                                                              <label htmlFor={`milestone_${index}_emoji`}>Milestone Emoji:</label>
+                                                              {renderEmojiPicker(index, 'milestone')}
+                                                          </div>
+                                                          <div className="toggle-switch">
+                                                              <Switch
+                                                                  checked={milestone.hasDeadline}
+                                                                  onChange={() => handleMilestoneChange(index, 'hasDeadline', !milestone.hasDeadline)}
+                                                                  color="primary"
+                                                              />
+                                                              <label htmlFor={`milestone_${index}_hasDeadline`}>Has Deadline</label>
+                                                          </div>
+                                                          {milestone.hasDeadline && (
+                                                              <div className="form-group">
+                                                                  <label htmlFor={`milestone_${index}_deadline`}>Deadline Date & Time:</label>
+                                                                  <input
+                                                                      type="datetime-local"
+                                                                      id={`milestone_${index}_deadline`}
+                                                                      name={`milestone_${index}_deadline`}
+                                                                      value={milestone.deadline}
+                                                                      onChange={(e) => handleMilestoneChange(index, 'deadline', e.target.value)}
+                                                                  />
+                                                              </div>
+                                                          )}
+                                                      </>
+                                                  )}
+                                              </div>
+                                          ))}
+                                      </div>
+                                  )}
+                              </>
+                          )}
+                          {goalType === 'habit' && (
+                              <>
+                                  <div className="form-group">
+                                      <label htmlFor="habit_action">Habit Action:</label>
+                                      <small>What action, activity or behavior does your habit consist of?</small>
+                                      <input
+                                          type="text"
+                                          id="habit_action"
+                                          name="habit_action"
+                                          value={habitData.habit_action}
+                                          onChange={handleHabitInputChange}
+                                          required
+                                      />
+                                      <small className='description-example'>Example: "Exercise" or "Read"</small>
+                                  </div>
+                                  
+                                  <div className="form-group">
+                                      <label htmlFor="habit_frequencyNum">Frequency:</label>
+                                      <small>How often do you want to try to do your habit?</small>
+                                      <div className="frequency-input">
+                                          <input
+                                              type="number"
+                                              id="habit_frequencyNum"
+                                              name="habit_frequencyNum"
+                                              value={habitData.habit_frequencyNum}
+                                              onChange={handleHabitInputChange}
+                                              min="1"
+                                              required
+                                          />
+                                          <select
+                                              id="habit_frequencyPeriod"
+                                              name="habit_frequencyPeriod"
+                                              value={habitData.habit_frequencyPeriod}
+                                              onChange={handleHabitInputChange}
+                                              required
+                                          >
+                                              <option value="daily">{getFrequencyPeriodText('daily')}</option>
+                                              <option value="weekly">{getFrequencyPeriodText('weekly')}</option>
+                                              <option value="monthly">{getFrequencyPeriodText('monthly')}</option>
+                                          </select>
+                                      </div>
+                                      {habitErrors.habit_frequencyNum && (
+                                          <small className="error">{habitErrors.habit_frequencyNum}</small>
+                                      )}
+                                      <small className='description-example'>Example: "3 times per week" or "1 time per day"</small>
+                                  </div>
+                                  
+                                  <div className="form-group">
+                                      <label htmlFor="habit_goal_streakNum">Streak Goal:</label>
+                                      <small>How many days/weeks/months in a row do you want to try to keep your habit going?</small>
+                                      <div className="streak-input">
+                                          <input
+                                              type="number"
+                                              id="habit_goal_streakNum"
+                                              name="habit_goal_streakNum"
+                                              value={habitData.habit_goal_streakNum}
+                                              onChange={handleHabitInputChange}
+                                              min="1"
+                                              required
+                                          />
+                                          <select
+                                              id="habit_streakPeriod"
+                                              name="habit_streakPeriod"
+                                              value={habitData.habit_streakPeriod}
+                                              onChange={handleHabitInputChange}
+                                              required
+                                          >
+                                              {getValidStreakPeriods().map(period => (
+                                                  <option key={period} value={period}>{getStreakPeriodText(period)}</option>
+                                              ))}
+                                          </select>
+                                      </div>
+                                      {habitErrors.habit_goal_streakNum && (
+                                          <small className="error">{habitErrors.habit_goal_streakNum}</small>
+                                      )}
+                                      <small className='description-example'>Example: "For 30 days in a row" or "For 1 week straight"</small>
+                                  </div>
+                              </>
+                          )}
+                          {goalType === 'performance' && (
+                              <>
+                                  <div className="form-group">
+                                      <label htmlFor="performance_metric">Performance Metric:</label>
+                                      <input
+                                          type="text"
+                                          id="performance_metric"
+                                          name="performance_metric"
+                                          value={performanceData.performance_metric}
+                                          onChange={handlePerformanceInputChange}
+                                          required
+                                      />
+                                      <small className='description-example'>Example: "Bench Press Weight" or "Running Speed"</small>
+                                  </div>
+                                  <div className="form-group">
+                                      <label htmlFor="performance_unit">Unit of Measurement:</label>
+                                      <input
+                                          type="text"
+                                          id="performance_unit"
+                                          name="performance_unit"
+                                          value={performanceData.performance_unit}
+                                          onChange={handlePerformanceInputChange}
+                                          required
+                                      />
+                                      <small className='description-example'>Example: "lbs" or "mph"</small>
+                                  </div>
+                                  <div className="form-group">
+                                      <label htmlFor="performance_startingValue">Starting Value:</label>
+                                      <input
+                                          type="number"
+                                          id="performance_startingValue"
+                                          name="performance_startingValue"
+                                          value={performanceData.performance_startingValue}
+                                          onChange={handlePerformanceInputChange}
+                                          required
+                                      />
+                                      <small className='description-example'>Example: "100" (for 100 lbs) or "6" (for 6 mph)</small>
+                                  </div>
+                                  <div className="form-group">
+                                      <label htmlFor="performance_targetValue">Target Value:</label>
+                                      <input
+                                          type="number"
+                                          id="performance_targetValue"
+                                          name="performance_targetValue"
+                                          value={performanceData.performance_targetValue}
+                                          onChange={handlePerformanceInputChange}
+                                          required
+                                      />
+                                      <small className='description-example'>Example: "200" (for 200 lbs) or "8" (for 8 mph)</small>
+                                  </div>
+                              </>
+                          )}
+                          {goalType === 'project' && (
+                            renderProjectGoal()
+                          )}
+                          {goalType === 'transformation' && (
+                              <div className="sub-goals-container flex justify-center flex-col">
+                                  <button 
+                                      type="button" 
+                                      className="dimension-theme-colored mt-4 font-bold py-2 px-4 rounded"
+                                      onClick={handleAddSubGoal}
+                                      disabled={allSubGoalsLocked} 
+                                  >
+                                      Add Sub-Goal
+                                  </button>
+                                  {subGoals.map((subGoal, index) => renderSubGoal(subGoal, index))}
+                              </div>
+                          )}
+                          <div className="form-group">
+                              <div className="form-divider"></div>
+                              <button type="submit" className="submit-button dimension-theme-colored">Review Goal</button>
+                          </div>
+                      </>
+                  )}
+              </form>
+          </div>
+      )}
+  </div>
+);
+
 };
 
 export default NewGoalForm;
