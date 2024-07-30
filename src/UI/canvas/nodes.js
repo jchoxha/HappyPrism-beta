@@ -1,6 +1,7 @@
 // nodes.js
 // nodes.js
 import { ShapeType } from '../../Misc/shapes.js';
+import { generateUUID } from '../../Misc/utils.js';
 
 //GLOBAL VARIABLES
 const radiusMult = 1.5;
@@ -28,7 +29,7 @@ class Node {
     this.description = "New Node Description";
     this.dimensionName = "New Node Dimension Name";
     this.dimensionDescription = "New Node Dimension Description";
-    this.id = crypto.randomUUID();
+    this.id = generateUUID();
     this.visible = true;
 
     //Positioning
