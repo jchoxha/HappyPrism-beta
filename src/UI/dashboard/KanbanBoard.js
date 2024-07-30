@@ -41,13 +41,13 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   const [showLogView, setShowLogView] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const theme = new Theme();
-  const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/Sparkles.svg');
+  const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/sparkles.svg');
 
 
   useEffect(() => {
     const rootStyles = getComputedStyle(document.documentElement);
     const textColor = rootStyles.getPropertyValue('--dimension-text-color').trim();
-    setSvgPathSparkles(theme.getSvgPathBasedOnTextColorAndName(textColor, 'Sparkles'));
+    setSvgPathSparkles(theme.getSvgPathBasedOnTextColorAndName(textColor, 'sparkles'));
   }, []);
 
   const handleInputChange = (e) => {

@@ -486,7 +486,7 @@ class CanvasManager {
         if (this.numNodesInitialized >= 7) {
           // Adjust this number based on your needs
           this.defaultNodesInitialized = true;
-          //console.log("Default nodes initialized");
+          console.log("Default nodes initialized");
         }
       }
     }

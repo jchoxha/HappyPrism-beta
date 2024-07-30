@@ -98,7 +98,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   });
   const [goalNameExample, setGoalNameExample] = useState('');
   const theme = new Theme();
-  const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/Sparkles.svg');
+  const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/sparkles.svg');
 
   useEffect(() => {
     theme.updateThemeForNode({ dimensionName: currentDimension });
@@ -107,7 +107,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   useEffect(() => {
     const rootStyles = getComputedStyle(document.documentElement);
     const textColor = rootStyles.getPropertyValue('--dimension-text-color').trim();
-    setSvgPathSparkles(theme.getSvgPathBasedOnTextColorAndName(textColor, 'Sparkles'));
+    setSvgPathSparkles(theme.getSvgPathBasedOnTextColorAndName(textColor, 'sparkles'));
   }, [currentDimension, theme]);
 
   useEffect(() => {
