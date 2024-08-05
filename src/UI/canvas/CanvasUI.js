@@ -7,7 +7,9 @@ import { Theme } from '../theme.js';
 
 export function showCanvasUI() {
   const canvasUI = document.getElementById('uiMenus');
-  canvasUI.style.display = 'block';
+  if(canvasUI){
+    canvasUI.style.display = 'block';
+  }
 }
 
 export function hideCanvasUI() {

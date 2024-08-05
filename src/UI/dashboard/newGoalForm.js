@@ -9,7 +9,6 @@ import { useDimension } from '../DimensionContext.js';
 import { getRandomExample } from './goalExamples.js';
 import { Theme } from '../theme.js';
 import KanbanBoard from './KanbanBoard';
-import dotenv from 'dotenv';
 const config = require('../../config.js');
 
 const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
@@ -70,7 +69,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
       { id: 'list-3', title: 'Done', cardIds: [], statusOfTasks: 'Completed' },
     ],
     cards: {}
-  });
+  });  
   const [subGoals, setSubGoals] = useState([]); 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
@@ -99,6 +98,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const [goalNameExample, setGoalNameExample] = useState('');
   const theme = new Theme();
   const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/sparkles.svg');
+  const [goalStatus, setGoalStatus] = useState("Not Yet Started");
+  const emojiPickerRef = useRef(null);
 
   useEffect(() => {
     theme.updateThemeForNode({ dimensionName: currentDimension });
@@ -228,17 +229,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
     let newGoal;
     if (goalType === 'habit') {
-        newGoal = new Goal(
-            goalData.goal_name,
-            goalData.goal_emoji,
-            goalData.goal_type,
-            goalData.goal_startDate,
-            null,
-            [],
-            habitData
-        );
+      newGoal = new Goal(
+        goalData.goal_name,
+        goalData.goal_emoji,
+        goalData.goal_type,
+        goalData.goal_startDate,
+        null,
+        [],
+        habitData
+      );
     } else if (goalType === 'project') {
-      const allTasks = projectLists.flatMap(list => list.tasks);
+      const allTasks = projectLists.lists.flatMap(list => list.cardIds.map(id => projectLists.cards[id]));
       if (allTasks.length === 0) {
         setFormError('Project goals must have at least one task.');
         setShowFormErrorModal(true);
@@ -254,31 +255,33 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         [],
         {},
         {},
-        { tasks: allTasks, lists: projectLists }
+        { tasks: allTasks, lists: projectLists.lists }
       );
     } else if (goalType === 'transformation') {
-        newGoal = new Goal(
-            goalData.goal_name,
-            goalData.goal_emoji,
-            goalData.goal_type,
-            goalData.goal_startDate,
-            goalData.goal_deadline,
-            [],
-            {},
-            {},
-            {},
-            { subGoals: subGoals, totalPercentComplete: 0 }
-        );
+      newGoal = new Goal(
+        goalData.goal_name,
+        goalData.goal_emoji,
+        goalData.goal_type,
+        goalData.goal_startDate,
+        goalData.goal_deadline,
+        [],
+        {},
+        {},
+        {},
+        { subGoals: subGoals, totalPercentComplete: 0 }
+      );
     } else {
-        newGoal = new Goal(
-            goalData.goal_name,
-            goalData.goal_emoji,
-            goalData.goal_type,
-            goalData.goal_startDate,
-            goalData.goal_deadline,
-            goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal))
-        );
+      newGoal = new Goal(
+        goalData.goal_name,
+        goalData.goal_emoji,
+        goalData.goal_type,
+        goalData.goal_startDate,
+        goalData.goal_deadline,
+        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal))
+      );
     }
+
+    newGoal.status = goalStatus; // Set the status of the new goal
 
     onSubmit(newGoal);
     clearForm();
@@ -624,11 +627,13 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
           {currentEmoji || 'Select an Emoji'}
         </button>
         {activeEmojiPicker === index && showEmojiPicker && (
-          <EmojiPicker 
-            onEmojiClick={(emojiObject) => handleEmojiClick(emojiObject, index, type)}
-            suggestedEmojisMode="recent"
-            emojiStyle="native"
-          />
+          <div ref={emojiPickerRef} className="absolute z-10">
+            <EmojiPicker 
+              onEmojiClick={handleEmojiClick}
+              suggestedEmojisMode="recent"
+              emojiStyle="native" 
+            />
+          </div>
         )}
         {emojiError && <p className="text-red-500 text-sm mt-1">{emojiError}</p>}
       </div>
@@ -974,13 +979,14 @@ const ErrorModal = ({ message, onClose }) => (
   </div>
 );
 
-const handleAddNewProjectTask = () => {
-  const newCardId = `task-${Date.now()}`;
+const handleAddNewProjectTask = (listId) => {
+  const newCardId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const list = projectLists.lists.find(l => l.id === listId);
   const newCard = {
     id: newCardId,
     content: 'New Task',
     emoji: '📌',
-    status: 'To Do',
+    status: list.statusOfTasks,
     taskType: 'New Task',
     deadline: null,
     description: '',
@@ -988,7 +994,7 @@ const handleAddNewProjectTask = () => {
   setProjectLists(prevData => ({
     ...prevData,
     lists: prevData.lists.map(list => 
-      list.title === 'To Do' 
+      list.id === listId
         ? { ...list, cardIds: [...list.cardIds, newCardId] }
         : list
     ),
@@ -1007,7 +1013,6 @@ const handleProjectTaskChange = (updatedCard) => {
       [updatedCard.id]: updatedCard
     }
   }));
-  setIsDirty(true);
 };
 
 const handleRemoveTask = (taskId) => {
@@ -1023,19 +1028,55 @@ const handleRemoveTask = (taskId) => {
   });
 };
 
+const handleListUpdate = (updatedLists) => {
+  setProjectLists(prevData => ({
+    ...prevData,
+    lists: updatedLists
+  }));
+};
+
 const renderProjectGoal = () => (
-  <KanbanBoard
-    data={projectLists}
-    onCardUpdate={handleProjectTaskChange}
-    onAddNewCard={handleAddNewProjectTask}
-    onDeleteCard={handleRemoveTask}
-    onAddPreExistingGoal={handleAddPreExistingGoalAsProjectTask}
-  />
+  <div onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
+      <KanbanBoard
+        data={projectLists}
+        onCardUpdate={handleProjectTaskChange}
+        onAddNewCard={handleAddNewProjectTask}
+        onDeleteCard={handleRemoveTask}
+        onAddPreExistingGoal={handleAddPreExistingGoalAsProjectTask}
+        onListUpdate={handleListUpdate}
+        existingGoals={existingGoals}
+      />
+  </div>
 );
 
+useEffect(() => {
+  if (!projectLists.lists) {
+    setProjectLists({
+      lists: [
+        { id: 'list-1', title: 'To Do', cardIds: [], statusOfTasks: 'Not Yet Started' },
+        { id: 'list-2', title: 'In Progress', cardIds: [], statusOfTasks: 'In Progress' },
+        { id: 'list-3', title: 'Done', cardIds: [], statusOfTasks: 'Completed' },
+      ],
+      cards: {}
+    });
+  }
+}, [projectLists]);
+
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (showEmojiPicker && emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+      setShowEmojiPicker(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, [showEmojiPicker]);
 
 return (
-  <div className="form-container">
+  <div className="form-container" onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
       {showErrorPopup && (
           <ErrorPopup 
               message="Milestone deadline cannot be changed here. To modify, you must edit the source goal's deadline."
@@ -1133,7 +1174,7 @@ return (
               <div className="sub-header">
                   Manually input the goal type and its details.
               </div>
-              <form onSubmit={handleFormSubmit}>
+              <form onSubmit={handleFormSubmit} onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
                   <div className="form-group">
                       <label htmlFor="goal_type">Goal Type:</label>
                       <select
@@ -1183,6 +1224,20 @@ return (
                           <div className="form-group">
                               <label htmlFor="goal_emoji">Goal Emoji:</label>
                               {renderEmojiPicker('goal', 'goal')}
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="goal_status">Goal Status:</label>
+                            <select
+                              id="goal_status"
+                              name="goal_status"
+                              value={goalStatus}
+                              onChange={(e) => setGoalStatus(e.target.value)}
+                              required
+                            >
+                              <option value="Not Yet Started">Not Yet Started</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Completed">Completed</option>
+                            </select>
                           </div>
                           <div className="form-group">
                               <label htmlFor="goal_startDate">Start Date:</label>

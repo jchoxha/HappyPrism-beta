@@ -10,7 +10,8 @@ const GoalsPage = () => {
   const [goals, setGoals] = useState([
     (() => {
       const challengeGoal1 = new Goal("Complete a Marathon", "🏃‍♂️", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
-      challengeGoal1.id = uuidv4(); // Assign a unique ID
+      challengeGoal1.id = uuidv4();
+      challengeGoal1.status = "In Progress"; // Added status
       challengeGoal1.milestones = [
         new Milestone("Run 5K", "🏃", true, new Date("2024-01-01"), new Date("2024-03-31"), true, new Date("2024-03-15")),
         new Milestone("Run 10K", "🏃", true, new Date("2024-04-01"), new Date("2024-06-30"), true, new Date("2024-06-15")),
@@ -22,7 +23,8 @@ const GoalsPage = () => {
     })(),
     (() => {
       const challengeGoal2 = new Goal("Write a Novel", "📚", "challenge", new Date("2024-01-01"));
-      challengeGoal2.id = uuidv4(); // Assign a unique ID
+      challengeGoal2.id = uuidv4();
+      challengeGoal2.status = "In Progress"; // Added status
       challengeGoal2.milestones = [
         new Milestone("Outline Story", "✍️", true, new Date("2024-01-01"), new Date("2024-02-29"), true, new Date("2024-02-20")),
         new Milestone("Write First Draft", "📝", true, new Date("2024-03-01"), new Date("2024-08-31")),
@@ -34,12 +36,14 @@ const GoalsPage = () => {
     })(),
     (() => {
       const challengeGoal3 = new Goal("Learn Spanish", "🗣️", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
-      challengeGoal3.id = uuidv4(); // Assign a unique ID
+      challengeGoal3.id = uuidv4();
+      challengeGoal3.status = "Not Yet Started"; // Added status
       return challengeGoal3;
     })(),
     (() => {
       const challengeGoal4 = new Goal("Improve Coding Skills", "💻", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
-      challengeGoal4.id = uuidv4(); // Assign a unique ID
+      challengeGoal4.id = uuidv4();
+      challengeGoal4.status = "In Progress"; // Added status
       challengeGoal4.milestones = [
         new Milestone("Complete Python Course", "🐍", true, new Date("2024-01-01"), new Date("2024-04-30"), false, null, true),
         new Milestone("Build Web Application", "🌐", false, new Date("2024-05-01")),
@@ -50,7 +54,8 @@ const GoalsPage = () => {
     })(),
     (() => {
       const habitGoal = new Goal("Workout 5 times a week", "🏋️‍♀️", "habit", new Date(), null, 40);
-      habitGoal.id = uuidv4(); // Assign a unique ID
+      habitGoal.id = uuidv4();
+      habitGoal.status = "In Progress"; // Added status
       habitGoal.habit_action = "Workout";
       habitGoal.habit_frequencyNum = 5;
       habitGoal.habit_frequencyPeriod = "weekly";
@@ -61,7 +66,8 @@ const GoalsPage = () => {
     })(),
     (() => {
       const performanceGoal = new Goal("Improve Bench Press", "🏋️‍♂️", "performance", new Date(), new Date("2024-12-31"), 60);
-      performanceGoal.id = uuidv4(); // Assign a unique ID
+      performanceGoal.id = uuidv4();
+      performanceGoal.status = "In Progress"; // Added status
       performanceGoal.performance_metric = "Bench Press Weight";
       performanceGoal.performance_unit = "lbs";
       performanceGoal.performance_startingValue = 135;
@@ -77,7 +83,8 @@ const GoalsPage = () => {
     })(),
     (() => {
       const projectGoal = new Goal("Launch Personal Website", "🌐", "project", new Date(), new Date("2024-12-31"), 30);
-      projectGoal.id = uuidv4(); // Assign a unique ID
+      projectGoal.id = uuidv4();
+      projectGoal.status = "In Progress"; // Added status
       projectGoal.project_tasks = [
         new ProjectTask("Design homepage", "📐", "To Do", "New Task", null, null, 20, "Create a mockup for the homepage"),
         new ProjectTask("Set up hosting", "💻", "To Do", "New Task", null, null, 10, "Choose and set up web hosting"),
@@ -89,7 +96,8 @@ const GoalsPage = () => {
     })(),
     (() => {
       const transformationGoal = new Goal("Become Physically Fit", "💪", "transformation", new Date(), new Date("2024-12-31"), 65);
-      transformationGoal.id = uuidv4(); // Assign a unique ID
+      transformationGoal.id = uuidv4();
+      transformationGoal.status = "In Progress"; // Added status
       transformationGoal.subGoals = [
         new SubGoal(
           new Goal("Complete a Fitness Program", "🏋️‍♀️", "challenge", new Date(), new Date("2024-06-30")),
@@ -100,6 +108,9 @@ const GoalsPage = () => {
           50
         )
       ];
+      transformationGoal.subGoals.forEach(subGoal => {
+        subGoal.goal.status = "Not Yet Started"; // Added status to sub-goals
+      });
       return transformationGoal;
     })(),
   ]);
@@ -125,7 +136,8 @@ const GoalsPage = () => {
       goalData.goal_projectData || { tasks: []},
       goalData.goal_subGoals || []
     );
-    newGoal.id = uuidv4(); // Assign a unique ID to the new goal
+    newGoal.id = uuidv4();
+    newGoal.status = goalData.status || "Not Yet Started"; // Ensure new goals have a status
     setGoals([...goals, newGoal]);
     setShowNewGoalForm(false);
   };

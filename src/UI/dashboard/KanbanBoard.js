@@ -4,7 +4,8 @@ import { Switch } from '@mui/material';
 import EmojiPicker from 'emoji-picker-react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Theme } from '../theme.js';
-import dotenv from 'dotenv';
+import GoalPicker from './GoalPicker';
+import GoalCard from './GoalCard';
 const config = require('../../config.js');
 
 const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
@@ -26,9 +27,6 @@ const defaultData = {
   },
 };
 
-
-
-
 const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   const [editedCard, setEditedCard] = useState({
     ...card,
@@ -42,6 +40,7 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const theme = new Theme();
   const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/sparkles.svg');
+  const emojiPickerRef = useRef(null);
 
 
   useEffect(() => {
@@ -56,7 +55,8 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
     setHasChanges(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
     onUpdate(editedCard);
     setHasChanges(false);
   };
@@ -265,99 +265,119 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
     );
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showEmojiPicker && emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={(e) => e.stopPropagation()}>
       <div className="bg-white rounded-lg w-full max-w-md mx-4" style={{
-        height: 'calc(100vh - 2rem)',
         maxHeight: '-webkit-fill-available',
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {showLogView ? (
-          <LogView
-            editedCard={editedCard}
-            onAddLogEntry={handleAddLogEntry}
-            onBackToCard={handleBackToCard}
-            onDeleteLogEntry={handleDeleteLogEntry}
-            onEditLogEntry={handleEditLogEntry}
-          />
+        {editedCard.taskType === 'Pre-Existing Goal' ? (
+          <>
+            <div className="p-6 overflow-y-auto flex-grow flex flex-col">
+              <h2 className="text-2xl font-bold mb-4">Pre-Existing Goal Task</h2>
+              <GoalCard goal={editedCard.pre_existing_goal} showUpdateButton={false} />
+              <button onClick={onDelete} className="mt-4 border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center">
+                Remove Task
+              </button>
+            </div>
+            <div className="p-4 bg-gray-100 rounded-b-lg">
+              <button onClick={onClose} className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150">
+                Close
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <div className="p-6 overflow-y-auto flex-grow flex flex-col">
               <h2 className="text-2xl font-bold mb-4">Edit Task</h2>
-              {editedCard.taskType === 'Pre-Existing Goal' && (
-                <p className="mb-4 text-blue-600">This task is linked to a pre-existing goal.</p>
-              )}
               <form onSubmit={(e) => e.preventDefault()}>
-            <div className="mb-4">
-              <label htmlFor="content" className="block mb-1">Title:</label>
-              <input
-                type="text"
-                id="content"
-                name="content"
-                value={editedCard.content}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="emoji" className="block mb-1">Emoji:</label>
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  className="dimension-theme-colored ai-suggest-emoji w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200 mr-2"
-                  onClick={suggestEmoji}
-                  disabled={isLoadingEmoji || !editedCard.content}
-                  aria-label="Have AI suggest an Emoji"
-                >
-                  {isLoadingEmoji ? (
-                    <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
-                  ) : (
-                    <img src={svgPathSparkles} alt="Have AI suggest an Emoji" className="w-5 h-5" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleEmojiPicker}
-                  className="emoji-button px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition-colors duration-200"
-                >
-                  {editedCard.emoji || 'Select an Emoji'}
-                </button>
-                {showEmojiPicker && (
-                  <div className="absolute z-10">
-                    <EmojiPicker onEmojiClick={handleEmojiClick} />
+                <div className="mb-4">
+                  <label htmlFor="content" className="block mb-1">Title:</label>
+                  <input
+                    type="text"
+                    id="content"
+                    name="content"
+                    value={editedCard.content}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="emoji" className="block mb-1">Emoji:</label>
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      className="dimension-theme-colored ai-suggest-emoji w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200 mr-2"
+                      onClick={suggestEmoji}
+                      disabled={isLoadingEmoji || !editedCard.content}
+                      aria-label="Have AI suggest an Emoji"
+                    >
+                      {isLoadingEmoji ? (
+                        <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
+                      ) : (
+                        <img src={svgPathSparkles} alt="Have AI suggest an Emoji" className="w-5 h-5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleEmojiPicker}
+                      className="emoji-button ml-2 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition-colors duration-200"
+                    >
+                      {editedCard.emoji || 'Select an Emoji'}
+                    </button>
+                    {showEmojiPicker && (
+                      <div ref={emojiPickerRef} className="absolute z-10">
+                      <EmojiPicker 
+                        onEmojiClick={handleEmojiClick}
+                        suggestedEmojisMode="recent"
+                        emojiStyle="native" 
+                      />
+                    </div>
+                    )}
+                  </div>
+                  {emojiError && <p className="text-red-500 text-sm mt-1">{emojiError}</p>}
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="status" className="block mb-1">Status:</label>
+                  <p className="w-full p-2 bg-gray-100 rounded">{editedCard.status}</p>
+                </div>
+                <div className="mb-4">
+                  <div className="flex items-center">
+                    <Switch
+                      checked={editedCard.hasDeadline}
+                      onChange={handleDeadlineToggle}
+                      color="primary"
+                    />
+                    <label htmlFor="hasDeadline" className="ml-2">Task has a Deadline</label>
+                  </div>
+                </div>
+                {editedCard.hasDeadline && (
+                  <div className="mb-4">
+                    <label htmlFor="deadline" className="block mb-1">Deadline:</label>
+                    <input
+                      type="date"
+                      id="deadline"
+                      name="deadline"
+                      value={editedCard.deadline || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded"
+                    />
                   </div>
                 )}
-              </div>
-              {emojiError && <p className="text-red-500 text-sm mt-1">{emojiError}</p>}
-            </div>
-            <div className="mb-4">
-              <label htmlFor="status" className="block mb-1">Status:</label>
-              <p className="w-full p-2 bg-gray-100 rounded">{editedCard.status}</p>
-            </div>
-            <div className="mb-4">
-              <div className="flex items-center">
-                <Switch
-                  checked={editedCard.hasDeadline}
-                  onChange={handleDeadlineToggle}
-                  color="primary"
-                />
-                <label htmlFor="hasDeadline" className="ml-2">Task has a Deadline</label>
-              </div>
-            </div>
-            {editedCard.hasDeadline && (
-              <div className="mb-4">
-                <label htmlFor="deadline" className="block mb-1">Deadline:</label>
-                <input
-                  type="date"
-                  id="deadline"
-                  name="deadline"
-                  value={editedCard.deadline || ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-            )}
                 <div className="mb-4">
                   <label htmlFor="description" className="block mb-1">Description:</label>
                   <textarea
@@ -377,14 +397,16 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
                   View Task Log
                 </button>
               </form>
-              <button onClick={onDelete} className="mt-2 border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center">Delete Task</button>
+              <button onClick={onDelete} className="mt-2 border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center">
+                Delete Task
+              </button>
             </div>
             <div className="p-4 bg-gray-100 rounded-b-lg">
               {hasChanges ? (
                 <div className="flex justify-between mb-2">
                   <button onClick={handleSubmit} className="dimension-theme-colored text-white px-4 py-2 rounded">Save Changes</button>
-                    <button onClick={handleDiscard} className="border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-centerd">Discard Changes</button>
-                  </div>
+                  <button onClick={handleDiscard} className="border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center">Discard Changes</button>
+                </div>
               ) : (
                 <div className="flex justify-center mb-2">
                   <button onClick={onClose} className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150">Exit</button>
@@ -398,20 +420,89 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   );
 };
 
-const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreExistingGoal }) => {
+const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreExistingGoal, onListUpdate, existingGoals }) => {
+  const [boardData, setBoardData] = useState(data);
   const [editingListId, setEditingListId] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
   const [openListOptionsId, setOpenListOptionsId] = useState(null);
   const listOptionsRef = useRef(null);
-  const listOptionsButtonRef = useRef(null);
+  const listOptionsButtonRefs = useRef({});
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [activeListId, setActiveListId] = useState(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+  const [filteredGoals, setFilteredGoals] = useState([]);
+  const [activeListStatus, setActiveListStatus] = useState(null);
+  const [selectedPreExistingGoals, setSelectedPreExistingGoals] = useState([]);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+
+  const updateSelectedPreExistingGoals = (cards) => {
+    const selectedGoals = Object.values(cards)
+      .filter(card => card.taskType === 'Pre-Existing Goal')
+      .map(card => card.pre_existing_goal.id);
+    setSelectedPreExistingGoals(selectedGoals);
+  };
+
+  const checkAndUpdatePreExistingGoalTasks = () => {
+    let updatedLists = [...boardData.lists];
+    let updatedCards = { ...boardData.cards };
+    let listsChanged = false;
+
+    Object.values(updatedCards).forEach(card => {
+      if (card.taskType === 'Pre-Existing Goal') {
+        const currentList = updatedLists.find(list => list.cardIds.includes(card.id));
+        if (currentList.statusOfTasks !== card.pre_existing_goal.status) {
+          // Remove card from current list
+          currentList.cardIds = currentList.cardIds.filter(id => id !== card.id);
+
+          // Find or create appropriate list
+          let appropriateList = updatedLists.find(list => list.statusOfTasks === card.pre_existing_goal.status);
+          if (!appropriateList) {
+            appropriateList = createNewList(card.pre_existing_goal.status);
+            updatedLists.push(appropriateList);
+          }
+
+          // Add card to appropriate list
+          appropriateList.cardIds.push(card.id);
+          listsChanged = true;
+        }
+      }
+    });
+
+    if (listsChanged) {
+      setBoardData(prevData => ({
+        ...prevData,
+        lists: updatedLists,
+        cards: updatedCards
+      }));
+      onListUpdate(updatedLists);
+    }
+  };
+
+  const createNewList = (status) => {
+    const newListId = `list-${Date.now()}`;
+    return {
+      id: newListId,
+      title: status,
+      cardIds: [],
+      statusOfTasks: status
+    };
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (listOptionsRef.current && !listOptionsRef.current.contains(event.target)) {
-        setOpenListOptionsId(null);
+      if (openListOptionsId) {
+        const listOptionsButton = listOptionsButtonRefs.current[openListOptionsId];
+        if (
+          listOptionsRef.current &&
+          !listOptionsRef.current.contains(event.target) &&
+          listOptionsButton &&
+          !listOptionsButton.contains(event.target)
+        ) {
+          setOpenListOptionsId(null);
+        }
       }
     };
   
@@ -419,177 +510,259 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [openListOptionsId]);
+
+  const handleListOptionsClick = (listId, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpenListOptionsId(prevId => prevId === listId ? null : listId);
+  };
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId, type } = result;
-  
+
     if (!destination) {
-      return;
+        return;
     }
-  
+
     if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
+        destination.droppableId === source.droppableId &&
+        destination.index === source.index
     ) {
-      return;
+        return;
     }
-  
+
     if (type === 'list') {
-      const newListOrder = Array.from(data.lists);
-      const [reorderedList] = newListOrder.splice(source.index, 1);
-      newListOrder.splice(destination.index, 0, reorderedList);
-  
-      setData({
-        ...data,
-        lists: newListOrder,
-      });
-      return;
+        const newListOrder = Array.from(boardData.lists);
+        const [reorderedList] = newListOrder.splice(source.index, 1);
+        newListOrder.splice(destination.index, 0, reorderedList);
+
+        const newData = {
+            ...boardData,
+            lists: newListOrder,
+        };
+        setBoardData(newData);
+        onListUpdate(newListOrder);
+        return;
     }
-  
-    const sourceList = data.lists.find(list => list.id === source.droppableId);
-    const destinationList = data.lists.find(list => list.id === destination.droppableId);
-    
-    const sourceCardIds = Array.from(sourceList.cardIds);
-    sourceCardIds.splice(source.index, 1);
-    const newSourceList = {
-      ...sourceList,
-      cardIds: sourceCardIds,
+
+    const startList = boardData.lists.find(list => list.id === source.droppableId);
+    const finishList = boardData.lists.find(list => list.id === destination.droppableId);
+
+    if(boardData.cards[draggableId].taskType === 'Pre-Existing Goal') {
+      if(boardData.cards[draggableId].status != finishList.statusOfTasks){
+        //console.log("Incorrect Status of new list, cancelling drag.")
+        return;
+      }
+    }
+
+    if (startList === finishList) {
+        const newCardIds = Array.from(startList.cardIds);
+        newCardIds.splice(source.index, 1);
+        newCardIds.splice(destination.index, 0, draggableId);
+
+        const newList = {
+            ...startList,
+            cardIds: newCardIds,
+        };
+
+        const newData = {
+            ...boardData,
+            lists: boardData.lists.map(list => 
+                list.id === newList.id ? newList : list
+            ),
+        };
+
+        setBoardData(newData);
+        onListUpdate(newData.lists);
+        return;
+    }
+
+    // Moving from one list to another
+    const startCardIds = Array.from(startList.cardIds);
+    startCardIds.splice(source.index, 1);
+    const newStartList = {
+        ...startList,
+        cardIds: startCardIds,
     };
-  
-    const destinationCardIds = Array.from(destinationList.cardIds || []);
-    destinationCardIds.splice(destination.index, 0, draggableId);
-    const newDestinationList = {
-      ...destinationList,
-      cardIds: destinationCardIds,
+
+    const finishCardIds = Array.from(finishList.cardIds);
+    finishCardIds.splice(destination.index, 0, draggableId);
+    const newFinishList = {
+        ...finishList,
+        cardIds: finishCardIds,
     };
-  
-    const newState = {
-      ...data,
-      lists: data.lists.map(list => {
-        if (list.id === newSourceList.id) {
-          return newSourceList;
-        } else if (list.id === newDestinationList.id) {
-          return newDestinationList;
-        } else {
-          return list;
-        }
-      }),
+
+    const updatedCard = {
+        ...boardData.cards[draggableId],
+        status: finishList.statusOfTasks
     };
-  
-    setData(newState);
-  };
+
+    const newData = {
+        ...boardData,
+        lists: boardData.lists.map(list => {
+            if (list.id === newStartList.id) {
+                return newStartList;
+            } else if (list.id === newFinishList.id) {
+                return newFinishList;
+            } else {
+                return list;
+            }
+        }),
+        cards: {
+            ...boardData.cards,
+            [draggableId]: updatedCard,
+        },
+    };
+
+    setBoardData(newData);
+    onListUpdate(newData.lists);
+    onCardUpdate(updatedCard);
+};
 
   const handleListTitleClick = (listId) => {
     setEditingListId(listId);
   };
-
+  
   const handleListTitleChange = (listId, newTitle) => {
-    const newLists = data.lists.map(list =>
+    setBoardData(prevData => ({
+      ...prevData,
+      lists: prevData.lists.map(list =>
+        list.id === listId ? { ...list, title: newTitle } : list
+      )
+    }));
+    onListUpdate(boardData.lists.map(list =>
       list.id === listId ? { ...list, title: newTitle } : list
-    );
-    setData({ ...data, lists: newLists });
+    ));
   };
-
-  const handleListTitleBlur = () => {
+  
+  const handleListTitleBlur = (e) => {
+    e.preventDefault();
     setEditingListId(null);
+    onListUpdate(boardData.lists);
   };
+  
 
-  const addNewList = () => {
+
+  const addNewList = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!Array.isArray(boardData.lists)) {
+      console.error('boardData.lists is not an array:', boardData.lists);
+      setShowErrorPopup(true);
+      setErrorMessage('The board data is corrupted. Please try reloading the page.');
+      return;
+    }
     const newListId = `list-${Date.now()}`;
     const newList = {
       id: newListId,
       title: 'New List',
       cardIds: [],
+      statusOfTasks: 'None'
     };
-    setData({
-      ...data,
-      lists: [...data.lists, newList],
-    });
+    const updatedLists = [...boardData.lists, newList];
+    setBoardData(prevData => ({
+      ...prevData,
+      lists: updatedLists
+    }));
+    onListUpdate(updatedLists);
   };
+  
 
-  const addNewCard = (listId) => {
-    const newCardId = `task-${Date.now()}`;
-    const newCard = {
-      id: newCardId,
-      content: 'New Task',
-      emoji: '📌',
-      status: 'To Do',
-      taskType: 'New Task',
-      deadline: null,
-      description: '',
-    };
-    const updatedList = data.lists.find(list => list.id === listId);
-    updatedList.cardIds.push(newCardId);
-    setData({
-      ...data,
-      lists: data.lists.map(list => list.id === listId ? updatedList : list),
-      cards: {
-        ...data.cards,
-        [newCardId]: newCard,
-      },
-    });
-  };
 
   const handleCardClick = (card) => {
     setEditingCard(card);
   };
 
-  const handleCardUpdate = (updatedCard) => {
-    setData({
-      ...data,
-      cards: {
-        ...data.cards,
-        [updatedCard.id]: updatedCard,
-      },
+  const handleListStatusChange = (listId, status) => {
+    const updatedLists = boardData.lists.map(list =>
+      list.id === listId ? { ...list, statusOfTasks: status } : list
+    );
+
+    const updatedCards = { ...boardData.cards };
+    updatedLists.find(list => list.id === listId).cardIds.forEach(cardId => {
+      updatedCards[cardId] = { ...updatedCards[cardId], status };
     });
+
+    setBoardData(prevData => ({
+      ...prevData,
+      lists: updatedLists,
+      cards: updatedCards
+    }));
+    onListUpdate(updatedLists);
+    Object.values(updatedCards).forEach(card => onCardUpdate(card));
   };
 
-
-  const handleListOptionsClick = (listId, event) => {
-    event.stopPropagation();
-    if (listId === openListOptionsId) {
-      setOpenListOptionsId(null);
-    } else {
-        setOpenListOptionsId(listId);
-    }
+  const handleCardUpdate = (updatedCard) => {
+    setBoardData(prevData => ({
+      ...prevData,
+      cards: {
+        ...prevData.cards,
+        [updatedCard.id]: updatedCard
+      }
+    }));
+    onCardUpdate(updatedCard);
   };
+
 
   const handleDeleteList = (listId) => {
-    setDeleteConfirmation(listId);
-    setListOptionsOpen(null);
+    setDeleteConfirmation({ type: 'list', id: listId });
+    setOpenListOptionsId(null);
   };
 
-  const confirmDeleteList = () => {
-    const listToDelete = data.lists.find(list => list.id === deleteConfirmation);
-    const newLists = data.lists.filter(list => list.id !== deleteConfirmation);
-    const newCards = { ...data.cards };
-    listToDelete.cardIds.forEach(cardId => {
-      delete newCards[cardId];
-    });
+  const confirmDelete = () => {
+    if (deleteConfirmation.type === 'task') {
+      const taskId = deleteConfirmation.id;
+      const updatedLists = boardData.lists.map(list => ({
+        ...list,
+        cardIds: list.cardIds.filter(id => id !== taskId)
+      }));
+      const { [taskId]: deletedTask, ...updatedCards } = boardData.cards;
+      
+      setBoardData(prevData => ({
+        ...prevData,
+        lists: updatedLists,
+        cards: updatedCards
+      }));
+      onListUpdate(updatedLists);
+      onDeleteCard(taskId);
+      setEditingCard(null);
+    } else if (deleteConfirmation.type === 'list') {
+      const listId = deleteConfirmation.id;
+      const newLists = boardData.lists.filter(list => list.id !== listId);
+      const newCards = { ...boardData.cards };
+      boardData.lists.find(list => list.id === listId).cardIds.forEach(cardId => {
+        delete newCards[cardId];
+      });
 
-    setData({
-      ...data,
-      lists: newLists,
-      cards: newCards,
-    });
+      setBoardData(prevData => ({
+        ...prevData,
+        lists: newLists,
+        cards: newCards,
+      }));
+      onListUpdate(newLists);
+    }
     setDeleteConfirmation(null);
   };
 
-  const handleListStatusChange = (listId, status) => {
-    setData(prevData => ({
-      ...prevData,
-      lists: prevData.lists.map(list =>
-        list.id === listId ? { ...list, statusOfTasks: status } : list
-      )
-    }));
-  };
-
   const ListOptionsPopup = ({ listId }) => {
-    const list = data.lists.find(l => l.id === listId);
+    const list = boardData.lists.find(l => l.id === listId);
     return (
-      <div className="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg p-2 right-0 mt-2 w-64">
-        <h4 className="text-sm font-bold mb-2 px-4 py-2">List Options</h4>
+      <div 
+        ref={listOptionsRef}
+        className="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg p-2 left-0 right-0 mt-2"
+        onClick={(e) => e.stopPropagation()}
+        style={{ top: '0%' }}
+      >
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="text-sm font-bold px-4 py-2">"{list.title}" List Options</h4>
+          <button 
+            onClick={() => setOpenListOptionsId(null)}
+            className="text-gray-500 hover:text-gray-700 transition-colors duration-150"
+          >
+            ✕
+          </button>
+        </div>
         <hr className="mb-2" />
         <div className="px-4 py-2">
           <label htmlFor={`list-status-${listId}`} className="block text-sm font-medium text-gray-700 mb-1">
@@ -618,28 +791,91 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
     );
   };
 
-  const DeleteConfirmationModal = ({ listId }) => {
-    const handleConfirm = (e) => {
-      e.preventDefault(); // Prevent any default action
-      confirmDeleteList();
-    };
-
-    const handleCancel = (e) => {
-      e.preventDefault(); // Prevent any default action
-      setDeleteConfirmation(null);
-    };
+  const DeleteConfirmationModal = () => {
+    const itemType = deleteConfirmation.type;
+    const itemName = itemType === 'task' 
+      ? boardData.cards[deleteConfirmation.id].content
+      : boardData.lists.find(list => list.id === deleteConfirmation.id).title;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div className="bg-white p-8 rounded-lg max-w-md">
-          <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
-          <p className="mb-6">Are you sure you want to delete this list and all its tasks?</p>
+          <h3 className="text-xl font-bold mb-4">Confirm Delete List</h3>
+          <p className="mb-6">Are you sure you want to delete this {itemType}: "{itemName}"?</p>
+          <div className="flex justify-between">
+            <button 
+              onClick={confirmDelete}
+              className="border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center"
+            >
+              Delete
+            </button>
+            <button 
+              onClick={() => setDeleteConfirmation(null)}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const [deleteTaskConfirmation, setDeleteTaskConfirmation] = useState(null);
+
+  const handleDeleteTask = (taskId, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDeleteTaskConfirmation(taskId);
+  };
+
+  const confirmDeleteTask = () => {
+    const taskId = deleteTaskConfirmation;
+    const updatedLists = boardData.lists.map(list => ({
+      ...list,
+      cardIds: list.cardIds.filter(id => id !== taskId)
+    }));
+    const { [taskId]: deletedTask, ...updatedCards } = boardData.cards;
+    
+    setBoardData(prevData => {
+      const updatedData = {
+        ...prevData,
+        lists: updatedLists,
+        cards: updatedCards
+      };
+      updateSelectedPreExistingGoals(updatedData.cards);
+      return updatedData;
+    });
+    onListUpdate(updatedLists);
+    onDeleteCard(taskId);
+    setEditingCard(null);
+    setDeleteTaskConfirmation(null);
+  };
+
+  const DeleteTaskConfirmationModal = ({ taskId, onConfirm, onCancel }) => {
+    const handleConfirm = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onConfirm();
+    };
+  
+    const handleCancel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onCancel();
+    };
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={handleCancel}>
+        <div className="bg-white p-8 rounded-lg max-w-md" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-xl font-bold mb-4">Confirm Delete Task</h3>
+          <p className="mb-6">Are you sure you want to delete this task?</p>
           <div className="flex justify-between">
             <button 
               onClick={handleConfirm}
               className="border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center"
             >
-              Confirm
+              Delete
             </button>
             <button 
               onClick={handleCancel}
@@ -653,72 +889,178 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
     );
   };
 
-  const [deleteTaskConfirmation, setDeleteTaskConfirmation] = useState(null);
-
-  const handleDeleteTask = (taskId) => {
-    setDeleteTaskConfirmation(taskId);
-  };
-
-  const confirmDeleteTask = () => {
-    const taskId = deleteTaskConfirmation;
-    const updatedLists = data.lists.map(list => ({
-      ...list,
-      cardIds: list.cardIds.filter(id => id !== taskId)
-    }));
-    const { [taskId]: deletedTask, ...updatedCards } = data.cards;
-    
-    setData({
-      ...data,
-      lists: updatedLists,
-      cards: updatedCards
-    });
-    setEditingCard(null);
-    setDeleteTaskConfirmation(null);
-  };
-
-  const DeleteTaskConfirmationModal = ({ taskId }) => {
-    const task = data.cards[taskId];
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white p-8 rounded-lg max-w-md">
-          <h3 className="text-xl font-bold mb-4">Confirm Delete Task</h3>
-          <p className="mb-6">Are you sure you want to delete the task "{task.content}"?</p>
-          <div className="flex justify-between">
-            <button 
-              onClick={confirmDeleteTask}
-              className="border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center"
-            >
-              Delete
-            </button>
-            <button 
-              onClick={() => setDeleteTaskConfirmation(null)}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const handleAddTaskClick = (listId) => {
+  const handleAddTaskClick = (listId, event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setActiveListId(listId);
     setShowAddTaskModal(true);
   };
 
-  const handleAddNewTask = () => {
-    onAddNewCard(activeListId);
+  const handleAddNewTask = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const list = boardData.lists.find(list => list.id === activeListId);
+    const newCardId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newCard = {
+        id: newCardId,
+        content: 'New Task',
+        emoji: '',
+        status: list.statusOfTasks,
+        taskType: 'New Task',
+        deadline: null,
+        description: '',
+        // Add any other necessary properties here
+    };
+
+    setBoardData(prevData => {
+        const updatedList = prevData.lists.find(list => list.id === activeListId);
+        if (!updatedList) {
+            console.error(`List with ID ${activeListId} not found`);
+            return prevData;
+        }
+
+        const updatedLists = prevData.lists.map(list => 
+            list.id === activeListId 
+                ? { ...list, cardIds: [...list.cardIds, newCardId] }
+                : list
+        );
+
+        const updatedData = {
+            ...prevData,
+            lists: updatedLists,
+            cards: {
+                ...prevData.cards,
+                [newCardId]: newCard
+            }
+        };
+
+        return updatedData;
+    });
+
+    setShowAddTaskModal(false);
+};
+
+  const handleAddPreExistingGoal = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const list = boardData.lists.find(l => l.id === activeListId);
+    setActiveListStatus(list.statusOfTasks);
+    
+    if (list.statusOfTasks !== 'None') {
+      const availableGoals = existingGoals.filter(goal => 
+        !selectedPreExistingGoals.includes(goal.id) &&
+        goal.status === list.statusOfTasks
+      );
+      
+      if (availableGoals.length === 0) {
+        setErrorMessage(`You can't add goals to this list because its status (${list.statusOfTasks}) doesn't match any available goals. Please update the goal's status first.`);
+        setShowErrorPopup(true);
+        return;
+      }
+      
+      setFilteredGoals(availableGoals);
+    } else {
+      const availableGoals = existingGoals.filter(goal => 
+        !selectedPreExistingGoals.includes(goal.id)
+      );
+      setFilteredGoals(availableGoals);
+    }
+    
+    setShowGoalPicker(true);
+  };
+
+  const ErrorPopup = ({ message, onClose }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-8 rounded-lg max-w-md">
+        <h3 className="text-xl font-bold mb-4">Error</h3>
+        <p className="mb-6">{message}</p>
+        <button 
+          onClick={onClose}
+          className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors duration-150"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+
+  const handleGoalPickerSelect = (selectedGoal) => {
+    addPreExistingGoalToList(activeListId, selectedGoal);
+    setShowGoalPicker(false);
     setShowAddTaskModal(false);
   };
 
-  const handleAddPreExistingGoal = () => {
-    onAddPreExistingGoal(activeListId);
-    setShowAddTaskModal(false);
+  const getAlreadyAddedGoalIds = () => {
+    return Object.values(boardData.cards)
+      .filter(card => card.taskType === 'Pre-Existing Goal')
+      .map(card => card.pre_existing_goal.id);
+  };
+
+  const handleGoalPickerCancel = () => {
+    setShowGoalPicker(false);
+  };
+
+  const addPreExistingGoalToList = (listId, goal) => {
+    const newCardId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+    const newCard = {
+      id: newCardId,
+      content: goal.goal_name,
+      emoji: goal.goal_emoji,
+      status: goal.status,
+      taskType: 'Pre-Existing Goal',
+      pre_existing_goal: goal,
+      deadline: goal.goal_deadline,
+      description: goal.goal_description || ""
+    };
+  
+    setBoardData(prevData => {
+      const updatedList = prevData.lists.find(list => list.id === listId);
+      if (!updatedList) {
+        console.error(`List with ID ${listId} not found`);
+        return prevData;
+      }
+  
+      const updatedLists = prevData.lists.map(list => 
+        list.id === listId 
+          ? { ...list, cardIds: [...list.cardIds, newCardId] }
+          : list
+      );
+  
+      const updatedData = {
+        ...prevData,
+        lists: updatedLists,
+        cards: {
+          ...prevData.cards,
+          [newCardId]: newCard
+        }
+      };
+  
+      updateSelectedPreExistingGoals(updatedData.cards);
+      return updatedData;
+    });
+
+  };
+
+  const handleErrorModalConfirm = () => {
+    const goal = editingCard.pre_existing_goal;
+    const appropriateList = boardData.lists.find(list => list.statusOfTasks === goal.status);
+    if (appropriateList) {
+      addPreExistingGoalToList(appropriateList.id, goal);
+    } else {
+      const newList = createNewList(goal.status);
+      setBoardData(prevData => ({
+        ...prevData,
+        lists: [...prevData.lists, newList]
+      }));
+      addPreExistingGoalToList(newList.id, goal);
+    }
+    setShowErrorModal(false);
   };
 
   const AddTaskModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={(e) => e.stopPropagation()}>
       <div className="bg-white p-8 rounded-lg max-w-md">
         <h3 className="text-xl font-bold mb-4">Add New Task</h3>
         <p className="mb-6">How would you like to add a new task?</p>
@@ -737,7 +1079,7 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
           </button>
         </div>
         <button 
-          onClick={() => setShowAddTaskModal(false)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAddTaskModal(false); }}
           className="mt-4 w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150"
         >
           Cancel
@@ -755,17 +1097,18 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
             {...provided.droppableProps}
             ref={provided.innerRef}
             className="flex overflow-x-auto p-4"
+            style={{ minHeight: '275px' }}
           >
-            {data != null && data.lists != null && data.lists.map((list, index) => (
+            {boardData != null && boardData.lists != null && boardData.lists.map((list, index) => (
               <Draggable key={list.id} draggableId={list.id} index={index}>
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.draggableProps}
-                    className="w-80 mx-2 relative"
+                    className="w-60 mx-2 relative"
                     style={provided.draggableProps.style}
                   >
-                    <div className="bg-gray-100 rounded-md p-4">
+                    <div className="w-60 bg-gray-100 rounded-md p-4">
                       <div {...provided.dragHandleProps} className="flex justify-between items-center mb-4">
                         {editingListId === list.id ? (
                           <input
@@ -785,7 +1128,7 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
                               {list.title}
                             </h3>
                             <button
-                              ref={listOptionsButtonRef}
+                              ref={(el) => listOptionsButtonRefs.current[list.id] = el}
                               onClick={(e) => handleListOptionsClick(list.id, e)}
                               className="text-xl hover:bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center transition-colors duration-150"
                             >
@@ -809,33 +1152,42 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
                               backgroundColor: snapshot.isDraggingOver ? 'rgba(229, 231, 235, 0.5)' : 'transparent',
                             }}
                           >
-                            {(list.cardIds || []).map((cardId, index) => (
-                              <Draggable
-                                key={cardId}
-                                draggableId={cardId}
-                                index={index}
-                              >
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    onClick={() => handleCardClick(data.cards[cardId])}
-                                    className={`bg-white p-2 mb-2 rounded shadow cursor-pointer ${
-                                      snapshot.isDragging ? 'opacity-50' : ''
-                                    }`}
-                                  >
-                                    {data.cards[cardId].emoji} {data.cards[cardId].content}
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
+                            {(list.cardIds || []).map((cardId, index) => {
+                              const card = boardData.cards[cardId];
+                              
+                              if (!card) {
+                                console.error(`Card with ID ${cardId} not found in boardData.cards`);
+                                return null;
+                              }
+
+                              return (
+                                <Draggable
+                                  key={cardId}
+                                  draggableId={cardId}
+                                  index={index}
+                                >
+                                  {(provided, snapshot) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      onClick={() => handleCardClick(card)}
+                                      className={`bg-white p-2 mb-2 rounded shadow cursor-pointer ${
+                                        snapshot.isDragging ? 'opacity-50' : ''
+                                      }`}
+                                    >
+                                      {card.emoji} {card.content}
+                                    </div>
+                                  )}
+                                </Draggable>
+                              );
+                            })}
                             {provided.placeholder}
                           </div>
                         )}
                       </Droppable>
                       <button
-                        onClick={() => handleAddTaskClick(list.id)}
+                        onClick={(e) => handleAddTaskClick(list.id, e)}
                         className="w-full p-2 mt-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
                       >
                         + Add Task
@@ -849,7 +1201,7 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
             <div className="mx-2">
               <button
                 onClick={addNewList}
-                className="w-80 p-4 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
+                className="w-60 p-4 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
               >
                 + Add List
               </button>
@@ -863,15 +1215,48 @@ const KanbanBoard = ({ data = defaultData, onCardUpdate, onAddNewCard, onDeleteC
           card={editingCard}
           onClose={() => setEditingCard(null)}
           onUpdate={handleCardUpdate}
-          onDelete={() => onDeleteCard(editingCard.id)}
+          onDelete={(event) => handleDeleteTask(editingCard.id, event)}
         />
       )}
 
-      {deleteConfirmation && (
-        <DeleteConfirmationModal listId={deleteConfirmation} />
+      {deleteTaskConfirmation && (
+        <DeleteTaskConfirmationModal
+          taskId={deleteTaskConfirmation}
+          onConfirm={confirmDeleteTask}
+          onCancel={() => setDeleteTaskConfirmation(null)}
+        />
       )}
 
+      {deleteConfirmation && <DeleteConfirmationModal />}
+
       {showAddTaskModal && <AddTaskModal />}
+      {showGoalPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <GoalPicker
+            goals={filteredGoals}
+            onSelect={handleGoalPickerSelect}
+            onCancel={() => setShowGoalPicker(false)}
+            initialFilter={activeListStatus}
+          />
+        </div>
+      )}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-8 rounded-lg max-w-md">
+            <p>{errorMessage}</p>
+            <div className="mt-4 flex justify-between">
+              <button onClick={handleErrorModalConfirm} className="dimension-theme-colored px-4 py-2 rounded">Yes</button>
+              <button onClick={() => setShowErrorModal(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded">No</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showErrorPopup && (
+        <ErrorPopup
+          message={errorMessage}
+          onClose={() => setShowErrorPopup(false)}
+        />
+      )}
     </DragDropContext>
   );
 };

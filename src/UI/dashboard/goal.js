@@ -6,6 +6,7 @@ class Goal {
       this.goal_startDate = goal_startDate;
       this.goal_lastUpdated = goal_startDate;
       this.goal_deadline = goal_type !== 'habit' ? goal_deadline : null;
+      this.status = "Not Yet Started";
   
       if (this.goal_type === "challenge") {
         this.milestones = goal_milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal));
@@ -40,6 +41,13 @@ class Goal {
       if (this.goal_type === "transformation") {
         this.subGoals = goal_transformationData.subGoals.map(g => new SubGoal(g.goal, g.percentOfTransformation));
         this.totalPercentComplete = goal_transformationData.totalPercentComplete || 0;
+      }
+    }
+    updateStatus(newStatus) {
+      if (["Not Yet Started", "In Progress", "Completed"].includes(newStatus)) {
+        this.status = newStatus;
+      } else {
+        throw new Error("Invalid status. Must be 'Not Yet Started', 'In Progress', or 'Completed'.");
       }
     }
   }

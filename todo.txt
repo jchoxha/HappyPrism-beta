@@ -73,3 +73,9 @@ Chat
 7/23/2024
 -Make trello board interactable.
 -Make transformation goals require at least one subgoal and projects require at least one task.
+
+8/5
+Make project goals update their overall goal status if you have any tasks that are marked as in progress
+Update the goal card to show the goals status and have a button that lets you view a goal editor modal component
+Make sure all the goal types can be properly submitted using the new goal form
+Figure out how to differentiate pre-existing goal tasks on the kanban board, should be related to how its done with milestones
