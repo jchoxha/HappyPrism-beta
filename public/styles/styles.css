@@ -54,7 +54,7 @@ body {
   font-size: 16px;
   font-weight: bold;
   text-align: center;
-  background: var(--dimension-bg-color);
+  /* background: var(--dimension-bg-color); */
   color: var(--dimension-text-color);
 }
 
@@ -63,10 +63,6 @@ body {
   stroke: var(--dimension-text-color); 
 }
 
-
-.dimension-theme-colored button:hover {
-  background: var(--dimension-hover-bg-color);
-}
 
 @keyframes gradient {
   0%, 100% {
@@ -1147,7 +1143,8 @@ div#chat-response-buttons {}
   width: 200px;
   padding: 20px;
   height: 100vh;
-  position: fixed;
+  position: absolute;
+  z-index: 10;
 }
 #sidebar-nav ul {
   list-style-type: none;
@@ -1166,7 +1163,6 @@ div#chat-response-buttons {}
   text-decoration: underline;
 }
 main {
-  margin-left: 220px;
   padding: 20px;
   flex-grow: 1;
 }

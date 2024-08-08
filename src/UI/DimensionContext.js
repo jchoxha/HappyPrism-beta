@@ -1,4 +1,3 @@
-// DimensionContext.js
 import React, { createContext, useContext, useState } from 'react';
 
 const DimensionContext = createContext();
@@ -38,12 +37,35 @@ export const DimensionProvider = ({ children }) => {
     'Ivy': '#2E8B57'     // Green
   };
 
+  const getDimensionsForNewGoal = () => {
+    if (currentDimension === 'Spectrum') {
+      return {
+        Spiritual: true,
+        Mental: true,
+        Physical: true,
+        Social: true,
+        Vocational: true,
+        Environmental: true
+      };
+    } else {
+      return {
+        Spiritual: dimensionMap[currentDimension] === 'Spiritual',
+        Mental: dimensionMap[currentDimension] === 'Mental',
+        Physical: dimensionMap[currentDimension] === 'Physical',
+        Social: dimensionMap[currentDimension] === 'Social',
+        Vocational: dimensionMap[currentDimension] === 'Vocational',
+        Environmental: dimensionMap[currentDimension] === 'Environmental'
+      };
+    }
+  };
+
   const value = {
     currentDimension,
     setCurrentDimension,
     agents,
     dimensionMap,
-    dimensionColors // Added dimensionColors to the value
+    dimensionColors,
+    getDimensionsForNewGoal
   };
 
   return (

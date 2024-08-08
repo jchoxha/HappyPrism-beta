@@ -420,7 +420,7 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   );
 };
 
-const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreExistingGoal, onListUpdate, existingGoals }) => {
+const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdate }) => {
   const [boardData, setBoardData] = useState(data);
   const [editingListId, setEditingListId] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
@@ -437,6 +437,30 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
   const [activeListStatus, setActiveListStatus] = useState(null);
   const [selectedPreExistingGoals, setSelectedPreExistingGoals] = useState([]);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
+
+  
+  useEffect(() => {
+    checkAndUpdateProjectStatus();
+    onBoardUpdate(boardData);
+  }, [boardData]);
+
+  const checkAndUpdateProjectStatus = () => {
+    const hasActiveOrCompletedTasks = Object.values(boardData.cards).some(card => 
+      card.taskType === "Pre-Existing Goal" && 
+      (card.pre_existing_goal.status === "In Progress" || card.pre_existing_goal.status === "Completed")
+    );
+
+    let newStatus;
+    if (hasActiveOrCompletedTasks) {
+      newStatus = "In Progress";
+    } else if (Object.keys(boardData.cards).length > 0) {
+      newStatus = "Not Yet Started";
+    } else {
+      return; // No change needed if there are no tasks
+    }
+
+    onProjectStatusUpdate(newStatus);
+  };
 
   const updateSelectedPreExistingGoals = (cards) => {
     const selectedGoals = Object.values(cards)
@@ -477,7 +501,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         lists: updatedLists,
         cards: updatedCards
       }));
-      onListUpdate(updatedLists);
     }
   };
 
@@ -542,7 +565,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
             lists: newListOrder,
         };
         setBoardData(newData);
-        onListUpdate(newListOrder);
         return;
     }
 
@@ -574,7 +596,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         };
 
         setBoardData(newData);
-        onListUpdate(newData.lists);
         return;
     }
 
@@ -616,8 +637,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
     };
 
     setBoardData(newData);
-    onListUpdate(newData.lists);
-    onCardUpdate(updatedCard);
 };
 
   const handleListTitleClick = (listId) => {
@@ -631,15 +650,11 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         list.id === listId ? { ...list, title: newTitle } : list
       )
     }));
-    onListUpdate(boardData.lists.map(list =>
-      list.id === listId ? { ...list, title: newTitle } : list
-    ));
   };
   
   const handleListTitleBlur = (e) => {
     e.preventDefault();
     setEditingListId(null);
-    onListUpdate(boardData.lists);
   };
   
 
@@ -665,7 +680,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
       ...prevData,
       lists: updatedLists
     }));
-    onListUpdate(updatedLists);
   };
   
 
@@ -689,8 +703,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
       lists: updatedLists,
       cards: updatedCards
     }));
-    onListUpdate(updatedLists);
-    Object.values(updatedCards).forEach(card => onCardUpdate(card));
   };
 
   const handleCardUpdate = (updatedCard) => {
@@ -701,7 +713,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         [updatedCard.id]: updatedCard
       }
     }));
-    onCardUpdate(updatedCard);
   };
 
 
@@ -724,8 +735,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         lists: updatedLists,
         cards: updatedCards
       }));
-      onListUpdate(updatedLists);
-      onDeleteCard(taskId);
       setEditingCard(null);
     } else if (deleteConfirmation.type === 'list') {
       const listId = deleteConfirmation.id;
@@ -740,7 +749,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
         lists: newLists,
         cards: newCards,
       }));
-      onListUpdate(newLists);
     }
     setDeleteConfirmation(null);
   };
@@ -846,8 +854,6 @@ const KanbanBoard = ({ data, onCardUpdate, onAddNewCard, onDeleteCard, onAddPreE
       updateSelectedPreExistingGoals(updatedData.cards);
       return updatedData;
     });
-    onListUpdate(updatedLists);
-    onDeleteCard(taskId);
     setEditingCard(null);
     setDeleteTaskConfirmation(null);
   };

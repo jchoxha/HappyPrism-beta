@@ -54,6 +54,7 @@ class CanvasManager {
     this.defaultNodesInitialized = false;
     this.defaultCentralSize = 150;
     this.defaultOuterSize = 120;
+    this.instantInitDefaultNodes = false;
 
     // Bind methods that will be used as event listeners
     this.resizeCanvas = this.resizeCanvas.bind(this);
@@ -339,6 +340,52 @@ class CanvasManager {
     }
   }
 
+  instantChangeCentralNode(orbit, currentCentralNode, newCentralNode, canvasManager) {
+
+    // Immediately update the orbit's central node
+    orbit.centralNode = newCentralNode;
+
+    // Update the sizes of the nodes
+    currentCentralNode.size = this.defaultOuterSize;
+    newCentralNode.size = this.defaultCentralSize;
+
+    // Remove the new central node from orbiting nodes and add the current central node
+    orbit.orbitingNodes = orbit.orbitingNodes.filter(node => node !== newCentralNode);
+    orbit.orbitingNodes.push(currentCentralNode);
+
+    // Update node properties
+    newCentralNode.inOrbit = false;
+    newCentralNode.fixedX = 0;  // Assuming the central node is at (0,0)
+    newCentralNode.fixedY = 0;
+
+    currentCentralNode.inOrbit = true;
+    currentCentralNode.centralNode = newCentralNode;
+    currentCentralNode.currentOrbit = orbit;
+
+    // Update orbits
+    newCentralNode.orbits.push(orbit);
+    currentCentralNode.orbits = [];
+
+    // Update orbiting nodes' positions
+    updateOrbitingNodesRefAngles(this, orbit, 0);
+
+    // Redraw the canvas
+    this.draw();
+  }
+
+  initNodesOnDashboardOpen(canvasManager) {
+    if (!this.defaultNodesInitialized) {
+      this.instantInitDefaultNodes = true;
+      console.log("Initializing default nodes for dashboard");
+      while(this.numNodesInitialized < 7 && !this.defaultNodesInitialized){
+        console.log("Running initDefaultNodes");
+        this.initDefaultNodes(canvasManager);
+      }
+      this.instantInitDefaultNodes = false; // Reset after initialization
+      console.log("All default nodes initialized for dashboard");
+    }
+  }
+
   addOrbitToNode(node) {
     node.addOrbit(this);
     this.draw();
@@ -374,7 +421,7 @@ class CanvasManager {
       const centralSize = this.defaultCentralSize;
       const outerSize = this.defaultOuterSize;
 
-      if (Date.now() - lastInitializedTime >= 500) {
+      if (Date.now() - lastInitializedTime >= 500 || this.instantInitDefaultNodes) {
         if (numNodesInitialized === 0) {
           const centralNode = addNode(
             canvasManager,
@@ -490,7 +537,11 @@ class CanvasManager {
         }
       }
     }
+    else{
+      console.log("defaultNodesInitialized:", this.defaultNodesInitialized, "width:", this.width, "height:", this.height);
+    }
   }
+
 
   updateOrbits() {
     let windowSizeOrbitRadiusMult = 1.5;

@@ -77,5 +77,12 @@ Chat
 8/5
 Make project goals update their overall goal status if you have any tasks that are marked as in progress
 Update the goal card to show the goals status and have a button that lets you view a goal editor modal component
+
+8/6
 Make sure all the goal types can be properly submitted using the new goal form
 Figure out how to differentiate pre-existing goal tasks on the kanban board, should be related to how its done with milestones
+Add a hide sidebar button to the dashboard, optimize for mobile.
+Update the milestones on challenge goals to show goal cards for pre-existing goals
+Rename Deadlines to Target Completion Date
+Remove Deadlines for completed goals, Remove start date for goals not yet started
+

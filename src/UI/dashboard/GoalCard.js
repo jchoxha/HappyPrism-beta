@@ -35,6 +35,15 @@ const PerformanceChart = ({ data }) => (
   </ResponsiveContainer>
 );
 
+const dimensionColors = {
+  Spiritual: '🟡',
+  Mental: '🟠',
+  Physical: '🔴',
+  Social: '🔵',
+  Vocational: '🟣',
+  Environmental: '🟢'
+};
+
 const GoalCard = ({ goal, showUpdateButton = true }) => {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
   const { currentDimension } = useDimension();
@@ -46,6 +55,19 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
 
   const formatDate = (date) => {
     return format(new Date(date), 'PP');
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Not Yet Started':
+        return 'text-gray-500';
+      case 'In Progress':
+        return 'text-blue-500';
+      case 'Completed':
+        return 'text-green-500';
+      default:
+        return 'text-gray-500';
+    }
   };
 
   const renderMilestones = (milestones) => (
@@ -95,6 +117,18 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
             <div className="text-sm text-gray-500">
               <p>Created: {formatDate(goal.goal_startDate)}</p>
               <p>Last Modified: {formatDate(goal.goal_lastUpdated || goal.goal_startDate)}</p>
+            </div>
+            <div className={`text-sm font-semibold ${getStatusColor(goal.status)}`}>
+              Status: {goal.status}
+            </div>
+            <div className="dimension-indicators mt-2">
+              {Object.entries(goal.dimensions).map(([dimension, isAssociated]) => 
+                isAssociated && (
+                  <span key={dimension} title={dimension} className="mr-1">
+                    {dimensionColors[dimension]}
+                  </span>
+                )
+              )}
             </div>
           </div>
           <div className="text-4xl">{goal.goal_emoji}</div>

@@ -4,6 +4,7 @@ import Dashboard from '../dashboard/dashboard';
 import { drawChat } from '../chat/chatai.js';
 import NodeSelector from './NodeSelector.js';
 import { Theme } from '../theme.js';
+import { ca } from 'date-fns/locale';
 
 export function showCanvasUI() {
   const canvasUI = document.getElementById('uiMenus');
@@ -44,7 +45,9 @@ const CanvasUI = ({ canvasManager }) => {
 
   const handleDashboardClick = (e) => {
     e.preventDefault();
-    setShowDashboard(true);
+    if(canvasManager.defaultNodes.length > 0){
+      setShowDashboard(true);
+    }
   };
 
   const handleChatClick = (e) => {

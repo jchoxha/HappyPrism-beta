@@ -42,7 +42,7 @@ const goalDescriptions = {
 };
 
 const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
-  const { currentDimension, dimensionMap } = useDimension();
+  const { currentDimension, getDimensionsForNewGoal } = useDimension();
   const [option, setOption] = useState(null);
   const [goalType, setGoalType] = useState('');
   const [goalData, setGoalData] = useState({
@@ -100,6 +100,90 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const [svgPathSparkles, setSvgPathSparkles] = useState('/Images/UI/sparkles.svg');
   const [goalStatus, setGoalStatus] = useState("Not Yet Started");
   const emojiPickerRef = useRef(null);
+  const [projectGoal, setProjectGoal] = useState(null);
+  const [availableStatuses, setAvailableStatuses] = useState(["Not Yet Started", "In Progress", "Completed"]);
+  const [dimensions, setDimensions] = useState(getDimensionsForNewGoal());
+
+  useEffect(() => {
+    setDimensions(getDimensionsForNewGoal());
+  }, [currentDimension]);
+
+  const handleDimensionChange = (dimension) => {
+    setDimensions(prevDimensions => ({
+      ...prevDimensions,
+      [dimension]: !prevDimensions[dimension]
+    }));
+  };
+
+  useEffect(() => {
+    if (goalType === 'challenge' || goalType === 'project' || goalType === 'transformation') {
+      updateAvailableStatuses();
+    }
+  }, [milestones, projectLists, subGoals, goalType]);
+
+  useEffect(() => {
+    if (goalType === 'project') {
+      setProjectGoal(new Goal(
+        goalData.goal_name,
+        goalData.goal_emoji,
+        'project',
+        goalData.goal_startDate,
+        goalData.goal_deadline,
+        [],
+        {},
+        {},
+        { tasks: [], percentComplete: 0, taskPercentagesEnabled: false }
+      ));
+    }
+  }, [goalType]);
+
+  const handleKanbanBoardUpdate = (updatedBoardData) => {
+    setProjectLists(updatedBoardData);
+    updateAvailableStatuses();
+  };
+
+  const updateAvailableStatuses = () => {
+    let hasActiveOrCompletedItems = false;
+  
+    if (goalType === 'project') {
+      // Check for in-progress or completed tasks, including pre-existing goals
+      hasActiveOrCompletedItems = Object.values(projectLists.cards).some(card => 
+        card.status === "In Progress" || 
+        card.status === "Completed" ||
+        (card.taskType === "Pre-Existing Goal" && 
+         (card.pre_existing_goal.status === "In Progress" || card.pre_existing_goal.status === "Completed"))
+      );
+    } else if (goalType === 'challenge') {
+      // Check for in-progress or completed milestones, including pre-existing goals
+      hasActiveOrCompletedItems = milestones.some(milestone => 
+        milestone.started || 
+        milestone.completed ||
+        (milestone.pre_existing_goal && 
+         (milestone.pre_existing_goal.status === "In Progress" || milestone.pre_existing_goal.status === "Completed"))
+      );
+    } else if (goalType === 'transformation') {
+      // Check for in-progress or completed sub-goals
+      hasActiveOrCompletedItems = subGoals.some(subGoal => 
+        subGoal.goal.status === "In Progress" || subGoal.goal.status === "Completed"
+      );
+    }
+  
+    if (hasActiveOrCompletedItems) {
+      setAvailableStatuses(["In Progress", "Completed"]);
+      if (goalStatus === "Not Yet Started") {
+        setGoalStatus("In Progress");
+      }
+    } else {
+      setAvailableStatuses(["Not Yet Started", "In Progress", "Completed"]);
+    }
+  };
+
+  const handleGoalStatusChange = (newStatus) => {
+    setGoalStatus(newStatus);
+    if (projectGoal) {
+      projectGoal.updateStatus(newStatus);
+    }
+  };
 
   useEffect(() => {
     theme.updateThemeForNode({ dimensionName: currentDimension });
@@ -236,7 +320,12 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         goalData.goal_startDate,
         null,
         [],
-        habitData
+        habitData,
+        {},
+        {},
+        [],
+        { subGoals: [], totalPercentComplete: 0 },
+        dimensions
       );
     } else if (goalType === 'project') {
       const allTasks = projectLists.lists.flatMap(list => list.cardIds.map(id => projectLists.cards[id]));
@@ -245,18 +334,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         setShowFormErrorModal(true);
         return;
       }
-
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        goalData.goal_deadline,
-        [],
-        {},
-        {},
-        { tasks: allTasks, lists: projectLists.lists }
-      );
+      projectGoal.project_tasks = allTasks.map(task => new ProjectTask(
+        task.content,
+        task.emoji,
+        task.status,
+        task.taskType,
+        task.pre_existing_goal,
+        task.deadline,
+        task.description
+      ));
+      newGoal = projectGoal;
+      newGoal.dimensions = dimensions;
     } else if (goalType === 'transformation') {
       newGoal = new Goal(
         goalData.goal_name,
@@ -268,7 +356,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         {},
         {},
         {},
-        { subGoals: subGoals, totalPercentComplete: 0 }
+        { subGoals: subGoals.map(sg => ({ ...sg, goal: { ...sg.goal, status: sg.goal.status } })), totalPercentComplete: 0 },
+        dimensions
       );
     } else {
       newGoal = new Goal(
@@ -277,12 +366,18 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         goalData.goal_type,
         goalData.goal_startDate,
         goalData.goal_deadline,
-        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal))
+        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal)),
+        {},
+        {},
+        {},
+        [],
+        { subGoals: [], totalPercentComplete: 0 },
+        dimensions
       );
     }
 
-    newGoal.status = goalStatus; // Set the status of the new goal
-
+    newGoal.status = goalStatus; 
+    console.log(newGoal);
     onSubmit(newGoal);
     clearForm();
   };
@@ -392,8 +487,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
   const handleAddNewMilestone = () => {
     setMilestones([...milestones, { name: '', hasDeadline: false, deadline: '' }]);
+    updateAvailableStatuses();
   };
-
 
   const handleGoalPickerSelect = (selectedGoal) => {
     if (goalType === 'challenge') {
@@ -414,7 +509,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         id: newCardId,
         content: selectedGoal.goal_name,
         emoji: selectedGoal.goal_emoji,
-        status: 'To Do',
+        status: selectedGoal.status,
         taskType: 'Pre-Existing Goal',
         pre_existing_goal: selectedGoal,
         deadline: selectedGoal.goal_deadline,
@@ -449,9 +544,11 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         ),
         percentOfTransformation: 100
       };
+      newSubGoal.goal.status = selectedGoal.status;
       const updatedSubGoals = distributeTransformationPercentages([...subGoals, newSubGoal]);
       setSubGoals(updatedSubGoals);
     }
+    updateAvailableStatuses();
     setShowGoalPicker(false);
   };
   
@@ -463,6 +560,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const handleRemoveMilestone = (index) => {
     const updatedMilestones = milestones.filter((_, i) => i !== index);
     setMilestones(updatedMilestones);
+    updateAvailableStatuses();
   };
 
   const handleMoveMilestoneUp = (index) => {
@@ -486,20 +584,6 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     }));
   }, [milestones]);
 
-
-  const handleMoveProjectTaskUp = (index) => {
-    if (index === 0) return;
-    const updatedTasks = [...projectTasks];
-    [updatedTasks[index - 1], updatedTasks[index]] = [updatedTasks[index], updatedTasks[index - 1]];
-    setProjectTasks(updatedTasks);
-  };
-
-  const handleMoveProjectTaskDown = (index) => {
-    if (index === projectTasks.length - 1) return;
-    const updatedTasks = [...projectTasks];
-    [updatedTasks[index + 1], updatedTasks[index]] = [updatedTasks[index], updatedTasks[index + 1]];
-    setProjectTasks(updatedTasks);
-  };
 
   useEffect(() => {
     setGoalData(prevData => ({
@@ -661,113 +745,14 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
       Max value: {maxValue}%
     </small>
   );
-  
 
-const renderProjectTask = (task, index) => {
-
-  const updatedTasks = [...projectTasks];
-
-  return (
-    <div key={index} className="task">
-      <div className="task-header">
-        <span className="title">#{index + 1}</span>
-        <div className="rearrange-buttons">
-          <button type="button" onClick={() => handleRemoveProjectTask(index)} className="remove-button">
-            <img src="/Images/UI/trashcan.svg" alt="Remove" />
-          </button>
-          {index > 0 && (
-            <button type="button" onClick={() => handleMoveProjectTaskUp(index)} className="rearrange-button">
-              <img src="/Images/UI/up_small.svg" alt="Move Up" />
-            </button>
-          )}
-          {index < projectTasks.length - 1 && (
-            <button type="button" onClick={() => handleMoveProjectTaskDown(index)} className="rearrange-button">
-              <img src="/Images/UI/down_small.svg" alt="Move Down" />
-            </button>
-          )}
-        </div>
-      </div>
-      {task.taskType === 'Pre-Existing Goal' ? (
-        <>
-          <GoalCard goal={task.pre_existing_goal} showUpdateButton={false} />
-        </>
-      ) : (
-        <>
-          <div className="form-group">
-            <label htmlFor={`task_${index}_name`}>Task Name:</label>
-            <input
-              type="text"
-              id={`task_${index}_name`}
-              name={`task_${index}_name`}
-              value={task.name}
-              onChange={(e) => handleProjectTaskChange(index, 'name', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor={`task_${index}_emoji`}>Task Emoji:</label>
-            {renderEmojiPicker(index, 'task')}
-          </div>
-          <div className="form-group">
-            <label htmlFor={`task_${index}_status`}>Status:</label>
-            <select
-              id={`task_${index}_status`}
-              name={`task_${index}_status`}
-              value={task.status}
-              onChange={(e) => handleProjectTaskChange(index, 'status', e.target.value)}
-            >
-              <option value="To Do">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
-          </div>
-          <div className="toggle-switch">
-            <Switch
-              checked={task.hasDeadline}
-              onChange={() => handleProjectTaskChange(index, 'hasDeadline', !task.hasDeadline)}
-              color="primary"
-            />
-            <label htmlFor={`task_${index}_hasDeadline`}>Has Deadline</label>
-          </div>
-          {task.hasDeadline && (
-            <div className="form-group">
-              <label htmlFor={`task_${index}_deadline`}>Deadline Date & Time:</label>
-              <input
-                type="datetime-local"
-                id={`task_${index}_deadline`}
-                name={`task_${index}_deadline`}
-                value={task.deadline}
-                onChange={(e) => handleProjectTaskChange(index, 'deadline', e.target.value)}
-              />
-            </div>
-          )}
-          <div className="form-group">
-            <label htmlFor={`task_${index}_description`}>Task Description:</label>
-            <textarea
-              id={`task_${index}_description`}
-              name={`task_${index}_description`}
-              rows="3"
-              className="form-control"
-              value={task.description}
-              onChange={(e) => handleProjectTaskChange(index, 'description', e.target.value)}
-            />
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const [selectedTask, setSelectedTask] = useState(null);
-
-const handleTaskSelect = (task) => {
-  setSelectedTask(task);
-};
 
 
 
 const handleRemoveSubGoal = (index) => {
   const updatedSubGoals = subGoals.filter((_, i) => i !== index);
   setSubGoals(updatedSubGoals);
+  updateAvailableStatuses();
 };
 
 const handleMoveSubGoalUp = (index) => {
@@ -991,40 +976,50 @@ const handleAddNewProjectTask = (listId) => {
     deadline: null,
     description: '',
   };
-  setProjectLists(prevData => ({
-    ...prevData,
-    lists: prevData.lists.map(list => 
-      list.id === listId
-        ? { ...list, cardIds: [...list.cardIds, newCardId] }
-        : list
-    ),
-    cards: {
-      ...prevData.cards,
-      [newCardId]: newCard
-    }
-  }));
+  setProjectLists(prevData => {
+    const updatedData = {
+      ...prevData,
+      lists: prevData.lists.map(list => 
+        list.id === listId
+          ? { ...list, cardIds: [...list.cardIds, newCardId] }
+          : list
+      ),
+      cards: {
+        ...prevData.cards,
+        [newCardId]: newCard
+      }
+    };
+    updateAvailableStatuses();
+    return updatedData;
+  });
 };
 
 const handleProjectTaskChange = (updatedCard) => {
-  setProjectLists(prevData => ({
-    ...prevData,
-    cards: {
-      ...prevData.cards,
-      [updatedCard.id]: updatedCard
-    }
-  }));
+  setProjectLists(prevData => {
+    const updatedData = {
+      ...prevData,
+      cards: {
+        ...prevData.cards,
+        [updatedCard.id]: updatedCard
+      }
+    };
+    updateAvailableStatuses();
+    return updatedData;
+  });
 };
 
 const handleRemoveTask = (taskId) => {
   setProjectLists(prevData => {
     const { [taskId]: removedCard, ...remainingCards } = prevData.cards;
-    return {
+    const updatedData = {
       lists: prevData.lists.map(list => ({
         ...list,
         cardIds: list.cardIds.filter(id => id !== taskId)
       })),
       cards: remainingCards
     };
+    updateAvailableStatuses();
+    return updatedData;
   });
 };
 
@@ -1039,12 +1034,9 @@ const renderProjectGoal = () => (
   <div onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
       <KanbanBoard
         data={projectLists}
-        onCardUpdate={handleProjectTaskChange}
-        onAddNewCard={handleAddNewProjectTask}
-        onDeleteCard={handleRemoveTask}
-        onAddPreExistingGoal={handleAddPreExistingGoalAsProjectTask}
-        onListUpdate={handleListUpdate}
+        onBoardUpdate={handleKanbanBoardUpdate}
         existingGoals={existingGoals}
+        onProjectStatusUpdate={handleGoalStatusChange}
       />
   </div>
 );
@@ -1222,6 +1214,22 @@ return (
                               <small className='description-example'>Example: "{goalNameExample}"</small>
                           </div>
                           <div className="form-group">
+                          <label>Associated Dimensions:</label>
+                          <div className="dimensions-checkboxes">
+                            {Object.entries(dimensions).map(([dimension, isChecked]) => (
+                              <div key={dimension} className="dimension-checkbox">
+                                <input
+                                  type="checkbox"
+                                  id={`dimension-${dimension}`}
+                                  checked={isChecked}
+                                  onChange={() => handleDimensionChange(dimension)}
+                                />
+                                <label htmlFor={`dimension-${dimension}`}>{dimension}</label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                          <div className="form-group">
                               <label htmlFor="goal_emoji">Goal Emoji:</label>
                               {renderEmojiPicker('goal', 'goal')}
                           </div>
@@ -1231,12 +1239,12 @@ return (
                               id="goal_status"
                               name="goal_status"
                               value={goalStatus}
-                              onChange={(e) => setGoalStatus(e.target.value)}
+                              onChange={(e) => handleGoalStatusChange(e.target.value)}
                               required
                             >
-                              <option value="Not Yet Started">Not Yet Started</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Completed">Completed</option>
+                              {availableStatuses.map(status => (
+                                <option key={status} value={status}>{status}</option>
+                              ))}
                             </select>
                           </div>
                           <div className="form-group">
