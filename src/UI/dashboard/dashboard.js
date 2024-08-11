@@ -6,22 +6,22 @@ import ToolsPage from './ToolsPage';
 import { Theme } from '../theme.js';
 import { useDimension } from '../DimensionContext';
 
-const Dashboard = ({ canvasManager, onClose }) => {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
+  const [currentPage, setCurrentPage] = useState('Dashboard');
   const { currentDimension, setCurrentDimension, dimensionColors } = useDimension();
   const theme = new Theme();
   const [currentNode, setCurrentNode] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
 
   useEffect(() => {
-  const handleResize = () => {
-    setIsMobile(window.innerWidth <= 768);
-  };
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
 
-  window.addEventListener('resize', handleResize);
-  return () => window.removeEventListener('resize', handleResize);
-}, []);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (canvasManager && !canvasManager.defaultNodesInitialized) {
@@ -32,6 +32,7 @@ const Dashboard = ({ canvasManager, onClose }) => {
   useEffect(() => {
     const colors = theme.getColorsForNode({ dimensionName: currentDimension });
     theme.updateThemeForNode({ dimensionName: currentDimension });
+    console.log("Current dimension: ", currentDimension);
   }, [currentDimension]);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const Dashboard = ({ canvasManager, onClose }) => {
     setCurrentDimension(newNode.name);
     theme.updateThemeForNode(newNode);
     canvasManager.instantChangeCentralNode(canvasManager.orbits[0], canvasManager.orbits[0].centralNode, newNode);
+    onNodeChange(newNode);
   };
 
   const toggleSidebar = () => {
@@ -61,69 +63,116 @@ const Dashboard = ({ canvasManager, onClose }) => {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'goals':
+      case 'Goals':
         return <GoalsPage />;
-      case 'progress':
+      case 'Progress':
         return <ProgressPage />;
-      case 'tools':
+      case 'Tools':
         return <ToolsPage />;
       default:
         return <DashboardMain />;
     }
   };
 
+  const Dimensionselector = () => {
+    const { dimensionMap } = useDimension();
+  
+    const getDimensionDisplay = (nodeName) => {
+      if (nodeName === 'Spectrum') {
+        return 'All\nDimensions';
+      }
+      const dimensionName = dimensionMap[nodeName];
+      return `${dimensionName}\nDimension`;
+    };
+  
+    return (
+      <div className={`flex items-center justify-between ${isMobile ? 'px-0' : 'px-2'} py-3`}>
+        <button
+          className={`rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent ${
+            isMobile ? 'py-2 pr-2' : 'p-2'
+          }`}
+          onClick={() => handleNodeChange('prev')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current text-white`} viewBox="0 0 24 24">
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          </svg>
+        </button>
+        <span 
+          className={`font-semibold dimension-theme-colored ${isMobile ? 'text-lg' : 'text-sm'} flex-grow text-center px-2`} 
+          style={{ 
+            background: 'none', 
+            minWidth: '170px',
+            whiteSpace: 'pre-wrap',
+            lineHeight: '1.2',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            height: '48px'  // Adjust this value as needed
+          }}
+        >
+          {currentNode ? getDimensionDisplay(currentNode.name) : ''}
+        </span>
+        <button
+          className="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+          onClick={() => handleNodeChange('next')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current text-white`} viewBox="0 0 24 24">
+            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+
   return (
     <div id="dashboard-popup" style={{ display: 'block' }}>
-      <button
-        id="close-dashboard-button"
-        className="activatable-button dimension-theme-colored"
-        onClick={onClose}
-      >
-        <img src="/Images/UI/close.svg" alt="close" />
-      </button>
       <div id="dashboard-content">
-      <div id="dashboard-header" className="dimension-theme-colored sticky top-0 z-30 p-4 shadow-md">
-          <button
-            className="mr-4 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-            onClick={toggleSidebar}
-          >
-            <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
-          </button>
-          <div className="flex items-center justify-center">
-            <button
-              className="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-              onClick={() => handleNodeChange('prev')}
-            >
-              <img src="/Images/UI/left.svg" alt="Previous Node" className="w-6 h-6" />
-            </button>
-            <span className="mx-4 text-lg font-semibold">
-              {currentNode ? currentNode.name : ''}
-            </span>
-            <button
-              className="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-              onClick={() => handleNodeChange('next')}
-            >
-              <img src="/Images/UI/right.svg" alt="Next Node" className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+      <div id="dashboard-header" className="flex items-center justify-between dimension-theme-colored sticky top-0 z-40 p-4 shadow-md overflow-x-auto">
+        <button
+          className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+          onClick={toggleSidebar}
+        >
+          <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
+        </button>
+        
+        <h1 className="text-xl font-bold text-center mx-2">{currentPage}</h1>
+        
+        {!isMobile && <Dimensionselector />}
+        
+        <button
+          id="close-dashboard-button"
+          className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+          onClick={onClose}
+        >
+          <img src="/Images/UI/close.svg" alt="close" className="w-6 h-6" />
+        </button>
+      </div>
         {isSidebarOpen && (
-          <div id="dashboard-sidebar" className="fixed z-30">
+              <div 
+              id="dashboard-sidebar" 
+              className="fixed z-30 h-full overflow-y-auto"
+              style={{
+                width: isMobile ? '300px' : '200px',
+                transition: 'width 0.3s ease-in-out'
+              }}
+            >
             <nav className="dimension-theme-colored" id="sidebar-nav">
-            <ul>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('dashboard'); isMobile && toggleSidebar(); }}>Dashboard</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('goals'); isMobile && toggleSidebar(); }}>Goals</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('progress'); isMobile && toggleSidebar(); }}>Progress</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('tools'); isMobile && toggleSidebar(); }}>Tools</a></li>
+              <ul>
+                {isMobile && (<li><Dimensionselector /></li>)}
+                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Dashboard'); isMobile && toggleSidebar(); }}>Dashboard</a></li>
+                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Goals'); isMobile && toggleSidebar(); }}>Goals</a></li>
+                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Progress'); isMobile && toggleSidebar(); }}>Progress</a></li>
+                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Tools'); isMobile && toggleSidebar(); }}>Tools</a></li>
               </ul>
             </nav>
           </div>
         )}
         {isSidebarOpen && isMobile && (
           <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20" 
-          onClick={toggleSidebar}
-        ></div>
+            className="fixed inset-0 bg-black bg-opacity-50 z-20" 
+            onClick={toggleSidebar}
+          ></div>
         )}
         <main style={{ marginLeft: isSidebarOpen && !isMobile ? '220px' : '0', transition: 'margin-left 0.3s' }}>
           {renderPage()}

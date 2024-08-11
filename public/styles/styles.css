@@ -48,12 +48,12 @@ body {
 
 .dimension-theme-colored button {
   border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
+  /* border-radius: 5px; */
+  /* padding: 10px 20px; */
   cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: center;
+  /* font-size: 16px; */
+  /* font-weight: bold; */
+  /* text-align: center; */
   /* background: var(--dimension-bg-color); */
   color: var(--dimension-text-color);
 }
@@ -1111,24 +1111,6 @@ div#chat-response-buttons {}
   overflow: hidden;
   display: none;
 }
-#close-dashboard-button {
-  z-index: 1002;
-  position: absolute;
-  right: 3vh;
-  top: 2vh;
-  background: none;
-  border: none;
-  height: 4vh;
-  display: flex;
-  align-items: center;
-}
-#close-dashboard-button img {
-  width: 3.5vh;
-  height: 3.5vh;
-}
-.button-overlay::before #close-dashboard-button {
-  background-color: rgba(0, 0, 0, 0.3);
-}
 #dashboard-content {
   background-color: #ededed;
   color: #000000;
@@ -1140,7 +1122,6 @@ div#chat-response-buttons {}
   overflow-y: scroll;
 }
 #sidebar-nav {
-  width: 200px;
   padding: 20px;
   height: 100vh;
   position: absolute;

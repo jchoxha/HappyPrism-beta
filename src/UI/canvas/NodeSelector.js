@@ -35,15 +35,31 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
     return () => clearInterval(intervalId);
   }, [canvasManager, initializedNodeCount]);
 
+  const handleNodeChange = (direction) => {
+    if (!isDisabled) {
+      const currentIndex = nodes.findIndex(n => n.name === currentNode.name);
+      const newIndex = direction === 'next' 
+        ? (currentIndex + 1) % nodes.length
+        : (currentIndex - 1 + nodes.length) % nodes.length;
+      const newNode = nodes[newIndex];
+      onSelectNode(newNode);
+      setCurrentDimension(newNode.name);
+      if (newNode && newNode.dimensionName) {
+        theme.updateThemeForNode({ dimensionName: newNode.name })
+      }
+    }
+  };
+
   const handleNodeSelect = (e) => {
     const selectedName = e.target.value;
     const node = nodes.find(n => n.name === selectedName);
     setSelectedNode(node);
     onSelectNode(node);
-    setCurrentDimension(node.name); // Update the current dimension when a new node is selected
+    setCurrentDimension(node.name);
     if (node && node.dimensionName) {
-      theme.updateThemeForNode(node);
+      theme.updateThemeForNode({ dimensionName: node.name })
     }
+    setIsOpen(false);
   };
 
   const openModal = () => {
@@ -88,7 +104,6 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
     document.getElementById('node-select').addEventListener('change', handleNodeSelect);
     document.getElementById('close-button').addEventListener('click', () => setIsOpen(false));
   };
-  
 
   const closeModal = () => {
     const modalElement = document.getElementById('modal');
@@ -97,64 +112,40 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
   };
 
   return (
-    <div className="node-selector">
-      {initializedNodeCount > 0 && (
-        <>
-          <div id="current-node-div" className="mb-4">
-            <button
-              id="prev-node-button"
-              className="node-nav-button"
-              disabled={isDisabled}
-              onClick={() => {
-                if (!isDisabled) {
-                  const currentIndex = nodes.findIndex(n => n.name === currentNode.name);
-                  const prevIndex = (currentIndex - 1 + nodes.length) % nodes.length;
-                  const prevNode = nodes[prevIndex];
-                  onSelectNode(prevNode);
-                  setCurrentDimension(prevNode.name); // Update the current dimension when a new node is selected
-                  if (prevNode && prevNode.dimensionName) {
-                    theme.updateThemeForNode(prevNode);
-                  }
-                }
-              }}
-            >
-              <img src="/Images/UI/left.svg" alt="Previous Node" />
-            </button>
-            <span id="current-node" className={`current-node-text ${canvasManager.changeCentralNodeMode ? 'changing-node' : ''}`}>
-              {currentNode.name}
-            </span>
-            <button
-              id="next-node-button"
-              className="node-nav-button"
-              disabled={isDisabled}
-              onClick={() => {
-                if (!isDisabled) {
-                  const currentIndex = nodes.findIndex(n => n.name === currentNode.name);
-                  const nextIndex = (currentIndex + 1) % nodes.length;
-                  const nextNode = nodes[nextIndex];
-                  onSelectNode(nextNode);
-                  setCurrentDimension(nextNode.name); // Update the current dimension when a new node is selected
-                  if (nextNode && nextNode.dimensionName) {
-                    theme.updateThemeForNode(nextNode);
-                  }
-                }
-              }}
-            >
-              <img src="/Images/UI/right.svg" alt="Next Node" />
-            </button>
-          </div>
-          <button
-            disabled={!canvasManager.defaultNodesInitialized}
-            onClick={() => {
-              console.log('view ai agents');
-              setIsOpen(true);
-            }}
-            id="view-ai-agents-button"
-          >
-            <img src="/Images/UI/nodes_color.svg" alt="View All AI Agents" className="ai-agents-icon" />
-          </button>
-        </>
-      )}
+    <div className="dimension-theme-colored rounded-lg node-selector flex flex-row items-center justify-between px-2 py-3 border-4 border-black">
+      <button
+        className={`rounded-lg dimension-theme-colored transition-colors duration-200 p-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => handleNodeChange('prev')}
+        disabled={isDisabled}
+        style={{ 
+          background: 'none'
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </button>
+      <span 
+        className={`flex rounded-lg items-center justify-center font-semibold dimension-theme-colored text-lg flex-grow text-center px-2 cursor-pointer ${canvasManager.changeCentralNodeMode ? 'changing-node' : ''}`}
+        style={{ 
+          background: 'none'
+        }}
+        onClick={() => setIsOpen(true)}
+      >
+        {currentNode.name}
+      </span>
+      <button
+        className={`rounded-lg dimension-theme-colored transition-colors duration-200 p-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => handleNodeChange('next')}
+        disabled={isDisabled}
+        style={{ 
+          background: 'none'
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+          <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </svg>
+      </button>
     </div>
   );
 };

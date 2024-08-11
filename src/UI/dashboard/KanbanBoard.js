@@ -302,6 +302,16 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
           </>
         ) : (
           <>
+          {showLogView ? (
+            <LogView
+              editedCard={editedCard}
+              onAddLogEntry={handleAddLogEntry}
+              onBackToCard={handleBackToCard}
+              onDeleteLogEntry={handleDeleteLogEntry}
+              onEditLogEntry={handleEditLogEntry}
+            />
+          ) : (
+          <>
             <div className="p-6 overflow-y-auto flex-grow flex flex-col">
               <h2 className="text-2xl font-bold mb-4">Edit Task</h2>
               <form onSubmit={(e) => e.preventDefault()}>
@@ -414,6 +424,8 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
               )}
             </div>
           </>
+        )}
+        </>
         )}
       </div>
     </div>

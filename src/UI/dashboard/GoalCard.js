@@ -24,6 +24,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'rec
 import { Theme } from '../theme.js';
 import { useDimension } from '../DimensionContext';
 
+
 const PerformanceChart = ({ data }) => (
   <ResponsiveContainer width="100%" height={200}>
     <LineChart data={data}>
@@ -39,10 +40,12 @@ const dimensionColors = {
   Spiritual: '🟡',
   Mental: '🟠',
   Physical: '🔴',
-  Social: '🔵',
-  Vocational: '🟣',
+  Social: '🟣',
+  Vocational: '🔵',
   Environmental: '🟢'
 };
+
+const dimensionOrder = ['Spiritual', 'Mental', 'Physical', 'Social', 'Vocational', 'Environmental'];
 
 const GoalCard = ({ goal, showUpdateButton = true }) => {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
@@ -54,7 +57,7 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
   }, [currentDimension]);
 
   const formatDate = (date) => {
-    return format(new Date(date), 'PP');
+    return date ? format(new Date(date), 'PP') : 'Not set';
   };
 
   const getStatusColor = (status) => {
@@ -121,9 +124,14 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
             <div className={`text-sm font-semibold ${getStatusColor(goal.status)}`}>
               Status: {goal.status}
             </div>
+            <div className="text-sm mt-2">
+              {goal.goal_startDate && <p>Started: {formatDate(goal.goal_startDate)}</p>}
+              {goal.goal_completedDate && <p>Completed: {formatDate(goal.goal_completedDate)}</p>}
+              {goal.goal_deadline && <p>Deadline: {formatDate(goal.goal_deadline)}</p>}
+            </div>
             <div className="dimension-indicators mt-2">
-              {Object.entries(goal.dimensions).map(([dimension, isAssociated]) => 
-                isAssociated && (
+              {dimensionOrder.map(dimension => 
+                goal.dimensions[dimension] && (
                   <span key={dimension} title={dimension} className="mr-1">
                     {dimensionColors[dimension]}
                   </span>
@@ -135,10 +143,6 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-sm mb-2">
-          {goal.goal_deadline && <p>Deadline: {formatDate(goal.goal_deadline)}</p>}
-        </div>
-
         {goal.goal_type === 'challenge' && (
           <div className="mt-2">
             {goal.milestones && goal.milestones.length > 0 ? (
@@ -181,14 +185,7 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
               <Trello />
               <span className="ml-2">Project Board</span>
             </div>
-            {/* <ProjectBoard
-              columns={[
-                { title: 'To Do', tasks: goal.project_tasks['To Do']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
-                { title: 'In Progress', tasks: goal.project_tasks['In Progress']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
-                { title: 'Done', tasks: goal.project_tasks['Done']?.map(task => ({ ...task, name: task.task_name, emoji: task.task_emoji })) || [] },
-              ]}
-              onCardClick={handleCardClick}
-            /> */}
+            {/* Project board rendering code remains the same */}
           </div>
         )}
 

@@ -7,6 +7,7 @@ class Theme {
     }
 
     updateThemeForNode(node) {
+        console.log("updating theme for node: ", node);
         const root = document.documentElement;
         const colors = this.getColorsForNode(node);
 

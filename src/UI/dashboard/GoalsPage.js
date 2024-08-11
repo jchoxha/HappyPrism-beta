@@ -12,11 +12,12 @@ const GoalsPage = () => {
       const challengeGoal1 = new Goal("Complete a Marathon", "🏃‍♂️", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
       challengeGoal1.id = uuidv4();
       challengeGoal1.status = "In Progress";
+      challengeGoal1.goal_startDate = new Date("2024-01-01");
       challengeGoal1.milestones = [
         new Milestone("Run 5K", "🏃", true, new Date("2024-01-01"), new Date("2024-03-31"), true, new Date("2024-03-15")),
         new Milestone("Run 10K", "🏃", true, new Date("2024-04-01"), new Date("2024-06-30"), true, new Date("2024-06-15")),
-        new Milestone("Run Half Marathon", "🏃", false, new Date("2024-07-01"), new Date("2024-09-30")),
-        new Milestone("Run Full Marathon", "🏅", false, new Date("2024-10-01"), new Date("2024-12-31")),
+        new Milestone("Run Half Marathon", "🏃", true, new Date("2024-07-01"), new Date("2024-09-30")),
+        new Milestone("Run Full Marathon", "🏅", false, null, new Date("2024-12-31")),
       ];
       challengeGoal1.goal_lastUpdated = new Date("2024-02-15");
       challengeGoal1.dimensions = {
@@ -33,11 +34,12 @@ const GoalsPage = () => {
       const challengeGoal2 = new Goal("Write a Novel", "📚", "challenge", new Date("2024-01-01"));
       challengeGoal2.id = uuidv4();
       challengeGoal2.status = "In Progress";
+      challengeGoal2.goal_startDate = new Date("2024-01-01");
       challengeGoal2.milestones = [
         new Milestone("Outline Story", "✍️", true, new Date("2024-01-01"), new Date("2024-02-29"), true, new Date("2024-02-20")),
         new Milestone("Write First Draft", "📝", true, new Date("2024-03-01"), new Date("2024-08-31")),
-        new Milestone("Edit and Revise", "📖", false, new Date("2024-09-01"), new Date("2024-11-30")),
-        new Milestone("Publish", "🎉", false, new Date("2024-12-01"), new Date("2024-12-31")),
+        new Milestone("Edit and Revise", "📖", false, null, new Date("2024-11-30")),
+        new Milestone("Publish", "🎉", false, null, new Date("2024-12-31")),
       ];
       challengeGoal2.goal_lastUpdated = new Date("2024-02-20");
       challengeGoal2.dimensions = {
@@ -51,7 +53,7 @@ const GoalsPage = () => {
       return challengeGoal2;
     })(),
     (() => {
-      const challengeGoal3 = new Goal("Learn Spanish", "🗣️", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
+      const challengeGoal3 = new Goal("Learn Spanish", "🗣️", "challenge", null, new Date("2024-12-31"));
       challengeGoal3.id = uuidv4();
       challengeGoal3.status = "Not Yet Started";
       challengeGoal3.dimensions = {
@@ -65,16 +67,18 @@ const GoalsPage = () => {
       return challengeGoal3;
     })(),
     (() => {
-      const challengeGoal4 = new Goal("Improve Coding Skills", "💻", "challenge", new Date("2024-01-01"), new Date("2024-12-31"));
-      challengeGoal4.id = uuidv4();
-      challengeGoal4.status = "In Progress";
-      challengeGoal4.milestones = [
-        new Milestone("Complete Python Course", "🐍", true, new Date("2024-01-01"), new Date("2024-04-30"), false, null, true),
-        new Milestone("Build Web Application", "🌐", false, new Date("2024-05-01")),
-        new Milestone("Contribute to Open Source", "🤝", false, new Date("2024-09-01"), new Date("2024-12-31")),
+      const projectGoal = new Goal("Launch Personal Website", "🌐", "project", new Date(), new Date("2024-12-31"));
+      projectGoal.id = uuidv4();
+      projectGoal.status = "In Progress";
+      projectGoal.goal_startDate = new Date();
+      projectGoal.project_tasks = [
+        new ProjectTask("Design homepage", "📐", "To Do", "New Task", null, null, "Create a mockup for the homepage"),
+        new ProjectTask("Set up hosting", "💻", "To Do", "New Task", null, null, "Choose and set up web hosting"),
+        new ProjectTask("Develop backend", "🖥️", "In Progress", "New Task", null, null, "Implement server-side logic"),
+        new ProjectTask("Domain registration", "🌐", "Done", "New Task", null, null, "Register a domain name"),
+        new ProjectTask("Create sitemap", "🗺️", "Done", "New Task", null, null, "Plan out the structure of the website")
       ];
-      challengeGoal4.goal_lastUpdated = new Date("2024-02-25");
-      challengeGoal4.dimensions = {
+      projectGoal.dimensions = {
         Spiritual: false,
         Mental: true,
         Physical: false,
@@ -82,19 +86,24 @@ const GoalsPage = () => {
         Vocational: true,
         Environmental: false
       };
-      return challengeGoal4;
+      return projectGoal;
     })(),
     (() => {
-      const habitGoal = new Goal("Workout 5 times a week", "🏋️‍♀️", "habit", new Date(), null, 40);
-      habitGoal.id = uuidv4();
-      habitGoal.status = "In Progress";
-      habitGoal.habit_action = "Workout";
-      habitGoal.habit_frequencyNum = 5;
-      habitGoal.habit_frequencyPeriod = "weekly";
-      habitGoal.habit_current_streakNum = 3;
-      habitGoal.habit_goal_streakNum = 12;
-      habitGoal.habit_streakPeriod = "weeks";
-      habitGoal.dimensions = {
+      const transformationGoal = new Goal("Become Physically Fit", "💪", "transformation", new Date(), new Date("2024-12-31"));
+      transformationGoal.id = uuidv4();
+      transformationGoal.status = "In Progress";
+      transformationGoal.goal_startDate = new Date();
+      transformationGoal.subGoals = [
+        new SubGoal(
+          new Goal("Complete a Fitness Program", "🏋️‍♀️", "challenge", new Date(), new Date("2024-06-30")),
+          50
+        ),
+        new SubGoal(
+          new Goal("Participate in a Marathon", "🏃‍♂️", "challenge", new Date(), new Date("2024-10-31")),
+          50
+        )
+      ];
+      transformationGoal.dimensions = {
         Spiritual: false,
         Mental: true,
         Physical: true,
@@ -102,10 +111,10 @@ const GoalsPage = () => {
         Vocational: false,
         Environmental: false
       };
-      return habitGoal;
+      return transformationGoal;
     })(),
     (() => {
-      const performanceGoal = new Goal("Improve Bench Press", "🏋️‍♂️", "performance", new Date(), new Date("2024-12-31"), 60);
+      const performanceGoal = new Goal("Improve Bench Press", "🏋️‍♂️", "performance", new Date(), new Date("2024-12-31"));
       performanceGoal.id = uuidv4();
       performanceGoal.status = "In Progress";
       performanceGoal.performance_metric = "Bench Press Weight";
@@ -128,51 +137,6 @@ const GoalsPage = () => {
         Environmental: false
       };
       return performanceGoal;
-    })(),
-    (() => {
-      const projectGoal = new Goal("Launch Personal Website", "🌐", "project", new Date(), new Date("2024-12-31"), 30);
-      projectGoal.id = uuidv4();
-      projectGoal.status = "In Progress";
-      projectGoal.project_tasks = [
-        new ProjectTask("Design homepage", "📐", "To Do", "New Task", null, null, 20, "Create a mockup for the homepage"),
-        new ProjectTask("Set up hosting", "💻", "To Do", "New Task", null, null, 10, "Choose and set up web hosting"),
-        new ProjectTask("Develop backend", "🖥️", "In Progress", "New Task", null, null, 30, "Implement server-side logic"),
-        new ProjectTask("Domain registration", "🌐", "Done", "New Task", null, null, 5, "Register a domain name"),
-        new ProjectTask("Create sitemap", "🗺️", "Done", "New Task", null, null, 5, "Plan out the structure of the website")
-      ];
-      projectGoal.dimensions = {
-        Spiritual: false,
-        Mental: true,
-        Physical: false,
-        Social: false,
-        Vocational: true,
-        Environmental: false
-      };
-      return projectGoal;
-    })(),
-    (() => {
-      const transformationGoal = new Goal("Become Physically Fit", "💪", "transformation", new Date(), new Date("2024-12-31"), 65);
-      transformationGoal.id = uuidv4();
-      transformationGoal.status = "In Progress";
-      transformationGoal.subGoals = [
-        new SubGoal(
-          new Goal("Complete a Fitness Program", "🏋️‍♀️", "challenge", new Date(), new Date("2024-06-30")),
-          50
-        ),
-        new SubGoal(
-          new Goal("Participate in a Marathon", "🏃‍♂️", "challenge", new Date(), new Date("2024-10-31")),
-          50
-        )
-      ];
-      transformationGoal.dimensions = {
-        Spiritual: false,
-        Mental: true,
-        Physical: true,
-        Social: false,
-        Vocational: false,
-        Environmental: false
-      };
-      return transformationGoal;
     })(),
   ]);
 
@@ -198,11 +162,70 @@ const GoalsPage = () => {
       goalData.goal_projectData || { tasks: [] },
       goalData.goal_subGoals || [],
       goalData.goal_transformationData || { subGoals: [], totalPercentComplete: 0 },
-      goalData.dimensions // Include the dimensions data
+      goalData.dimensions
     );
     newGoal.id = uuidv4();
     newGoal.status = goalData.status || "Not Yet Started";
     newGoal.goal_lastUpdated = new Date();
+
+    if (newGoal.status === "In Progress" && !newGoal.goal_startDate) {
+      newGoal.goal_startDate = new Date();
+    } else if (newGoal.status === "Completed") {
+      if (!newGoal.goal_startDate) {
+        newGoal.goal_startDate = new Date();
+      }
+      newGoal.goal_completedDate = new Date();
+      newGoal.goal_deadline = null;
+    }
+
+    // Handle milestones for challenge goals
+    if (newGoal.goal_type === "challenge") {
+      newGoal.milestones = newGoal.milestones.map(m => new Milestone(
+        m.name,
+        m.emoji,
+        m.started,
+        m.startDate,
+        m.deadline,
+        m.completed,
+        m.completedDate,
+        m.pre_existing_goal
+      ));
+    }
+
+    // Handle project tasks for project goals
+    if (newGoal.goal_type === "project") {
+      newGoal.project_tasks = newGoal.project_tasks.map(t => new ProjectTask(
+        t.name,
+        t.emoji,
+        t.status,
+        t.taskType,
+        t.pre_existing_goal,
+        t.deadline,
+        t.description
+      ));
+    }
+
+    // Handle sub-goals for transformation goals
+    if (newGoal.goal_type === "transformation") {
+      newGoal.subGoals = newGoal.subGoals.map(sg => new SubGoal(
+        new Goal(
+          sg.goal.goal_name,
+          sg.goal.goal_emoji,
+          sg.goal.goal_type,
+          sg.goal.goal_startDate,
+          sg.goal.goal_deadline,
+          sg.goal.milestones,
+          sg.goal.goal_habitData,
+          sg.goal.goal_performanceData,
+          sg.goal.goal_projectData,
+          sg.goal.goal_subGoals,
+          sg.goal.goal_transformationData,
+          sg.goal.dimensions
+        ),
+        sg.percentOfTransformation
+      ));
+    }
+
     setGoals([...goals, newGoal]);
     setShowNewGoalForm(false);
   };
@@ -233,8 +256,8 @@ const GoalsPage = () => {
       </div>
       <h1 className="text-2xl font-bold mb-4">Your Goals</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredGoals.map((goal, index) => (
-          <GoalCard key={index} goal={goal} />
+        {filteredGoals.map((goal) => (
+          <GoalCard key={goal.id} goal={goal} />
         ))}
       </div>
     </div>
