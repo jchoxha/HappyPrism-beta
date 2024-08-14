@@ -1136,7 +1136,6 @@ div#chat-response-buttons {}
   margin: 20px 0;
 }
 #sidebar-nav ul li a {
-  text-decoration: none;
   font-size: 18px;
   background: none;
 }
@@ -1286,8 +1285,6 @@ main {
   outline: none;
 }
 .submit-button {
-  background-color: #6200ea;
-  color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
@@ -1298,9 +1295,7 @@ main {
   font-weight: bold;
   text-align: center;
 }
-.submit-button:hover {
-  background-color: #3700b3;
-}
+
 .option-buttons {
   display: flex;
   justify-content: space-around;
@@ -1455,7 +1450,6 @@ main {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2000;
   max-width: 400px;
   width: 90%;
 }

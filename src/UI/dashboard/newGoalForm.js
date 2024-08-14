@@ -15,29 +15,37 @@ const config = require('../../config.js');
 
 const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
 
+const goalTypes = [
+  { value: 'challenge', label: 'Challenge', emoji: '🏆' },
+  { value: 'habit', label: 'Habit', emoji: '📅' },
+  { value: 'performance', label: 'Performance', emoji: '📊' },
+  { value: 'project', label: 'Project', emoji: '🛠️' },
+  { value: 'transformation', label: 'Transformation', emoji: '🔄' },
+];
+
 const goalDescriptions = {
   challenge: {
-    title: "Challenge",
+    title: "Challenge 🏆",
     description: "A specific objective broken down into milestones that act as precursor steps.",
     example: "Example: Complete a marathon with milestones for training milestones."
   },
   habit: {
-    title: "Habit",
+    title: "Habit 📅",
     description: "A recurring action with a frequency and streak to be maintained.",
     example: "Example: Exercise 5 times weekly for 30 days."
   },
   performance: {
-    title: "Performance",
+    title: "Performance 📊",
     description: "An objective to improve performance over time, possibly with a specific target.",
     example: "Example: Increase bench press weight to 200 lbs by the end of the year."
   },
   project: {
-    title: "Project",
+    title: "Project 🛠️",
     description: "A goal with specific steps organized into 'To Do', 'In Progress', and 'Done'.",
     example: "Example: Launch a personal website with tasks for design, setup, and content creation."
   },
   transformation: {
-    title: "Transformation",
+    title: "Transformation 🔄",
     description: "A long-term goal focused on positive change, often with linked sub-goals.",
     example: "Example: Become physically fit with sub-goals for various fitness challenges and habits."
   }
@@ -74,8 +82,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   });  
   const [subGoals, setSubGoals] = useState([]); 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
-  const lastSuggestedNames = useRef({});
+  const [lastSuggestedName, setLastSuggestedName] =  useState(null);
   const [emojiError, setEmojiError] = useState('');
   const [modalAction, setModalAction] = useState(null);
   const [showGoalPicker, setShowGoalPicker] = useState(false);
@@ -162,6 +169,18 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     updateAvailableStatuses();
   };
 
+  const handleJourneyMapUpdate = (updatedMapData) => {
+    setMilestones(updatedMapData.map(milestone => ({
+      ...milestone,
+      status: milestone.status || 'Not Yet Started',
+      startDate: milestone.startDate || null,
+      completedDate: milestone.completedDate || null,
+      hasDeadline: milestone.hasDeadline || false,
+      deadline: milestone.deadline || null
+    })));
+    updateAvailableStatuses();
+  }
+ 
   const updateAvailableStatuses = () => {
     let hasActiveOrCompletedItems = false;
   
@@ -174,10 +193,9 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
          (card.pre_existing_goal.status === "In Progress" || card.pre_existing_goal.status === "Completed"))
       );
     } else if (goalType === 'challenge') {
-      // Check for in-progress or completed milestones, including pre-existing goals
       hasActiveOrCompletedItems = milestones.some(milestone => 
-        milestone.started || 
-        milestone.completed ||
+        milestone.status === "In Progress" || 
+        milestone.status === "Completed" ||
         (milestone.pre_existing_goal && 
          (milestone.pre_existing_goal.status === "In Progress" || milestone.pre_existing_goal.status === "Completed"))
       );
@@ -382,7 +400,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         goalData.goal_type,
         goalData.goal_startDate,
         goalData.goal_deadline,
-        milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal, m.id)),
+        milestones.map(m => new Milestone(
+          m.name, 
+          m.emoji, 
+          m.status, 
+          m.startDate, 
+          m.deadline, 
+          m.completedDate, 
+          m.pre_existing_goal, 
+          m.description, 
+          m.id
+        )),
         {},
         {},
         {},
@@ -429,7 +457,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         goalData.goal_type,
         goalData.goal_startDate,
         goalData.goal_deadline,
-        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal)),
+        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id)),
         {},
         {},
         {},
@@ -519,11 +547,10 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     ]);
   };
 
-  const toggleEmojiPicker = (index) => {
-    if (activeEmojiPicker === index && showEmojiPicker) {
+  const toggleEmojiPicker = () => {
+    if (showEmojiPicker) {
       setShowEmojiPicker(false);
     } else {
-      setActiveEmojiPicker(index);
       setShowEmojiPicker(true);
     }
   };
@@ -564,122 +591,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     });
   };
 
-  const handleAddNewMilestone = () => {
-    const newMilestone = {
-      id: uuidv4(),
-      name: 'New Milestone',
-      emoji: '',
-      status: 'Not Yet Started',
-      hasDeadline: false,
-      deadline: '',
-      startDate: null,
-      completedDate: null
-    };
-    setMilestones(sortMilestones([...milestones, newMilestone]));
-    updateAvailableStatuses();
-  };
-
-  const renderMilestone = (milestone, index) => (
-    <div key={index} className="milestone">
-      <div className="milestone-header">
-        <span className="title">#{index + 1}</span>
-        <div className="rearrange-buttons">
-          <button type="button" onClick={() => handleRemoveMilestone(index)} className="remove-button">
-            <img src="/Images/UI/trashcan.svg" alt="Remove" />
-          </button>
-        </div>
-      </div>
-      {milestone.isPreExisting ? (
-        <GoalCard goal={milestone} showUpdateButton={false} />
-      ) : (
-        <>
-          <div className="form-group">
-            <label htmlFor={`milestone_${index}_name`}>Milestone Name:</label>
-            <input
-              type="text"
-              id={`milestone_${index}_name`}
-              name={`milestone_${index}_name`}
-              value={milestone.name}
-              onChange={(e) => handleMilestoneChange(index, 'name', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor={`milestone_${index}_emoji`}>Milestone Emoji:</label>
-            {renderEmojiPicker(index, 'milestone')}
-          </div>
-          <div className="form-group">
-            <label htmlFor={`milestone_${index}_status`}>Status:</label>
-            <select
-              id={`milestone_${index}_status`}
-              name={`milestone_${index}_status`}
-              value={milestone.status}
-              onChange={(e) => handleMilestoneChange(index, 'status', e.target.value)}
-            >
-              <option value="Not Yet Started">Not Yet Started</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-          {milestone.status !== 'Not Yet Started' && (
-            <div className="form-group">
-              <label htmlFor={`milestone_${index}_startDate`}>Start Date:</label>
-              <input
-                type="datetime-local"
-                id={`milestone_${index}_startDate`}
-                name={`milestone_${index}_startDate`}
-                value={milestone.startDate || ''}
-                onChange={(e) => handleMilestoneChange(index, 'startDate', e.target.value)}
-              />
-            </div>
-          )}
-          {milestone.status === 'Completed' && (
-            <div className="form-group">
-              <label htmlFor={`milestone_${index}_completedDate`}>Completion Date:</label>
-              <input
-                type="datetime-local"
-                id={`milestone_${index}_completedDate`}
-                name={`milestone_${index}_completedDate`}
-                value={milestone.completedDate || ''}
-                onChange={(e) => handleMilestoneChange(index, 'completedDate', e.target.value)}
-              />
-            </div>
-          )}
-          <div className="toggle-switch">
-            <Switch
-              checked={milestone.hasDeadline}
-              onChange={() => handleMilestoneChange(index, 'hasDeadline', !milestone.hasDeadline)}
-              color="primary"
-            />
-            <label htmlFor={`milestone_${index}_hasDeadline`}>Has Deadline</label>
-          </div>
-          {milestone.hasDeadline && (
-            <div className="form-group">
-              <label htmlFor={`milestone_${index}_deadline`}>Deadline Date & Time:</label>
-              <input
-                type="datetime-local"
-                id={`milestone_${index}_deadline`}
-                name={`milestone_${index}_deadline`}
-                value={milestone.deadline}
-                onChange={(e) => handleMilestoneChange(index, 'deadline', e.target.value)}
-              />
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-
   const handleGoalPickerSelect = (selectedGoal) => {
     if (goalType === 'challenge') {
       const newMilestone = new Milestone(
         selectedGoal.goal_name,
         selectedGoal.goal_emoji,
-        false,
+        selectedGoal.status,
         selectedGoal.goal_startDate,
         selectedGoal.goal_deadline,
-        false,
-        null,
-        selectedGoal
+        selectedGoal.completedDate,
+        selectedGoal,
+        selectedGoal.description
       );
       setMilestones([...milestones, newMilestone]);
     } else if (goalType === 'project') {
@@ -783,52 +705,39 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     return emojiRegex.test(str);
   };
 
-  const suggestEmoji = async (index) => {
+  const suggestEmoji = async () => {
     setIsLoadingEmoji(true);
     setEmojiError('');
-    setActiveEmojiPicker(index);
     setShowEmojiPicker(false);
 
-    const isGoalEmoji = index === 'goal';
-    const isMilestoneEmoji = milestones.some((_, idx) => idx === index);
-    const emojiName = isGoalEmoji ? goalData.goal_name : isMilestoneEmoji ? milestones[index]?.name : projectTasks[index]?.name;
-    const emojiType = isGoalEmoji ? goalType : isMilestoneEmoji ? 'Milestone' : 'Task';
+    const emojiName = goalData.goal_name;
+    const emojiType = goalType;
 
     if (!emojiName) {
-      setEmojiError('Please enter a name before suggesting an emoji.');
+      setEmojiError('Please enter a goal name before suggesting an emoji.');
       setIsLoadingEmoji(false);
-      setActiveEmojiPicker(null);
       return;
     }
 
-    if (lastSuggestedNames.current[index] === emojiName) {
+    if (lastSuggestedName === emojiName) {
       setIsLoadingEmoji(false);
+      setEmojiError('Please enter a new goal name before suggesting an emoji.');
       return;
     }
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-      const prompt = `Based on the following name for a ${emojiType}, suggest an emoji to represent it. Do not return any text besides one suggested emoji: "${emojiName}"`;
+      const prompt = `Based on the following name for a ${emojiType} goal, suggest an emoji to represent it. Do not return any text besides one suggested emoji: "${emojiName}"`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const suggestedEmoji = response.text().trim();
 
       if (isValidEmoji(suggestedEmoji)) {
-        if (isGoalEmoji) {
-          setGoalData(prevData => ({ ...prevData, goal_emoji: suggestedEmoji }));
-        } else if (isMilestoneEmoji) {
-          const updatedMilestones = [...milestones];
-          updatedMilestones[index].emoji = suggestedEmoji;
-          setMilestones(updatedMilestones);
-        } else {
-          const updatedTasks = [...projectTasks];
-          updatedTasks[index].emoji = suggestedEmoji;
-          setProjectTasks(updatedTasks);
-        }
-        lastSuggestedNames.current[index] = emojiName;
+        setGoalData(prevData => ({ ...prevData, goal_emoji: suggestedEmoji }));
+        setLastSuggestedName(emojiName);
       } else {
-        throw new Error('Invalid emoji response');
+        throw new Error('Invalid emoji response, try again.');
       }
     } catch (error) {
       console.error("Error suggesting emoji:", error);
@@ -839,39 +748,21 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   };
 
   useEffect(() => {
-    if (goalData.goal_name !== lastSuggestedNames.current['goal']) {
-      lastSuggestedNames.current['goal'] = null;
+    if (goalData.goal_name !== lastSuggestedName) {
+      setLastSuggestedName(null);
     }
   }, [goalData.goal_name]);
 
-  useEffect(() => {
-    milestones.forEach((milestone, index) => {
-      if (milestone.name !== lastSuggestedNames.current[index]) {
-        lastSuggestedNames.current[index] = null;
-      }
-    });
-  }, [milestones]);
-
-  useEffect(() => {
-    projectTasks.forEach((task, index) => {
-      if (task.name !== lastSuggestedNames.current[index]) {
-        lastSuggestedNames.current[index] = null;
-      }
-    });
-  }, [projectTasks]);
-
-  const renderEmojiPicker = (index, type) => {
-    const isGoalEmoji = type === 'goal';
-    const isMilestoneEmoji = type === 'milestone';
-    const emojiName = isGoalEmoji ? goalData.goal_name : isMilestoneEmoji ? milestones[index]?.name : projectTasks[index]?.name;
-    const currentEmoji = isGoalEmoji ? goalData.goal_emoji : isMilestoneEmoji ? milestones[index]?.emoji : projectTasks[index]?.emoji;
+  const renderEmojiPicker = () => {
+    const emojiName = goalData.goal_name;
+    const currentEmoji = goalData.goal_emoji;
 
     return (
       <div className="emoji-picker-container">
         <button
           type="button"
           className="dimension-theme-colored ai-suggest-emoji w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200"
-          onClick={() => suggestEmoji(index)}
+          onClick={() => suggestEmoji()}
           disabled={isLoadingEmoji || !emojiName}
           aria-label="Have AI suggest an Emoji"
         >
@@ -884,12 +775,12 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         <button
           type="button"
           className="emoji-button ml-2 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded transition-colors duration-200"
-          onClick={() => toggleEmojiPicker(index)}
+          onClick={() => toggleEmojiPicker()}
           style={{ fontSize: currentEmoji ? '1.5em' : '1em' }}
         >
           {currentEmoji || 'Select an Emoji'}
         </button>
-        {activeEmojiPicker === index && showEmojiPicker && (
+        {showEmojiPicker && (
           <div ref={emojiPickerRef} className="absolute z-10">
             <EmojiPicker 
               onEmojiClick={handleEmojiClick}
@@ -903,19 +794,10 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     );
   };
 
-  const handleEmojiClick = (emojiObject, index, type) => {
+  const handleEmojiClick = (emojiObject) => {
     const emoji = emojiObject.emoji;
-    if (type === 'goal') {
-      setGoalData(prevData => ({ ...prevData, goal_emoji: emoji }));
-    } else if (type === 'milestone') {
-      const updatedMilestones = [...milestones];
-      updatedMilestones[index].emoji = emoji;
-      setMilestones(updatedMilestones);
-    } else if (type === 'task') {
-      const updatedTasks = [...projectTasks];
-      updatedTasks[index].emoji = emoji;
-      setProjectTasks(updatedTasks);
-    }
+    setGoalData(prevData => ({ ...prevData, goal_emoji: emoji }));
+    console.log(goalData);
     setShowEmojiPicker(false);
   };
 
@@ -1272,12 +1154,12 @@ return (
           </div>
       )}
       {showGoalPicker && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-              <GoalPicker
-                  goals={goalPickerList}
-                  onSelect={handleGoalPickerSelect}
-                  onCancel={handleGoalPickerCancel}
-              />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
+            <GoalPicker
+              goals={goalPickerList}
+              onSelect={handleGoalPickerSelect}
+              onCancel={handleGoalPickerCancel}
+            />
           </div>
       )}
       <div className="form-header">
@@ -1356,11 +1238,11 @@ return (
                           required
                       >
                           <option value="">Select a goal type</option>
-                          <option value="challenge">Challenge</option>
-                          <option value="habit">Habit</option>
-                          <option value="performance">Performance</option>
-                          <option value="project">Project</option>
-                          <option value="transformation">Transformation</option>
+                          <option value="challenge">Challenge 🏆</option>
+                          <option value="habit">Habit 📅</option>
+                          <option value="performance">Performance 📊</option>
+                          <option value="project">Project 🛠️</option>
+                          <option value="transformation">Transformation 🔄</option>
                       </select>
                   </div>
 
@@ -1446,7 +1328,7 @@ return (
                                 type="datetime-local"
                                 id="goal_startDate"
                                 name="goal_startDate"
-                                value={goalData.goal_startDate}
+                                value={goalData.goal_startDate || new Date().toISOString().slice(0, 16)}
                                 onChange={handleInputChange}
                                 required
                               />
@@ -1460,7 +1342,7 @@ return (
                                 type="datetime-local"
                                 id="goal_completedDate"
                                 name="goal_completedDate"
-                                value={goalData.goal_completedDate}
+                                value={goalData.goal_completedDate || new Date().toISOString().slice(0, 16)}
                                 onChange={handleInputChange}
                                 required
                               />
@@ -1485,7 +1367,7 @@ return (
                                 type="datetime-local"
                                 id="goal_deadline"
                                 name="goal_deadline"
-                                value={goalData.goal_deadline}
+                                value={goalData.goal_deadline || new Date().toISOString().slice(0, 16)}
                                 onChange={handleInputChange}
                               />
                             </div>
@@ -1494,8 +1376,8 @@ return (
                               <>
                                 <div className="challenge-goal-section">
                                 <JourneyMap
-                                  milestones={milestones}
-                                  setMilestones={setMilestones}
+                                  data={milestones}
+                                  onMapUpdate={handleJourneyMapUpdate}
                                   goalName={goalData.goal_name}
                                   existingGoals={existingGoals}
                                 />
@@ -1651,7 +1533,7 @@ return (
                           )}
                           <div className="form-group">
                               <div className="form-divider"></div>
-                              <button type="submit" className="submit-button dimension-theme-colored">Review Goal</button>
+                              <button type="submit" className="submit-button dimension-theme-colored">Create New Goal</button>
                           </div>
                       </>
                   )}

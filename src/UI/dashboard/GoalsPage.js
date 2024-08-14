@@ -183,12 +183,13 @@ const GoalsPage = () => {
       newGoal.milestones = newGoal.milestones.map(m => new Milestone(
         m.name,
         m.emoji,
-        m.started,
+        m.status,
         m.startDate,
         m.deadline,
-        m.completed,
         m.completedDate,
-        m.pre_existing_goal
+        m.pre_existing_goal,
+        m.description,
+        m.id
       ));
     }
 

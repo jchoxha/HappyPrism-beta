@@ -11,7 +11,8 @@ const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
 const MilestoneCardModal = ({ milestone, onSave, onCancel, onDelete }) => {
   const [editedMilestone, setEditedMilestone] = useState({
     ...milestone,
-    logEntries: milestone.logEntries || []
+    logEntries: milestone.logEntries || [],
+    description: milestone.description || ''
   });
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isLoadingEmoji, setIsLoadingEmoji] = useState(false);
@@ -174,6 +175,30 @@ const MilestoneCardModal = ({ milestone, onSave, onCancel, onDelete }) => {
         setEditingEntryId(null);
       }
     };
+
+    const handleStatusChange = (e) => {
+      const newStatus = e.target.value;
+      setEditedMilestone(prevMilestone => {
+        const updatedMilestone = { ...prevMilestone, status: newStatus };
+        
+        if (newStatus === 'In Progress' || newStatus === 'Completed') {
+          updatedMilestone.startDate = updatedMilestone.startDate || new Date().toISOString().slice(0, 16);
+        } else {
+          updatedMilestone.startDate = null;
+        }
+    
+        if (newStatus === 'Completed') {
+          updatedMilestone.completedDate = updatedMilestone.completedDate || new Date().toISOString().slice(0, 16);
+          updatedMilestone.deadline = null;
+          updatedMilestone.hasDeadline = false;
+        } else {
+          updatedMilestone.completedDate = null;
+        }
+    
+        return updatedMilestone;
+      });
+      setHasChanges(true);
+    };
   
     return (
       <>
@@ -324,29 +349,70 @@ const MilestoneCardModal = ({ milestone, onSave, onCancel, onDelete }) => {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-            <div className="mb-4">
-              <div className="flex items-center">
-                <Switch
-                  checked={editedMilestone.hasDeadline}
-                  onChange={() => setEditedMilestone(prev => ({ ...prev, hasDeadline: !prev.hasDeadline }))}
-                  color="primary"
-                />
-                <label htmlFor="hasDeadline" className="ml-2">Milestone has a Deadline</label>
-              </div>
-            </div>
-            {editedMilestone.hasDeadline && (
+            {(editedMilestone.status === 'In Progress' || editedMilestone.status === 'Completed') && (
               <div className="mb-4">
-                <label htmlFor="deadline" className="block mb-1">Deadline:</label>
+                <label htmlFor="startDate" className="block mb-1">Start Date:</label>
                 <input
                   type="datetime-local"
-                  id="deadline"
-                  name="deadline"
-                  value={editedMilestone.deadline || ''}
+                  id="startDate"
+                  name="startDate"
+                  value={editedMilestone.startDate || new Date().toISOString().slice(0, 16)}
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 rounded"
                 />
               </div>
             )}
+            {editedMilestone.status === 'Completed' && (
+              <div className="mb-4">
+                <label htmlFor="completedDate" className="block mb-1">Completion Date:</label>
+                <input
+                  type="datetime-local"
+                  id="completedDate"
+                  name="completedDate"
+                  value={editedMilestone.completedDate || new Date().toISOString().slice(0, 16)}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
+            )}
+            {editedMilestone.status !== 'Completed' && (
+              <>
+              <div className="mb-4">
+                <div className="flex items-center">
+                  <Switch
+                    checked={editedMilestone.hasDeadline}
+                    onChange={() => setEditedMilestone(prev => ({ ...prev, hasDeadline: !prev.hasDeadline }))}
+                    color="primary"
+                  />
+                  <label htmlFor="hasDeadline" className="ml-2">Milestone has a Deadline</label>
+                </div>
+              </div>
+              {editedMilestone.hasDeadline && (
+                <div className="mb-4">
+                  <label htmlFor="deadline" className="block mb-1">Deadline:</label>
+                  <input
+                    type="datetime-local"
+                    id="deadline"
+                    name="deadline"
+                    value={editedMilestone.deadline || new Date().toISOString().slice(0, 16)}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded"
+                  />
+                </div>
+              )}
+              </>
+            )}
+            <div className="mb-4">
+              <label htmlFor="description" className="block mb-1">Description:</label>
+              <textarea
+                id="description"
+                name="description"
+                value={editedMilestone.description}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded"
+                rows="3"
+              />
+            </div>
             <button
               type="button"
               onClick={handleViewLog}
@@ -357,7 +423,7 @@ const MilestoneCardModal = ({ milestone, onSave, onCancel, onDelete }) => {
           </form>
         <button 
           onClick={() => onDelete(editedMilestone)} 
-          className="mt-2 border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center"
+          className="w-full mt-2 border border-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center"
         >
           Delete Milestone
         </button>
@@ -366,7 +432,7 @@ const MilestoneCardModal = ({ milestone, onSave, onCancel, onDelete }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
       <div className="bg-white rounded-lg w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()} style={{
         maxHeight: '-webkit-fill-available',
         display: 'flex',

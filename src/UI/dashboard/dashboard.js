@@ -128,7 +128,8 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   return (
     <div id="dashboard-popup" style={{ display: 'block' }}>
       <div id="dashboard-content">
-      <div id="dashboard-header" className="flex items-center justify-between dimension-theme-colored sticky top-0 z-40 p-4 shadow-md overflow-x-auto">
+      <div id="dashboard-header" className="flex items-center justify-between dimension-theme-colored sticky top-0 z-40 py-0 px-4 shadow-md overflow-x-auto">
+
         <button
           className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
           onClick={toggleSidebar}
@@ -149,7 +150,7 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
         </button>
       </div>
         {isSidebarOpen && (
-              <div 
+            <div 
               id="dashboard-sidebar" 
               className="fixed z-30 h-full overflow-y-auto"
               style={{
@@ -158,19 +159,52 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
               }}
             >
             <nav className="dimension-theme-colored" id="sidebar-nav">
-              <ul>
-                {isMobile && (<li><Dimensionselector /></li>)}
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Dashboard'); isMobile && toggleSidebar(); }}>Dashboard</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Goals'); isMobile && toggleSidebar(); }}>Goals</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Progress'); isMobile && toggleSidebar(); }}>Progress</a></li>
-                <li><a href="#" className="dimension-theme-colored block p-4" onClick={() => { setCurrentPage('Tools'); isMobile && toggleSidebar(); }}>Tools</a></li>
-              </ul>
+            <ul>
+              {isMobile && (<li><Dimensionselector /></li>)}
+              <li>
+                <a
+                  href="#"
+                  className={`dimension-theme-colored block p-4 ${currentPage === 'Dashboard' ? 'underline font-bold' : ''}`}
+                  onClick={() => { setCurrentPage('Dashboard'); isMobile && toggleSidebar(); }}
+                >
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`dimension-theme-colored block p-4 ${currentPage === 'Goals' ? 'underline font-bold' : ''}`}
+                  onClick={() => { setCurrentPage('Goals'); isMobile && toggleSidebar(); }}
+                >
+                  Goals
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`dimension-theme-colored block p-4 ${currentPage === 'Progress' ? 'underline font-bold' : ''}`}
+                  onClick={() => { setCurrentPage('Progress'); isMobile && toggleSidebar(); }}
+                >
+                  Progress
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className={`dimension-theme-colored block p-4 ${currentPage === 'Tools' ? 'underline font-bold' : ''}`}
+                  onClick={() => { setCurrentPage('Tools'); isMobile && toggleSidebar(); }}
+                >
+                  Tools
+                </a>
+              </li>
+            </ul>
             </nav>
           </div>
         )}
         {isSidebarOpen && isMobile && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-20" 
+            style={{ margin: "0" }}
             onClick={toggleSidebar}
           ></div>
         )}

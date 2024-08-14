@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import MilestonePopup from './MilestonePopup';
 import {
   Card,
@@ -23,6 +23,7 @@ import {
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { Theme } from '../theme.js';
 import { useDimension } from '../DimensionContext';
+import { use } from 'passport';
 
 
 const PerformanceChart = ({ data }) => (
@@ -53,11 +54,20 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
   const theme = new Theme();
 
   useEffect(() => {
+    console.log('goal card made for goal: ', goal);
+  }, []);
+
+  useEffect(() => {
     theme.updateThemeForNode({ dimensionName: currentDimension });
   }, [currentDimension]);
 
   const formatDate = (date) => {
     return date ? format(new Date(date), 'PP') : 'Not set';
+  };
+
+  const getDeadlineColor = (deadline) => {
+    if (!deadline) return 'text-black';
+    return isPast(new Date(deadline)) ? 'text-red-500' : 'text-black';
   };
 
   const getStatusColor = (status) => {
@@ -73,41 +83,79 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
     }
   };
 
+  const goalTypeEmojis = {
+    challenge: '🏆',
+    habit: '📅',
+    performance: '📊',
+    project: '🛠️',
+    transformation: '🔄'
+  };
+
+  const StepCard = ({ children, className = "" }) => (
+    <div className={`p-2 bg-white border border-gray-300 rounded-md shadow-sm ${className}`} style={{ minWidth: '80px', maxWidth: '120px' }}>
+      <div className="text-xs text-center overflow-hidden overflow-ellipsis whitespace-nowrap">
+        {children}
+      </div>
+    </div>
+  );
+
   const renderMilestones = (milestones) => (
-    <div className="flex items-center space-x-2 mt-2">
+    <div className="flex items-center space-x-2 mt-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
+      <div className="flex-shrink-0">
+        <StepCard className="bg-gray-100">Start</StepCard>
+      </div>
+      <ArrowRight className="flex-shrink-0 text-gray-400" />
       {milestones.map((milestone, index) => (
         <React.Fragment key={index}>
-          {index > 0 && <ArrowRight />}
-          {milestone.isPreExisting ? (
-            <GoalCard key={milestone.linkedGoalId} goal={milestone} showUpdateButton={false} />
-          ) : (
+          <div className="flex-shrink-0">
             <div
               className="flex flex-col items-center cursor-pointer"
               onClick={() => setSelectedMilestone(milestone)}
             >
-              <div className="mb-1">
-                {milestone.completed ? (
-                  <CheckCircle />
-                ) : milestone.pre_existing_goal ? (
-                  <Star />
-                ) : milestone.milestone_started ? (
-                  <PlayButton />
+              <div className="mb-2">
+                {milestone.status === 'Completed' ? (
+                  <CheckCircle className="text-green-500" />
+                ) : milestone.status === 'In Progress' ? (
+                  <PlayButton className="text-blue-500" />
                 ) : (
-                  <Circle />
+                  <Circle className="text-gray-500" />
                 )}
               </div>
-              {!milestone.completed && milestone.deadline && (
-                <Clock className="text-xs" />
-              )}
+              <StepCard>
+                {milestone.pre_existing_goal ? milestone.pre_existing_goal.goal_name : milestone.name}
+              </StepCard>
+              <div className="flex items-center mt-1">
+                {milestone.hasDeadline && milestone.deadline && (
+                  <Clock className={`text-xs mr-1 ${isPast(new Date(milestone.deadline)) ? 'text-red-500' : 'text-gray-500'}`} />
+                )}
+                {milestone.pre_existing_goal && (
+                  <span className="text-xs" title={`${milestone.pre_existing_goal.goal_type} goal`}>
+                    {goalTypeEmojis[milestone.pre_existing_goal.goal_type]}
+                  </span>
+                )}
+              </div>
             </div>
+          </div>
+          {index < milestones.length - 1 && (
+            <ArrowRight className="flex-shrink-0 text-gray-400" />
           )}
         </React.Fragment>
       ))}
+      <ArrowRight className="flex-shrink-0 text-gray-400" />
+      <div className="flex-shrink-0">
+        <StepCard className="bg-gray-100">
+          End
+        </StepCard>
+      </div>
     </div>
   );
 
   const handleCardClick = (task) => {
     console.log('Card clicked:', task);
+  };
+
+  const getCompletedMilestonesCount = (milestones) => {
+    return milestones.filter(milestone => milestone.status === 'Completed').length;
   };
 
   return (
@@ -127,7 +175,11 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
             <div className="text-sm mt-2">
               {goal.goal_startDate && <p>Started: {formatDate(goal.goal_startDate)}</p>}
               {goal.goal_completedDate && <p>Completed: {formatDate(goal.goal_completedDate)}</p>}
-              {goal.goal_deadline && <p>Deadline: {formatDate(goal.goal_deadline)}</p>}
+              {goal.goal_deadline && (
+                <p className={getDeadlineColor(goal.goal_deadline)}>
+                  Deadline: {formatDate(goal.goal_deadline)}
+                </p>
+              )}
             </div>
             <div className="dimension-indicators mt-2">
               {dimensionOrder.map(dimension => 
@@ -147,14 +199,14 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
           <div className="mt-2">
             {goal.milestones && goal.milestones.length > 0 ? (
               <>
-                <p>{goal.milestones.filter(m => m.completed).length}/{goal.milestones.length} milestones complete</p>
+                <p>{getCompletedMilestonesCount(goal.milestones)}/{goal.milestones.length} milestones complete</p>
                 {renderMilestones(goal.milestones)}
               </>
             ) : (
               <p>No milestones set for this challenge</p>
             )}
           </div>
-        )}
+          )}
 
         {goal.goal_type === 'habit' && (
           <div className="mt-2">

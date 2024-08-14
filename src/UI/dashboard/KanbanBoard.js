@@ -279,7 +279,7 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }} onClick={(e) => e.stopPropagation()}>
       <div className="bg-white rounded-lg w-full max-w-md mx-4" style={{
         maxHeight: '-webkit-fill-available',
         display: 'flex',
@@ -379,10 +379,10 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
                   <div className="mb-4">
                     <label htmlFor="deadline" className="block mb-1">Deadline:</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       id="deadline"
                       name="deadline"
-                      value={editedCard.deadline || ''}
+                      value={editedCard.deadline || new Date().toISOString().slice(0, 16)}
                       onChange={handleInputChange}
                       className="w-full p-2 border border-gray-300 rounded"
                     />
@@ -419,7 +419,7 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
                 </div>
               ) : (
                 <div className="flex justify-center mb-2">
-                  <button onClick={onClose} className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150">Exit</button>
+                  <button onClick={onClose} className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150">Close</button>
                 </div>
               )}
             </div>
@@ -449,7 +449,6 @@ const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdat
   const [activeListStatus, setActiveListStatus] = useState(null);
   const [selectedPreExistingGoals, setSelectedPreExistingGoals] = useState([]);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
-
   
   useEffect(() => {
     checkAndUpdateProjectStatus();
@@ -818,7 +817,7 @@ const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdat
       : boardData.lists.find(list => list.id === deleteConfirmation.id).title;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
         <div className="bg-white p-8 rounded-lg max-w-md">
           <h3 className="text-xl font-bold mb-4">Confirm Delete List</h3>
           <p className="mb-6">Are you sure you want to delete this {itemType}: "{itemName}"?</p>
@@ -884,7 +883,7 @@ const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdat
     };
   
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={handleCancel}>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }} onClick={handleCancel}>
         <div className="bg-white p-8 rounded-lg max-w-md" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-xl font-bold mb-4">Confirm Delete Task</h3>
           <p className="mb-6">Are you sure you want to delete this task?</p>
@@ -959,37 +958,22 @@ const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdat
     setShowAddTaskModal(false);
 };
 
-  const handleAddPreExistingGoal = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const list = boardData.lists.find(l => l.id === activeListId);
-    setActiveListStatus(list.statusOfTasks);
-    
-    if (list.statusOfTasks !== 'None') {
-      const availableGoals = existingGoals.filter(goal => 
-        !selectedPreExistingGoals.includes(goal.id) &&
-        goal.status === list.statusOfTasks
-      );
-      
-      if (availableGoals.length === 0) {
-        setErrorMessage(`You can't add goals to this list because its status (${list.statusOfTasks}) doesn't match any available goals. Please update the goal's status first.`);
-        setShowErrorPopup(true);
-        return;
-      }
-      
-      setFilteredGoals(availableGoals);
-    } else {
-      const availableGoals = existingGoals.filter(goal => 
-        !selectedPreExistingGoals.includes(goal.id)
-      );
-      setFilteredGoals(availableGoals);
-    }
-    
-    setShowGoalPicker(true);
-  };
+const handleAddPreExistingGoal = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  const list = boardData.lists.find(l => l.id === activeListId);
+  setActiveListStatus(list.statusOfTasks);
+  
+  const availableGoals = existingGoals.filter(goal => 
+    !selectedPreExistingGoals.includes(goal.id)
+  );
+  
+  setFilteredGoals(availableGoals);
+  setShowGoalPicker(true);
+};
 
   const ErrorPopup = ({ message, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
       <div className="bg-white p-8 rounded-lg max-w-md">
         <h3 className="text-xl font-bold mb-4">Error</h3>
         <p className="mb-6">{message}</p>
@@ -1077,205 +1061,223 @@ const KanbanBoard = ({ data, onBoardUpdate, existingGoals , onProjectStatusUpdat
     setShowErrorModal(false);
   };
 
-  const AddTaskModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-white p-8 rounded-lg max-w-md">
-        <h3 className="text-xl font-bold mb-4">Add New Task</h3>
-        <p className="mb-6">How would you like to add a new task?</p>
-        <div className="flex justify-between">
-          <button 
-            onClick={handleAddNewTask}
-            className="dimension-theme-colored px-4 py-2 rounded"
-          >
-            Add New Task
-          </button>
-          <button 
-            onClick={handleAddPreExistingGoal}
-            className="dimension-theme-colored px-4 py-2 rounded"
-          >
-            Use Pre-Existing Goal
-          </button>
+  const AddTaskModal = () => {
+    const list = boardData.lists.find(l => l.id === activeListId);
+    const addPreExistingGoalButtonLabel = list.statusOfTasks && list.statusOfTasks !== 'None'
+        ? `Add Pre-Existing\n${list.statusOfTasks.replace(/ /g, '-')}-Goal`
+        : 'Add a Pre-Existing Goal';
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }} onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white p-8 rounded-lg max-w-md">
+                <h3 className="text-xl font-bold mb-4">Add New Task</h3>
+                <p className="mb-6">How would you like to add a new task?</p>
+                <div className="flex justify-between mb-4">
+                    <button 
+                        onClick={handleAddNewTask}
+                        className="dimension-theme-colored px-4 py-2 rounded mr-2"
+                    >
+                        Add New Task
+                    </button>
+                    <button 
+                        onClick={handleAddPreExistingGoal}
+                        className="dimension-theme-colored px-4 py-2 rounded whitespace-pre-line"
+                    >
+                        {addPreExistingGoalButtonLabel}
+                    </button>
+                </div>
+                <button 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAddTaskModal(false); }}
+                    className="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150"
+                >
+                    Cancel
+                </button>
+            </div>
         </div>
-        <button 
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAddTaskModal(false); }}
-          className="mt-4 w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors duration-150"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
+
+
 
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId="all-lists" direction="horizontal" type="list">
-        {(provided) => (
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className="flex overflow-x-auto p-4"
-            style={{ minHeight: '275px' }}
-          >
-            {boardData != null && boardData.lists != null && boardData.lists.map((list, index) => (
-              <Draggable key={list.id} draggableId={list.id} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    className="w-60 mx-2 relative"
-                    style={provided.draggableProps.style}
-                  >
-                    <div className="w-60 bg-gray-100 rounded-md p-4">
-                      <div {...provided.dragHandleProps} className="flex justify-between items-center mb-4">
-                        {editingListId === list.id ? (
-                          <input
-                            type="text"
-                            value={list.title}
-                            onChange={(e) => handleListTitleChange(list.id, e.target.value)}
-                            onBlur={handleListTitleBlur}
-                            autoFocus
-                            className="font-bold w-full p-1 border border-gray-300 rounded"
-                          />
-                        ) : (
-                          <>
-                            <h3
-                              onClick={() => handleListTitleClick(list.id)}
-                              className="font-bold cursor-pointer"
-                            >
-                              {list.title}
-                            </h3>
-                            <button
-                              ref={(el) => listOptionsButtonRefs.current[list.id] = el}
-                              onClick={(e) => handleListOptionsClick(list.id, e)}
-                              className="text-xl hover:bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center transition-colors duration-150"
-                            >
-                              ⋮
-                            </button>
-                          </>
+    <div className="flex flex-col items-center space-y-4 my-6 border border-gray-300 rounded-lg p-6">
+      <h2 className="text-2xl font-bold mb-4">Your Project Board 📌</h2>
+      <div className="w-full">
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="all-lists" direction="horizontal" type="list">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex overflow-x-auto p-4"
+              style={{ 
+                minHeight: '275px',
+                scrollBehavior: 'smooth' 
+               }}
+            >
+              {boardData != null && boardData.lists != null && boardData.lists.map((list, index) => (
+                <Draggable key={list.id} draggableId={list.id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className="w-60 mx-2 relative"
+                      style={provided.draggableProps.style}
+                    >
+                      <div className="w-60 bg-gray-100 rounded-md p-4">
+                        <div {...provided.dragHandleProps} className="flex justify-between items-center mb-4">
+                          {editingListId === list.id ? (
+                            <input
+                              type="text"
+                              value={list.title}
+                              onChange={(e) => handleListTitleChange(list.id, e.target.value)}
+                              onBlur={handleListTitleBlur}
+                              autoFocus
+                              className="font-bold w-full p-1 border border-gray-300 rounded"
+                            />
+                          ) : (
+                            <>
+                              <h3
+                                onClick={() => handleListTitleClick(list.id)}
+                                className="font-bold cursor-pointer"
+                              >
+                                {list.title}
+                              </h3>
+                              <button
+                                ref={(el) => listOptionsButtonRefs.current[list.id] = el}
+                                onClick={(e) => handleListOptionsClick(list.id, e)}
+                                className="text-xl hover:bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center transition-colors duration-150"
+                              >
+                                ⋮
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {openListOptionsId === list.id && (
+                          <ListOptionsPopup listId={list.id} />
                         )}
-                      </div>
-                      {openListOptionsId === list.id && (
-                        <ListOptionsPopup listId={list.id} />
-                      )}
-                      <Droppable droppableId={list.id} type="task">
-                        {(provided, snapshot) => (
-                          <div
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                            className={`h-[300px] overflow-y-auto ${snapshot.isDraggingOver ? 'bg-gray-200' : ''}`}
-                            style={{
-                              minHeight: '55px',
-                              transition: 'background-color 0.2s ease',
-                              backgroundColor: snapshot.isDraggingOver ? 'rgba(229, 231, 235, 0.5)' : 'transparent',
-                            }}
-                          >
-                            {(list.cardIds || []).map((cardId, index) => {
-                              const card = boardData.cards[cardId];
-                              
-                              if (!card) {
-                                console.error(`Card with ID ${cardId} not found in boardData.cards`);
-                                return null;
-                              }
+                        <Droppable droppableId={list.id} type="task">
+                          {(provided, snapshot) => (
+                            <div
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
+                              className={`h-[300px] overflow-y-auto ${snapshot.isDraggingOver ? 'bg-gray-200' : ''}`}
+                              style={{
+                                minHeight: '55px',
+                                transition: 'background-color 0.2s ease',
+                                backgroundColor: snapshot.isDraggingOver ? 'rgba(229, 231, 235, 0.5)' : 'transparent',
+                              }}
+                            >
+                              {(list.cardIds || []).map((cardId, index) => {
+                                const card = boardData.cards[cardId];
+                                
+                                if (!card) {
+                                  console.error(`Card with ID ${cardId} not found in boardData.cards`);
+                                  return null;
+                                }
 
-                              return (
-                                <Draggable
-                                  key={cardId}
-                                  draggableId={cardId}
-                                  index={index}
-                                >
-                                  {(provided, snapshot) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      onClick={() => handleCardClick(card)}
-                                      className={`bg-white p-2 mb-2 rounded shadow cursor-pointer ${
-                                        snapshot.isDragging ? 'opacity-50' : ''
-                                      }`}
-                                    >
-                                      {card.emoji} {card.content}
-                                    </div>
-                                  )}
-                                </Draggable>
-                              );
-                            })}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                      <button
-                        onClick={(e) => handleAddTaskClick(list.id, e)}
-                        className="w-full p-2 mt-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
-                      >
-                        + Add Task
-                      </button>
+                                return (
+                                  <Draggable
+                                    key={cardId}
+                                    draggableId={cardId}
+                                    index={index}
+                                  >
+                                    {(provided, snapshot) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        onClick={() => handleCardClick(card)}
+                                        className={`bg-white p-2 mb-2 rounded shadow cursor-pointer ${
+                                          snapshot.isDragging ? 'opacity-50' : ''
+                                        }`}
+                                      >
+                                        {card.emoji} {card.content}
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                );
+                              })}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                        <button
+                          onClick={(e) => handleAddTaskClick(list.id, e)}
+                          className="w-full p-2 mt-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
+                        >
+                          + Add Task
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-            <div className="mx-2">
-              <button
-                onClick={addNewList}
-                className="w-60 p-4 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
-              >
-                + Add List
-              </button>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+              <div className="mx-2">
+                <button
+                  onClick={addNewList}
+                  className="w-60 p-4 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-150"
+                >
+                  + Add List
+                </button>
+              </div>
+            </div>
+          )}
+        </Droppable>
+
+        {editingCard && (
+          <CardModal
+            card={editingCard}
+            onClose={() => setEditingCard(null)}
+            onUpdate={handleCardUpdate}
+            onDelete={(event) => handleDeleteTask(editingCard.id, event)}
+          />
+        )}
+
+        {deleteTaskConfirmation && (
+          <DeleteTaskConfirmationModal
+            taskId={deleteTaskConfirmation}
+            onConfirm={confirmDeleteTask}
+            onCancel={() => setDeleteTaskConfirmation(null)}
+          />
+        )}
+
+        {deleteConfirmation && <DeleteConfirmationModal />}
+
+        {showAddTaskModal && <AddTaskModal />}
+        {showGoalPicker && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
+            <GoalPicker
+                goals={filteredGoals}
+                onSelect={handleGoalPickerSelect}
+                onCancel={() => setShowGoalPicker(false)}
+                presetFilters={{ Status: activeListStatus !== 'None' ? activeListStatus : undefined }}
+                disabledFilters={activeListStatus !== 'None' ? ['Status'] : []}
+            />
+          </div>
+        )}
+        {showErrorModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" style={{ margin: "0" }}>
+            <div className="bg-white p-8 rounded-lg max-w-md">
+              <p>{errorMessage}</p>
+              <div className="mt-4 flex justify-between">
+                <button onClick={handleErrorModalConfirm} className="dimension-theme-colored px-4 py-2 rounded">Yes</button>
+                <button onClick={() => setShowErrorModal(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded">No</button>
+              </div>
             </div>
           </div>
         )}
-      </Droppable>
-
-      {editingCard && (
-        <CardModal
-          card={editingCard}
-          onClose={() => setEditingCard(null)}
-          onUpdate={handleCardUpdate}
-          onDelete={(event) => handleDeleteTask(editingCard.id, event)}
-        />
-      )}
-
-      {deleteTaskConfirmation && (
-        <DeleteTaskConfirmationModal
-          taskId={deleteTaskConfirmation}
-          onConfirm={confirmDeleteTask}
-          onCancel={() => setDeleteTaskConfirmation(null)}
-        />
-      )}
-
-      {deleteConfirmation && <DeleteConfirmationModal />}
-
-      {showAddTaskModal && <AddTaskModal />}
-      {showGoalPicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <GoalPicker
-            goals={filteredGoals}
-            onSelect={handleGoalPickerSelect}
-            onCancel={() => setShowGoalPicker(false)}
-            initialFilter={activeListStatus}
+        {showErrorPopup && (
+          <ErrorPopup
+            message={errorMessage}
+            onClose={() => setShowErrorPopup(false)}
           />
-        </div>
-      )}
-      {showErrorModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg max-w-md">
-            <p>{errorMessage}</p>
-            <div className="mt-4 flex justify-between">
-              <button onClick={handleErrorModalConfirm} className="dimension-theme-colored px-4 py-2 rounded">Yes</button>
-              <button onClick={() => setShowErrorModal(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded">No</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showErrorPopup && (
-        <ErrorPopup
-          message={errorMessage}
-          onClose={() => setShowErrorPopup(false)}
-        />
-      )}
-    </DragDropContext>
+        )}
+      </DragDropContext>
+      </div>
+    </div>
   );
 };
 

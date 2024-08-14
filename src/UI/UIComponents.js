@@ -37,7 +37,7 @@ export const Progress = ({ value }) => (
 
 export const Dialog = ({ open, onOpenChange, children }) => (
   open ? (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center" style={{ margin: "0" }}>
       <div className="bg-white rounded-lg p-6">
         {children}
         <button onClick={() => onOpenChange(false)} className="mt-4 px-4 py-2 bg-gray-200 rounded">

@@ -20,7 +20,7 @@ class Goal {
     this.dimensions = dimensions;
 
     if (this.goal_type === "challenge") {
-      this.milestones = goal_milestones.map(m => new Milestone(m.name, m.emoji, m.started, m.startDate, m.deadline, m.completed, m.completedDate, m.pre_existing_goal, m.id));
+      this.milestones = goal_milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id));
       this.percentComplete = 0;
     }
 
@@ -100,7 +100,6 @@ class Goal {
       });
     } else if (newStatus === "Not Yet Started") {
       this.milestones.forEach(milestone => {
-        milestone.milestone_started = false;
         milestone.milestone_startDate = null;
         milestone.completed = false;
         milestone.milestone_completedDate = null;
@@ -183,39 +182,48 @@ class Goal {
   }
 }
   
-
-
 class Milestone {
-  constructor(name, emoji = "🏆", started = false, startDate = null, deadline = null, completed = false, completedDate = null, pre_existing_goal = null, id = null) {
+  constructor(name, emoji = "🏆", status = "Not Yet Started", startDate = null, deadline = null, completedDate = null, pre_existing_goal = null, description = "", id = null) {
     this.id = id || uuidv4();
     this.name = name;
     this.milestone_Emoji = emoji;
     this.milestone_Type = pre_existing_goal ? "Pre-Existing Goal" : "Milestone";
-    this.milestone_started = started;
+    this.status = status
     this.milestone_startDate = startDate;
+    this.hasDeadline = !!deadline;
     this.deadline = deadline;
-    this.completed = completed;
     this.milestone_completedDate = completedDate;
     this.pre_existing_goal = pre_existing_goal;
+    this.description = description;
   }
 
   updateStatus(newStatus) {
+    this.status = newStatus;
     if (newStatus === "In Progress") {
-      this.milestone_started = true;
-      if (!this.milestone_startDate) {
-        this.milestone_startDate = new Date();
-      }
+      this.milestone_startDate = this.milestone_startDate || new Date().toISOString();
     } else if (newStatus === "Completed") {
-      this.completed = true;
-      if (!this.milestone_completedDate) {
-        this.milestone_completedDate = new Date();
+      if (!this.milestone_startDate) {
+        this.milestone_startDate = new Date().toISOString();
       }
+      this.milestone_completedDate = new Date().toISOString();
+      this.hasDeadline = false;
+      this.deadline = null;
     } else if (newStatus === "Not Yet Started") {
-      this.milestone_started = false;
       this.milestone_startDate = null;
-      this.completed = false;
       this.milestone_completedDate = null;
     }
+  }
+
+  setDeadline(deadline) {
+    if (this.status !== "Completed") {
+      this.hasDeadline = true;
+      this.deadline = deadline;
+    }
+  }
+
+  removeDeadline() {
+    this.hasDeadline = false;
+    this.deadline = null;
   }
 }
 
@@ -252,8 +260,6 @@ class ProjectTask {
   }
 }
 
-
-
 class SubGoal {
   constructor(goal, percentOfTransformation, lockedPercent = false) {
     this.goal = goal instanceof Goal ? goal : new Goal(goal);
@@ -276,8 +282,6 @@ class SubGoal {
       
         this.totalPercentComplete = this.subGoals.reduce((sum, subGoal) => sum + (subGoal.percentOfTransformation), 0);
       }      
-  }
-  
-
+}
 
 export { Goal, Milestone, ProjectTask, SubGoal };
