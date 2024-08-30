@@ -1,23 +1,39 @@
 import { v4 as uuidv4 } from 'uuid';
 
 class Goal {
-  constructor(goal_name = "New goal", goal_emoji = "🏆", goal_type = "challenge", goal_startDate = null, goal_deadline = null, goal_milestones = [], goal_habitData = {}, goal_performanceData = {}, goal_projectData = {tasks: [], percentComplete: 0, taskPercentagesEnabled: false}, goal_subGoals = [], goal_transformationData = { subGoals: [], totalPercentComplete: 0 }, dimensions = {
-    Spiritual: false,
-    Mental: false,
-    Physical: false,
-    Social: false,
-    Vocational: false,
-    Environmental: false
-  }) {
+  constructor(
+    goal_name = "New goal", 
+    goal_emoji = "🏆", 
+    goal_type = "challenge", 
+    goal_startDate = null,
+    goal_completedDate = null, 
+    goal_deadline = null, 
+    goal_milestones = [], 
+    goal_habitData = {}, 
+    goal_performanceData = {}, 
+    goal_projectData = { tasks: [], percentComplete: 0, taskPercentagesEnabled: false }, 
+    goal_subGoals = [], 
+    goal_transformationData = { subGoals: [], totalPercentComplete: 0 }, 
+    dimensions = {
+      Spiritual: false,
+      Mental: false,
+      Physical: false,
+      Social: false,
+      Vocational: false,
+      Environmental: false
+    },
+    description = ""
+  ) {
     this.goal_name = goal_name;
     this.goal_emoji = goal_emoji;
     this.goal_type = goal_type;
-    this.goal_startDate = null;
-    this.goal_completedDate = null;
+    this.goal_startDate = goal_startDate;
+    this.goal_completedDate = goal_completedDate;
     this.goal_lastUpdated = new Date();
     this.goal_deadline = goal_type !== 'habit' ? goal_deadline : null;
     this.status = "Not Yet Started";
     this.dimensions = dimensions;
+    this.description = description; 
 
     if (this.goal_type === "challenge") {
       this.milestones = goal_milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id));

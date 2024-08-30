@@ -10,6 +10,7 @@ import { getRandomExample } from './goalExamples.js';
 import { Theme } from '../theme.js';
 import KanbanBoard from './KanbanBoard';
 import JourneyMap from './JourneyMap';
+import HabitScheduler from './HabbitScheduler.js';
 import { v4 as uuidv4 } from 'uuid';
 const config = require('../../config.js');
 
@@ -46,7 +47,7 @@ const goalDescriptions = {
   },
   transformation: {
     title: "Transformation 🔄",
-    description: "A long-term goal focused on positive change, often with linked sub-goals.",
+    description: "A long-term goal focused on positive change, consisting of a set of sub-goals that each make up a certain percentage of the overall transformation.",
     example: "Example: Become physically fit with sub-goals for various fitness challenges and habits."
   }
 };
@@ -87,17 +88,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const [modalAction, setModalAction] = useState(null);
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [habitData, setHabitData] = useState({
-    habit_action: '',
-    habit_frequencyNum: 1,
-    habit_frequencyPeriod: 'daily',
-    habit_goal_streakNum: 1,
-    habit_streakPeriod: 'days'
-  });
-  const [habitErrors, setHabitErrors] = useState({
-    habit_frequencyNum: '',
-    habit_goal_streakNum: ''
-  });
+
   const [performanceData, setPerformanceData] = useState({
     performance_metric: '',
     performance_unit: '',
@@ -111,7 +102,44 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const emojiPickerRef = useRef(null);
   const [projectGoal, setProjectGoal] = useState(null);
   const [availableStatuses, setAvailableStatuses] = useState(["Not Yet Started", "In Progress", "Completed"]);
+  const [habitData, setHabitData] = useState({
+    habit_action: '',
+    habit_frequencyNum: 1,
+    habit_frequencyPeriod: 'daily',
+    habit_goal_streakNum: 1,
+    habit_streakPeriod: 'days',
+    scheduleActions: []
+  });
 
+  const handleHabitDataChange = (newHabitData) => {
+    setHabitData(newHabitData);
+    setIsDirty(true);
+  };
+
+  const [habitErrors, setHabitErrors] = useState({
+    habit_frequencyNum: '',
+    habit_goal_streakNum: ''
+  });
+
+  const [streakGoalEnabled, setStreakGoalEnabled] = useState(false);
+
+  const handleHabitInputChange = (e) => {
+    const { name, value } = e.target;
+    let updatedValue = value;
+
+    if (name === 'habit_frequencyNum' || name === 'habit_goal_streakNum') {
+      updatedValue = Math.max(1, parseInt(value) || 0);
+      setHabitErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: updatedValue < 1 ? 'Minimum value is 1' : ''
+      }));
+    }
+
+    setHabitData(prevData => {
+      const newData = { ...prevData, [name]: updatedValue };
+      return newData;
+    });
+  };
   const [selectedDimensions, setSelectedDimensions] = useState({});
 
   const dimensions = [
@@ -280,34 +308,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     setIsDirty(false);
   };
 
-  const handleHabitInputChange = (e) => {
-    const { name, value } = e.target;
-    let updatedValue = value;
-    
-    if (name === 'habit_frequencyNum' || name === 'habit_goal_streakNum') {
-      updatedValue = Math.max(1, parseInt(value) || 0);
-      
-      setHabitErrors(prevErrors => ({
-        ...prevErrors,
-        [name]: updatedValue < 1 ? 'Minimum value is 1' : ''
-      }));
-    }
-    
-    setHabitData(prevData => {
-      const newData = { ...prevData, [name]: updatedValue };
-      
-      if (name === 'habit_frequencyPeriod') {
-        if (value === 'weekly' && newData.habit_streakPeriod === 'days') {
-          newData.habit_streakPeriod = 'weeks';
-        } else if (value === 'monthly' && (newData.habit_streakPeriod === 'days' || newData.habit_streakPeriod === 'weeks')) {
-          newData.habit_streakPeriod = 'months';
-        }
-      }
-      
-      return newData;
-    });
-    setIsDirty(true);
-  };
+
 
   const getFrequencyPeriodText = (period) => {
     const { habit_frequencyNum } = habitData;
@@ -362,21 +363,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-
-    // Check for sub-goals if the goal type is transformation
-    if (goalType === 'transformation' && subGoals.length === 0) {
-        setFormError('Transformation goals must have at least one sub-goal.');
-        setShowFormErrorModal(true);
-        return;
-    }
-
-    // Check for tasks if the goal type is project
-    if (goalType === 'project' && projectTasks.length === 0) {
-        setFormError('Project goals must have at least one task.');
-        setShowFormErrorModal(true);
-        return;
-    }
-
+  
     let newGoal;
     if (goalType === 'habit') {
       newGoal = new Goal(
@@ -391,7 +378,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         {},
         [],
         { subGoals: [], totalPercentComplete: 0 },
-        dimensions
+        dimensions,
+        goalData.description // Add description here
       );
     } else if (goalType === 'challenge') {
       newGoal = new Goal(
@@ -416,7 +404,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         {},
         [],
         { subGoals: [], totalPercentComplete: 0 },
-        dimensions
+        dimensions,
+        goalData.description // Add description here
       );
     } else if (goalType === 'project') {
       const allTasks = projectLists.lists.flatMap(list => list.cardIds.map(id => projectLists.cards[id]));
@@ -436,6 +425,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
       ));
       newGoal = projectGoal;
       newGoal.dimensions = dimensions;
+      newGoal.description = goalData.description; // Add description here
     } else if (goalType === 'transformation') {
       newGoal = new Goal(
         goalData.goal_name,
@@ -448,7 +438,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         {},
         {},
         { subGoals: subGoals.map(sg => ({ ...sg, goal: { ...sg.goal, status: sg.goal.status } })), totalPercentComplete: 0 },
-        dimensions
+        dimensions,
+        goalData.description // Add description here
       );
     } else {
       newGoal = new Goal(
@@ -463,18 +454,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         {},
         [],
         { subGoals: [], totalPercentComplete: 0 },
-        dimensions
+        dimensions,
+        goalData.description // Add description here
       );
     }
-
+  
     newGoal.status = goalStatus; 
+    newGoal.goal_completedDate = goalData.goal_completedDate; // Add completed date here
     console.log(newGoal);
     onSubmit(newGoal);
     clearForm();
   };
-
-
-
 
   const handleOptionClick = (selectedOption) => {
     setOption(selectedOption);
@@ -864,6 +854,39 @@ const renderSubGoal = (subGoal, index) => {
       }
     }
     setSubGoals(updatedSubGoals);
+  };
+
+    const [habitData, setHabitData] = useState({
+    habit_action: '',
+    habit_frequencyNum: 1,
+    habit_frequencyPeriod: 'daily',
+    habit_goal_streakNum: 1,
+    habit_streakPeriod: 'days'
+  });
+
+  const [habitErrors, setHabitErrors] = useState({
+    habit_frequencyNum: '',
+    habit_goal_streakNum: ''
+  });
+
+  const [streakGoalEnabled, setStreakGoalEnabled] = useState(false);
+
+  const handleHabitInputChange = (e) => {
+    const { name, value } = e.target;
+    let updatedValue = value;
+
+    if (name === 'habit_frequencyNum' || name === 'habit_goal_streakNum') {
+      updatedValue = Math.max(1, parseInt(value) || 0);
+      setHabitErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: updatedValue < 1 ? 'Minimum value is 1' : ''
+      }));
+    }
+
+    setHabitData(prevData => {
+      const newData = { ...prevData, [name]: updatedValue };
+      return newData;
+    });
   };
 
   return (
@@ -1275,6 +1298,17 @@ return (
                               <small className='description-example'>Example: "{goalNameExample}"</small>
                           </div>
                           <div className="form-group">
+                            <label htmlFor="description" className="block mb-1">Goal Description:</label>
+                            <textarea
+                              id="description"
+                              name="description"
+                              value={goalData.description}
+                              onChange={handleInputChange}
+                              className="w-full p-2 border border-gray-300 rounded"
+                              rows="3"
+                            />
+                          </div>
+                          <div className="form-group">
                             <label>Associated Dimensions:</label>
                             <div className="flex items-center mb-2">
                             {dimensionOrder.map(dimension => 
@@ -1385,83 +1419,101 @@ return (
                               </>
                           )}
                           {goalType === 'habit' && (
-                              <>
-                                  <div className="form-group">
-                                      <label htmlFor="habit_action">Habit Action:</label>
-                                      <small>What action, activity or behavior does your habit consist of?</small>
-                                      <input
-                                          type="text"
-                                          id="habit_action"
-                                          name="habit_action"
-                                          value={habitData.habit_action}
-                                          onChange={handleHabitInputChange}
-                                          required
-                                      />
-                                      <small className='description-example'>Example: "Exercise" or "Read"</small>
+                            <>
+                              <div className="form-group">
+                                <label htmlFor="habit_action">Habit Action:</label>
+                                <small>What action, activity or behavior does your habit consist of?</small>
+                                <input
+                                  type="text"
+                                  id="habit_action"
+                                  name="habit_action"
+                                  value={habitData.habit_action}
+                                  onChange={handleHabitInputChange}
+                                  required
+                                />
+                                <small className='description-example'>Example: "Exercise" or "Read"</small>
+                              </div>
+
+                              <div className="form-group">
+                                <label htmlFor="habit_frequencyNum">Frequency:</label>
+                                <small>How often do you want to try to do your habit?</small>
+                                <div className="frequency-input">
+                                  <input
+                                    type="number"
+                                    id="habit_frequencyNum"
+                                    name="habit_frequencyNum"
+                                    value={habitData.habit_frequencyNum}
+                                    onChange={handleHabitInputChange}
+                                    min="1"
+                                    required
+                                  />
+                                  <select
+                                    id="habit_frequencyPeriod"
+                                    name="habit_frequencyPeriod"
+                                    value={habitData.habit_frequencyPeriod}
+                                    onChange={handleHabitInputChange}
+                                    required
+                                  >
+                                    <option value="daily">{getFrequencyPeriodText('daily')}</option>
+                                    <option value="weekly">{getFrequencyPeriodText('weekly')}</option>
+                                    <option value="monthly">{getFrequencyPeriodText('monthly')}</option>
+                                  </select>
+                                </div>
+                                {habitErrors.habit_frequencyNum && (
+                                  <small className="error">{habitErrors.habit_frequencyNum}</small>
+                                )}
+                                <small className='description-example'>Example: "3 times per week" or "1 time per day"</small>
+                              </div>
+                              <div className="form-group">
+                              {habitData.habit_frequencyPeriod === 'daily' && (
+                                <HabitScheduler
+                                  habitData={habitData}
+                                  onHabitDataChange={handleHabitDataChange}
+                                />
+                              )}
+                              </div>
+                              <div className="form-group">
+                                <label>Set a Streak Goal</label>
+                                <Switch
+                                  checked={streakGoalEnabled}
+                                  onChange={() => setStreakGoalEnabled(!streakGoalEnabled)}
+                                  color="primary"
+                                />
+                              </div>
+
+                              {streakGoalEnabled && (
+                                <div className="form-group">
+                                  <label htmlFor="habit_goal_streakNum">Streak Goal:</label>
+                                  <small>How many days/weeks/months in a row do you want to try to keep your habit going?</small>
+                                  <div className="streak-input">
+                                    <input
+                                      type="number"
+                                      id="habit_goal_streakNum"
+                                      name="habit_goal_streakNum"
+                                      value={habitData.habit_goal_streakNum}
+                                      onChange={handleHabitInputChange}
+                                      min="1"
+                                      required
+                                    />
+                                    <select
+                                      id="habit_streakPeriod"
+                                      name="habit_streakPeriod"
+                                      value={habitData.habit_streakPeriod}
+                                      onChange={handleHabitInputChange}
+                                      required
+                                    >
+                                      <option value="days">{getStreakPeriodText('days')}</option>
+                                      <option value="weeks">{getStreakPeriodText('weeks')}</option>
+                                      <option value="months">{getStreakPeriodText('months')}</option>
+                                    </select>
                                   </div>
-                                  
-                                  <div className="form-group">
-                                      <label htmlFor="habit_frequencyNum">Frequency:</label>
-                                      <small>How often do you want to try to do your habit?</small>
-                                      <div className="frequency-input">
-                                          <input
-                                              type="number"
-                                              id="habit_frequencyNum"
-                                              name="habit_frequencyNum"
-                                              value={habitData.habit_frequencyNum}
-                                              onChange={handleHabitInputChange}
-                                              min="1"
-                                              required
-                                          />
-                                          <select
-                                              id="habit_frequencyPeriod"
-                                              name="habit_frequencyPeriod"
-                                              value={habitData.habit_frequencyPeriod}
-                                              onChange={handleHabitInputChange}
-                                              required
-                                          >
-                                              <option value="daily">{getFrequencyPeriodText('daily')}</option>
-                                              <option value="weekly">{getFrequencyPeriodText('weekly')}</option>
-                                              <option value="monthly">{getFrequencyPeriodText('monthly')}</option>
-                                          </select>
-                                      </div>
-                                      {habitErrors.habit_frequencyNum && (
-                                          <small className="error">{habitErrors.habit_frequencyNum}</small>
-                                      )}
-                                      <small className='description-example'>Example: "3 times per week" or "1 time per day"</small>
-                                  </div>
-                                  
-                                  <div className="form-group">
-                                      <label htmlFor="habit_goal_streakNum">Streak Goal:</label>
-                                      <small>How many days/weeks/months in a row do you want to try to keep your habit going?</small>
-                                      <div className="streak-input">
-                                          <input
-                                              type="number"
-                                              id="habit_goal_streakNum"
-                                              name="habit_goal_streakNum"
-                                              value={habitData.habit_goal_streakNum}
-                                              onChange={handleHabitInputChange}
-                                              min="1"
-                                              required
-                                          />
-                                          <select
-                                              id="habit_streakPeriod"
-                                              name="habit_streakPeriod"
-                                              value={habitData.habit_streakPeriod}
-                                              onChange={handleHabitInputChange}
-                                              required
-                                          >
-                                              {getValidStreakPeriods().map(period => (
-                                                  <option key={period} value={period}>{getStreakPeriodText(period)}</option>
-                                              ))}
-                                          </select>
-                                      </div>
-                                      {habitErrors.habit_goal_streakNum && (
-                                          <small className="error">{habitErrors.habit_goal_streakNum}</small>
-                                      )}
-                                      <small className='description-example'>Example: "For 30 days in a row" or "For 1 week straight"</small>
-                                  </div>
-                              </>
+                                  {habitErrors.habit_goal_streakNum && (
+                                    <small className="error">{habitErrors.habit_goal_streakNum}</small>
+                                  )}
+                                  <small className='description-example'>Example: "For 30 days in a row" or "For 1 week straight"</small>
+                                </div>
+                              )}
+                            </>
                           )}
                           {goalType === 'performance' && (
                               <>

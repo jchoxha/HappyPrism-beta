@@ -112,7 +112,7 @@ const NodeSelector = ({ canvasManager, currentNode, onSelectNode, initializedNod
   };
 
   return (
-    <div className="dimension-theme-colored rounded-lg node-selector flex flex-row items-center justify-between px-2 py-3 border-4 border-black">
+    <div className="dimension-theme-colored rounded-lg node-selector flex flex-row items-center justify-between px-2 border-4 border-black">
       <button
         className={`rounded-lg dimension-theme-colored transition-colors duration-200 p-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={() => handleNodeChange('prev')}
