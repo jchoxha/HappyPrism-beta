@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format, parse, differenceInMinutes, addMinutes, setMinutes, getMinutes, setHours, getHours } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import { Switch } from '@mui/material';
 
-//TODO: FIX TOUCH GESTURES
-//      MAKE THE COLLUMNS RENDER BETTER
-//      START WORKING ON THE WEEKLY SCHEDULER
+//TODO: 
+//      ADD A + AND - BUTTON NEXT TO FREQUENCY NUM INPUT FOR EASY INCREMENTAL ADJUSTMENT
+//      FIX THE SELECTED EVENT BLOCK COLORATION
+//      CREATE COLOR PICKER COMPONENT AND ADD IT TO ACTION SCHEDULER
+//      MAKE SELECTED ACTION(S) APPEAR IN MINIMIZED ACTION SCHEDULER
+//      HIGHLIGHT SELECTED ACTION(S) IN MAXIMIZED ACTION SCHEDULER
+//      CHANGE CURSOR TO POINTER OVER EVENT BLOCKS FOR MINIMIZED DAILY SCHEDULER
+//      START WORKING ON THE WEEKLY/MONTHLY SCHEDULER
 
 const MINUTES_IN_SCHEDULER = 25 * 60;
 const MINUTES_IN_DAY = 24 * 60;
@@ -16,14 +22,12 @@ const DRAG_INTERVAL = 5; // minutes
 
 const ANY_TIME_HEIGHT = 100; // pixels
 const SECTION_GAP = 20; // pixels
-const GAP_THRESHOLD = 3; // hours, for the minimized view
 const SCROLL_THRESHOLD = 50; // pixels from top/bottom to trigger scrolling
-const SCROLL_SPEED = 5; // pixels to scroll per frame
 
 const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   const [localHabitData, setLocalHabitData] = useState(habitData);
   const [showActionScheduler, setShowActionScheduler] = useState(false);
-  const [isActionSchedulerMinimized, setIsActionSchedulerMinimized] = useState(false);
+  const [isActionSchedulerMinimized, setIsActionSchedulerMinimized] = useState(true);
   const [scheduleActions, setScheduleActions] = useState([]);
   const [dynamicEvents, setDynamicEvents] = useState([]);
   const [draggedEvents, setDraggedEvents] = useState(null);
@@ -32,7 +36,7 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [use24HourFormat, setUse24HourFormat] = useState(false);
-  const [isDailySchedulerMinimized, setIsDailySchedulerMinimized] = useState(false);
+  const [isDailySchedulerMinimized, setIsDailySchedulerMinimized] = useState(true);
   const [expandedSections, setExpandedSections] = useState([]);
   const actionSchedulerContentRef = useRef(null);
   const dailySchedulerRef = useRef(null);
@@ -43,10 +47,20 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   const schedulerRef = useRef(null);
   const [isDraggingTouch, setIsDraggingTouch] = useState(false);
   const setIsDraggingTouchWithLog = (value) => {
-    console.log(`isDraggingTouch changed to: ${value}`);
     setIsDraggingTouch(value);
   };
   const touchStartRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [currentMinimizedAction, setCurrentMinimizedAction] = useState(0);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const preventScroll = useCallback((e) => {
     if (isDraggingTouch) {
@@ -117,13 +131,11 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   };
 
   const handleActionTypeChange = (id, type) => {
-    console.log("Starting action change for action with id: ", id, " and type: ", type);
     const updatedActions = scheduleActions.map((action) => {
       if (action.id === id) {
         if (type === 'scheduled') {
           const startTime = '00:00'; // Set start time to 12:00 AM
           const endTime = format(addMinutes(parse(startTime, 'HH:mm', new Date()), DEFAULT_EVENT_DURATION), 'HH:mm');
-          console.log("updated action");
           return {
             ...action,
             type,
@@ -245,186 +257,148 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   };
 
   const assignColumns = (events) => {
+    console.log("assigning events to columns: ", events);
+    // Sort events by last dragged time, preserving order for equal times
     const sortedEvents = [...events].sort((a, b) => {
-      const startA = getMinutesFromMidnight(a.startTime);
-      const startB = getMinutesFromMidnight(b.startTime);
-      return startA - startB;
+      // const startA = getMinutesFromMidnight(a.startTime);
+      // const startB = getMinutesFromMidnight(b.startTime);
+      // if (startA !== startB) return startA - startB;
+      const timeA = a.lastDragged || 0;
+      const timeB = b.lastDragged || 0;
+      if (timeA === timeB) {
+        // If lastDragged times are equal, maintain current order
+        return events.indexOf(a) - events.indexOf(b);
+      }
+      return timeB - timeA;
     });
-
-    const processedEvents = [];
-    let currentGroup = [];
-
-    sortedEvents.forEach((event, index) => {
+  
+    const columns = [];
+    sortedEvents.forEach(event => {
       const startMinutes = getMinutesFromMidnight(event.startTime);
       let endMinutes = getMinutesFromMidnight(event.endTime);
-
-      if(endMinutes < startMinutes){
-        endMinutes += MINUTES_IN_DAY;
+      if (endMinutes <= startMinutes) endMinutes += MINUTES_IN_DAY;
+  
+      let column = 0;
+      while (columns[column]?.some(existingEvent => {
+        const existingStart = getMinutesFromMidnight(existingEvent.startTime);
+        let existingEnd = getMinutesFromMidnight(existingEvent.endTime);
+        if (existingEnd <= existingStart) existingEnd += MINUTES_IN_DAY;
+        return (startMinutes < existingEnd && endMinutes > existingStart);
+      })) {
+        column++;
       }
-      
-      // Check if the current event overlaps with any event in the current group
-      const overlapsWithGroup = currentGroup.some(groupEvent => {
-        const groupEventStart = getMinutesFromMidnight(groupEvent.startTime);
-        let groupEventEnd = getMinutesFromMidnight(groupEvent.endTime);
-        if(groupEventEnd < groupEventStart){
-          groupEventEnd += MINUTES_IN_DAY;
+  
+      if (!columns[column]) columns[column] = [];
+      columns[column].push(event);
+    });
+  
+    return columns.flatMap((column, columnIndex) => 
+      column.map(event => {
+        const isOverlapping = sortedEvents.some(otherEvent => {
+          if (event.id === otherEvent.id) return false;
+          
+          const eventStart = getMinutesFromMidnight(event.startTime);
+          let eventEnd = getMinutesFromMidnight(event.endTime);
+          if (eventEnd <= eventStart) eventEnd += MINUTES_IN_DAY;
+          
+          const otherStart = getMinutesFromMidnight(otherEvent.startTime);
+          let otherEnd = getMinutesFromMidnight(otherEvent.endTime);
+          if (otherEnd <= otherStart) otherEnd += MINUTES_IN_DAY;
+          
+          return (eventStart < otherEnd && eventEnd > otherStart);
+        });
+
+        return {
+          ...event,
+          column: columnIndex,
+          maxColumn: columns.length - 1,
+          isOverlapping
+        };
+      })
+    );
+  };
+  
+  const updateDraggedEventsPosition = () => {
+    if (draggedEvents && draggedEvents.length > 0 && dailySchedulerRef.current) {
+      const schedulerRect = dailySchedulerRef.current.getBoundingClientRect();
+      const anyTimeRect = dailySchedulerRef.current.previousSibling.getBoundingClientRect();
+      const currentMouseY = lastMousePositionRef.current.clientY;
+      const schedulerTop = schedulerRect.top + window.scrollY;
+      const relativeMouseY = currentMouseY + window.scrollY - schedulerTop;
+  
+      // Use the clicked event as the reference for movement
+      const clickedEvent = draggedEvents.find(de => de.isClicked) || draggedEvents[0];
+      const newStartMinutes = Math.floor((relativeMouseY / schedulerRect.height) * MINUTES_IN_SCHEDULER);
+      const roundedStartMinutes = roundToInterval(newStartMinutes);
+      const adjustedStartMinutes = Math.min(Math.max(roundedStartMinutes, 0), MINUTES_IN_DAY - 5);
+      const moveDelta = adjustedStartMinutes - (clickedEvent.initialStartTime ? getMinutesFromMidnight(clickedEvent.initialStartTime) : 0);
+  
+      const currentTime = Date.now();
+      let updatedEvents = [...dynamicEvents, ...anyTimeEvents].map(e => {
+        const draggedEvent = draggedEvents.find(de => de.id === e.id);
+        if (draggedEvent) {
+          const originalStartMinutes = draggedEvent.initialStartTime ? getMinutesFromMidnight(draggedEvent.initialStartTime) : 0;
+          // Moving into Any Time Section
+          if (relativeMouseY < 0 || ((originalStartMinutes + moveDelta) < 0)) {
+            return { ...e, type: 'unspecified', startTime: '', endTime: '', lastDragged: currentTime };
+          } 
+          // Moving out of Any Time Section or within regular schedule
+          else {
+            let newStartMinutes = (originalStartMinutes + moveDelta + MINUTES_IN_DAY) % MINUTES_IN_DAY;
+            if (originalStartMinutes + moveDelta >= MINUTES_IN_DAY) {
+              newStartMinutes = MINUTES_IN_DAY - DRAG_INTERVAL;
+            }
+  
+            const newStartTime = formatMinutesToTime(newStartMinutes);
+            const originalDuration = draggedEvent.isAnyTime || !draggedEvent.initialEndTime ? DEFAULT_EVENT_DURATION : 
+              (getMinutesFromMidnight(draggedEvent.initialEndTime) - getMinutesFromMidnight(draggedEvent.initialStartTime) + MINUTES_IN_DAY) % MINUTES_IN_DAY;
+            
+            const newEndMinutes = (newStartMinutes + originalDuration) % MINUTES_IN_DAY;
+            const newEndTime = formatMinutesToTime(newEndMinutes);
+  
+            return { 
+              ...e, 
+              type: 'scheduled', 
+              startTime: newStartTime, 
+              endTime: newEndTime,
+              lastDragged: currentTime
+            };
+          }
         }
-        return (startMinutes < groupEventEnd && endMinutes > groupEventStart);
+        return e;
       });
-
-      if (overlapsWithGroup) {
-        currentGroup.push(event);
-      } else {
-        // If the current group has more than one event, assign columns
-        if (currentGroup.length > 1) {
-          currentGroup.forEach((groupEvent, groupIndex) => {
-            processedEvents.push({
-              ...groupEvent,
-              column: groupIndex,
-              maxColumn: currentGroup.length - 1,
-              isOverlapping: true
-            });
-          });
-        } else if (currentGroup.length === 1) {
-          // If there's only one event in the group, it's not overlapping
-          processedEvents.push({ ...currentGroup[0], isOverlapping: false });
-        }
-        
-        // Start a new group with the current event
-        currentGroup = [event];
-      }
-
-      // Handle the last group
-      if (index === sortedEvents.length - 1) {
-        if (currentGroup.length > 1) {
-          currentGroup.forEach((groupEvent, groupIndex) => {
-            processedEvents.push({
-              ...groupEvent,
-              column: groupIndex,
-              maxColumn: currentGroup.length - 1,
-              isOverlapping: true
-            });
-          });
-        } else {
-          processedEvents.push({ ...currentGroup[0], isOverlapping: false });
-        }
-      }
-    });
-
-    return processedEvents;
-  };
-
-  const getVisibleHourBlocks = () => {
-    if (!isDailySchedulerMinimized) {
-      return Array.from({ length: 26 }, (_, i) => i);
-    }
   
-    const eventTimes = dynamicEvents
-      .flatMap(event => [
-        { time: getMinutesFromMidnight(event.startTime) / 60, isStart: true },
-        { time: getMinutesFromMidnight(event.endTime) / 60, isStart: false }
-      ])
-      .sort((a, b) => a.time - b.time);
-  
-    let visibleHours = new Set();
-    let lastEndTime = -Infinity;
-    let sectionStart = -1;
-  
-    eventTimes.forEach(({ time, isStart }, index) => {
-      const hour = Math.floor(time);
+      const scheduledEvents = updatedEvents.filter(e => e.type === 'scheduled');
+      const assignedEvents = assignColumns(scheduledEvents);
       
-      if (isStart) {
-        // Add buffer hour before event start
-        visibleHours.add(Math.max(0, hour - 1));
-        if (sectionStart === -1) sectionStart = Math.max(0, hour - 1);
-      }
-      
-      // If gap is small, fill in all hours
-      if (hour - lastEndTime < GAP_THRESHOLD) {
-        for (let h = Math.ceil(lastEndTime); h <= hour; h++) {
-          visibleHours.add(h);
-        }
+      setDynamicEvents(assignedEvents);
+      setAnyTimeEvents(updatedEvents.filter(e => e.type === 'unspecified'));
+  
+      // Update drag indicator (showing for the clicked event in multi-select)
+      const draggedEvent = assignedEvents.find(e => e.id === clickedEvent.id);
+      if (draggedEvent) {
+        const startMinutes = getMinutesFromMidnight(draggedEvent.startTime);
+        const endMinutes = getMinutesFromMidnight(draggedEvent.endTime);
+        setDragIndicator({
+          startTime: draggedEvent.startTime,
+          endTime: draggedEvent.endTime,
+          isAnyTime: false,
+          top: (startMinutes / MINUTES_IN_SCHEDULER) * schedulerRect.height,
+          height: ((endMinutes - startMinutes + MINUTES_IN_DAY) % MINUTES_IN_DAY) / MINUTES_IN_SCHEDULER * schedulerRect.height
+        });
       } else {
-        // If gap is large, just add this hour
-        visibleHours.add(hour);
-        
-        // Add one hour after the previous section if it exists
-        if (sectionStart !== -1) {
-          visibleHours.add(Math.min(24, Math.ceil(lastEndTime)));
-        }
-        
-        // Start a new section
-        sectionStart = hour;
+        setDragIndicator(null);
       }
-  
-      if (!isStart) {
-        lastEndTime = time;
-        
-        // If this is the last event, add one hour after
-        if (index === eventTimes.length - 1) {
-          visibleHours.add(Math.min(24, Math.ceil(time)));
-        }
-      }
-    });
-  
-    // Ensure we include the last hour of the day if there's an event crossing midnight
-    if (lastEndTime > 24) {
-      visibleHours.add(24);
-    }
-  
-    // Sort the visible hours
-    let sortedHours = Array.from(visibleHours).sort((a, b) => a - b);
-  
-    // Fill in single-hour gaps
-    for (let i = 0; i < sortedHours.length - 1; i++) {
-      if (sortedHours[i + 1] - sortedHours[i] === 2) {
-        sortedHours.splice(i + 1, 0, sortedHours[i] + 1);
-      }
-    }
-  
-    return sortedHours;
-  };
-  
-  const renderHourBlock = (hour, visibleHours) => {
-    const isVisible = visibleHours.includes(hour);
-    const prevHourVisible = visibleHours.includes(hour - 1);
-    const nextHourVisible = visibleHours.includes(hour + 1);
-
-    if (isVisible) {
-      return (
-        <div key={hour} className="absolute w-full border-b border-gray-200 last:border-b-0" 
-             style={{ top: `${hour * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}>
-        </div>
-      );
-    } else if (!prevHourVisible && !nextHourVisible) {
-      return null;
-    } else {
-      return (
-        <div key={hour} className="absolute w-full flex items-center justify-center cursor-pointer"
-             style={{ top: `${hour * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
-             onClick={() => handleExpandSection(hour)}>
-          <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-          <div className="w-1 h-1 bg-gray-400 rounded-full mx-1"></div>
-          <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-        </div>
-      );
     }
   };
 
-  const handleExpandSection = (hour) => {
-    setExpandedSections(prev => {
-      const isExpanded = prev.includes(hour);
-      if (isExpanded) {
-        return prev.filter(h => h !== hour);
-      } else {
-        return [...prev, hour];
-      }
-    });
-  };
-
-  const toggleDailySchedulerMinimize = () => {
-    setIsDailySchedulerMinimized(!isDailySchedulerMinimized);
-  };
+const toggleDailySchedulerMinimize = () => {
+  setIsDailySchedulerMinimized(!isDailySchedulerMinimized);
+  if (!isDailySchedulerMinimized) {
+    // Clear selected events when minimizing
+    setSelectedEvents([]);
+  }
+};
 
   const getOrdinalSuffix = (num) => {
     const j = num % 10,
@@ -510,6 +484,47 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
     };
   }, [preventDefaultForTouch]);
 
+  const handleAnyTimeEventClick = useCallback((event) => {
+    if (!isDailySchedulerMinimized && window.innerWidth <= 768) { // Assuming mobile breakpoint is 768px
+      const updatedEvents = anyTimeEvents.map(e => {
+        if (e.id === event.id) {
+          return {
+            ...e,
+            type: 'scheduled',
+            startTime: '00:00',
+            endTime: format(addMinutes(parse('00:00', 'HH:mm', new Date()), DEFAULT_EVENT_DURATION), 'HH:mm'),
+            lastDragged: Date.now()
+          };
+        }
+        return e;
+      });
+
+      const newDynamicEvents = [...dynamicEvents, updatedEvents.find(e => e.id === event.id)];
+      setDynamicEvents(assignColumns(newDynamicEvents));
+      setAnyTimeEvents(updatedEvents.filter(e => e.type === 'unspecified'));
+
+      // Update scheduleActions
+      const updatedActions = scheduleActions.map(action => {
+        if (action.id === event.id) {
+          return {
+            ...action,
+            type: 'scheduled',
+            startTime: '00:00',
+            endTime: format(addMinutes(parse('00:00', 'HH:mm', new Date()), DEFAULT_EVENT_DURATION), 'HH:mm'),
+            lastDragged: Date.now()
+          };
+        }
+        return action;
+      });
+      setScheduleActions(updatedActions);
+      updateLocalHabitData({ scheduleActions: updatedActions });
+    }
+  }, [isDailySchedulerMinimized, anyTimeEvents, dynamicEvents, scheduleActions, updateLocalHabitData]);
+
+  const getActionIndex = (eventId) => {
+    return scheduleActions.findIndex(action => action.id === eventId);
+  };
+
   const renderDailyScheduler = () => {
     let selBoxTopDiff = 0;
     
@@ -518,20 +533,28 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
     }
 
     const renderMinimizedEvents = () => {
+      // Sort events chronologically
+      const sortedEvents = [...dynamicEvents].sort((a, b) => {
+        const startA = getMinutesFromMidnight(a.startTime);
+        const startB = getMinutesFromMidnight(b.startTime);
+        return startA - startB;
+      });
+    
       return (
         <div className="relative" style={{ height: 'auto'}}>
-          {dynamicEvents.map((event) => {
+          {sortedEvents.map((event) => {
             const start = getMinutesFromMidnight(event.startTime);
             const end = getMinutesFromMidnight(event.endTime);
             const duration = (end - start + MINUTES_IN_DAY) % MINUTES_IN_DAY;
             const height = (duration / MINUTES_IN_SCHEDULER) * (HOUR_HEIGHT * 24);
-  
+            const actionIndex = getActionIndex(event.id);
+
             const style = {
               position: 'relative',
               height: `${Math.max(height, 20)}px`,
               marginBottom: '10px',
             };
-  
+    
             return (
               <div
                 key={event.id}
@@ -542,7 +565,10 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
                 style={style}
               >
                 <span className='truncate'>
-                  {localHabitData.habit_action} ({formatTime(event.startTime)} - {formatTime(event.endTime)})
+                {localHabitData.habit_action && localHabitData.habit_action.length > 0 
+                  ? `${localHabitData.habit_action} #${actionIndex + 1}` 
+                  : `Action #${actionIndex + 1}`
+                } ({formatTime(event.startTime)} - {formatTime(event.endTime)})
                 </span>
               </div>
             );
@@ -575,6 +601,7 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
             ))}
             {/* Event blocks */}
             {dynamicEvents.map((event) => {
+              const actionIndex = getActionIndex(event.id);
               let start = getMinutesFromMidnight(event.startTime);
               let end = getMinutesFromMidnight(event.endTime);
               let duration = end - start;
@@ -601,7 +628,10 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
                   } ${draggedEvents?.some(e => e.id === event.id) ? 'opacity-75' : ''}`}
                   style={style}
                 >
-                  <span className='truncate'>{localHabitData.habit_action} ({formatTime(event.startTime)} - {formatTime(event.endTime)})</span>
+                  <span className='truncate'>{localHabitData.habit_action && localHabitData.habit_action.length > 0 
+                  ? `${localHabitData.habit_action} #${actionIndex + 1}` 
+                  : `Action #${actionIndex + 1}`
+                } ({formatTime(event.startTime)} - {formatTime(event.endTime)})</span>
                 </div>
               );
             })}
@@ -610,28 +640,75 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
       );
     };
   
+    const renderAnyTimeEvents = () => {
+      return (
+        <div 
+          className="absolute right-0 bottom-0 overflow-x-auto"
+          style={{ left: isDailySchedulerMinimized ? '0' : `${HOUR_LABEL_WIDTH}px`, height: '100px',}}
+        >
+          <div className="flex items-center h-full">
+            {anyTimeEvents.map((event) => {
+              const actionIndex = getActionIndex(event.id);
+              return (
+                <div
+                  key={event.id}
+                  id={`event-${event.id}`}
+                  className={`bg-blue-500 text-white text-xs p-1 rounded mx-1 ${
+                    selectedEvents.includes(event.id) ? 'ring-2 ring-yellow-400 shadow-lg' : ''
+                  } ${draggedEvents?.some(e => e.id === event.id) ? 'opacity-75' : ''} ${
+                    isMobile ? 'cursor-pointer' : 'cursor-move'
+                  }`}
+                  style={{
+                    width: '110px',
+                    height: '60px',
+                    flexShrink: 0
+                  }}
+                  onClick={() => isMobile && handleAnyTimeEventClick(event)}
+                >
+                  <span className='truncate'>{localHabitData.habit_action && localHabitData.habit_action.length > 0 
+                    ? `${localHabitData.habit_action} #${actionIndex + 1}` 
+                    : `Action #${actionIndex + 1}`
+                  }</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+  
     return (
       <div className="mt-6 relative">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="text-lg font-medium">Daily Schedule</h3>
+          <h3 className="text-lg font-medium">Daily Scheduler</h3>
           <div className="flex items-center space-x-4">
-            <label className="inline-flex items-center cursor-pointer">
-              <span className="mr-2">12h</span>
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  className="sr-only"
+            {dynamicEvents.length > 0 && (
+              <div className="flex items-center cursor-pointer">
+                <span className="font-semibold">12h</span>
+                <Switch
                   checked={use24HourFormat}
                   onChange={() => setUse24HourFormat(!use24HourFormat)}
+                  sx={{
+                    '& .MuiSwitch-switchBase': {
+                      color: '#9ca3af', // gray-400
+                      '&.Mui-checked': {
+                        color: '#4b5563', // gray-600
+                      },
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: '#d1d5db', // gray-300
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#9ca3af', // gray-400
+                    },
+                  }}
                 />
-                <div className="w-10 h-4 bg-gray-400 rounded-full shadow-inner"></div>
-                <div className={`absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition ${use24HourFormat ? 'transform translate-x-full bg-blue-500' : ''}`}></div>
+                <span className="font-semibold">24h</span>
               </div>
-              <span className="ml-2">24h</span>
-            </label>
+            )}
             <button
-              onClick={toggleDailySchedulerMinimize}
-              className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDailySchedulerMinimize(); }}
+              className="w-6 h-6 flex items-center justify-center dimension-theme-colored"
             >
               {isDailySchedulerMinimized ? '+' : '-'}
             </button>
@@ -647,36 +724,20 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
         >
           {/* Any Time section */}
           {(!isDailySchedulerMinimized || (isDailySchedulerMinimized && anyTimeEvents.length > 0)) && (
-            <div 
-              className="border border-gray-300 rounded relative"
-              style={{ height: `${ANY_TIME_HEIGHT}px` }}
-            >
-              <div className="absolute top-0 bottom-0 left-0 w-full flex items-center justify-start pl-2 font-bold text-sm border-r border-gray-200" 
-                  style={{ width: `${HOUR_LABEL_WIDTH}px` }}>
-                Any Time
-              </div>
-              <div 
-                className="absolute top-0 right-0 bottom-0 overflow-x-auto"
-                style={{ left: `${HOUR_LABEL_WIDTH}px` }}
-              >
-                <div className="flex items-center h-full">
-                  {anyTimeEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      id={`event-${event.id}`}
-                      className={`bg-blue-500 text-white text-xs p-1 rounded cursor-move mx-1 ${
-                        selectedEvents.includes(event.id) ? 'ring-2 ring-yellow-400 shadow-lg' : ''
-                      } ${draggedEvents?.some(e => e.id === event.id) ? 'opacity-75' : ''}`}
-                      style={{
-                        width: '110px',
-                        height: '60px',
-                        flexShrink: 0
-                      }}
-                    >
-                      <span className='truncate'>{localHabitData.habit_action}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="border border-gray-300 rounded relative">
+              {isDailySchedulerMinimized && (
+                <h4 className="text-md font-medium p-2 bg-gray-100 border-b border-gray-300">
+                  'Any Time' Actions
+                </h4>
+              )}
+              <div style={{ height: `${ANY_TIME_HEIGHT}px` }}>
+                {!isDailySchedulerMinimized && (
+                  <div className="absolute top-0 bottom-0 left-0 w-full flex items-center justify-start pl-2 font-bold text-sm border-r border-gray-200" 
+                      style={{ width: `${HOUR_LABEL_WIDTH}px` }}>
+                    Any Time
+                  </div>
+                )}
+                {renderAnyTimeEvents()}
               </div>
             </div>
           )}
@@ -686,11 +747,16 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
             className="border border-gray-300 rounded relative" 
             style={{ height: isDailySchedulerMinimized ? 'auto' : `${HOUR_HEIGHT * 25}px` }}
           >
+            {isDailySchedulerMinimized && dynamicEvents.length > 0 && (
+              <h4 className="text-md font-medium p-2 bg-gray-100 border-b border-gray-300">
+                Scheduled Actions
+              </h4>
+            )}
             {isDailySchedulerMinimized ? renderMinimizedEvents() : renderNormalEvents()}
           </div>
         </div>
-        {/* Drag Indicator */}
-        {dragIndicator && !dragIndicator.isAnyTime && (
+        {/* Drag Indicator, currently disabled, rendering needs to be reworked */}
+        {dragIndicator && !dragIndicator.isAnyTime && 0 && (
           <div 
             className="absolute bg-gray-300 opacity-50 pointer-events-none"
             style={{
@@ -751,7 +817,7 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
   useEffect(() => {
     if (actionSchedulerContentRef.current) {
       if (isActionSchedulerMinimized) {
-        actionSchedulerContentRef.current.style.maxHeight = '0px';
+        actionSchedulerContentRef.current.style.maxHeight = 'none';
       } else {
         actionSchedulerContentRef.current.style.maxHeight = `${actionSchedulerContentRef.current.scrollHeight}px`;
       }
@@ -876,11 +942,15 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
             }
           }
           else{
+            if(!event.lastDragged){
+              event.lastDragged = 0;
+            }
             return {
               ...action,
               type: event.type,
               startTime: event.startTime,
-              endTime: event.endTime
+              endTime: event.endTime,
+              lastDragged: event.lastDragged
             };
           }
         }
@@ -977,106 +1047,6 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
     }
     setIsScrolling(false);
   };
-
-  const updateDraggedEventsPosition = () => {
-    if (draggedEvents && draggedEvents.length > 0 && dailySchedulerRef.current) {
-      const schedulerRect = dailySchedulerRef.current.getBoundingClientRect();
-      const anyTimeRect = dailySchedulerRef.current.previousSibling.getBoundingClientRect();
-      const currentMouseY = lastMousePositionRef.current.clientY;
-      const schedulerTop = schedulerRect.top + window.scrollY;
-      const relativeMouseY = currentMouseY + window.scrollY - schedulerTop;
-  
-      // Use the clicked event as the reference for movement
-      const clickedEvent = draggedEvents.find(de => de.isClicked) || draggedEvents[0];
-      const newStartMinutes = Math.floor((relativeMouseY / schedulerRect.height) * MINUTES_IN_SCHEDULER);
-      const roundedStartMinutes = roundToInterval(newStartMinutes);
-      const adjustedStartMinutes = Math.min(Math.max(roundedStartMinutes, 0), MINUTES_IN_DAY - 5);
-      const moveDelta = adjustedStartMinutes - (clickedEvent.initialStartTime ? getMinutesFromMidnight(clickedEvent.initialStartTime) : 0);
-  
-      let updatedEvents = [...dynamicEvents, ...anyTimeEvents].map(e => {
-        const draggedEvent = draggedEvents.find(de => de.id === e.id);
-        if (draggedEvent) {
-          const originalStartMinutes = draggedEvent.initialStartTime ? getMinutesFromMidnight(draggedEvent.initialStartTime) : 0;
-          // Moving into Any Time Section
-          if (relativeMouseY < 0 || ((originalStartMinutes + moveDelta) < 0)) {
-            return { ...e, type: 'unspecified', startTime: '', endTime: '' };
-          } 
-          // Moving out of Any Time Section or within regular schedule
-          else {
-            let newStartMinutes = (originalStartMinutes + moveDelta + MINUTES_IN_DAY) % MINUTES_IN_DAY;
-            if (originalStartMinutes + moveDelta >= MINUTES_IN_DAY){
-              newStartMinutes = MINUTES_IN_DAY - DRAG_INTERVAL;
-            }
-
-            const newStartTime = formatMinutesToTime(newStartMinutes);
-            const originalDuration = draggedEvent.isAnyTime || !draggedEvent.initialEndTime ? DEFAULT_EVENT_DURATION : 
-              (getMinutesFromMidnight(draggedEvent.initialEndTime) - getMinutesFromMidnight(draggedEvent.initialStartTime) + MINUTES_IN_DAY) % MINUTES_IN_DAY;
-            
-            const newEndMinutes = (newStartMinutes + originalDuration) % MINUTES_IN_DAY;
-            const newEndTime = formatMinutesToTime(newEndMinutes);
-  
-            return { 
-              ...e, 
-              type: 'scheduled', 
-              startTime: newStartTime, 
-              endTime: newEndTime 
-            };
-          }
-        }
-        return e;
-      });
-  
-      // Handle event collisions and adjust positions if necessary
-      //updatedEvents = handleEventCollisions(updatedEvents);
-  
-      setDynamicEvents(assignColumns(updatedEvents.filter(e => e.type !== 'unspecified')));
-      setAnyTimeEvents(updatedEvents.filter(e => e.type === 'unspecified'));
-  
-      // Update drag indicator (showing for the clicked event in multi-select)
-      const draggedEvent = updatedEvents.find(e => e.id === clickedEvent.id);
-      if (draggedEvent && draggedEvent.type !== 'unspecified') {
-        const startMinutes = getMinutesFromMidnight(draggedEvent.startTime);
-        const endMinutes = getMinutesFromMidnight(draggedEvent.endTime);
-        setDragIndicator({
-          startTime: draggedEvent.startTime,
-          endTime: draggedEvent.endTime,
-          isAnyTime: false,
-          top: (startMinutes / MINUTES_IN_SCHEDULER) * schedulerRect.height,
-          height: ((endMinutes - startMinutes + MINUTES_IN_DAY) % MINUTES_IN_DAY) / MINUTES_IN_SCHEDULER * schedulerRect.height
-        });
-      } else {
-        setDragIndicator(null);
-      }
-    }
-  };
-  
-  // Helper function to handle event collisions
-  const handleEventCollisions = (events) => {
-    const sortedEvents = events
-      .filter(e => e.type === 'scheduled')
-      .sort((a, b) => getMinutesFromMidnight(a.startTime) - getMinutesFromMidnight(b.startTime));
-  
-    for (let i = 1; i < sortedEvents.length; i++) {
-      const prevEvent = sortedEvents[i - 1];
-      const currentEvent = sortedEvents[i];
-      
-      const prevEndMinutes = getMinutesFromMidnight(prevEvent.endTime);
-      const currentStartMinutes = getMinutesFromMidnight(currentEvent.startTime);
-      
-      if (currentStartMinutes < prevEndMinutes) {
-        // Collision detected, adjust the current event's start time
-        const newStartTime = prevEvent.endTime;
-        const duration = (getMinutesFromMidnight(currentEvent.endTime) - getMinutesFromMidnight(currentEvent.startTime) + MINUTES_IN_DAY) % MINUTES_IN_DAY;
-        const newEndMinutes = (getMinutesFromMidnight(newStartTime) + duration) % MINUTES_IN_DAY;
-        const newEndTime = formatMinutesToTime(newEndMinutes);
-        
-        currentEvent.startTime = newStartTime;
-        currentEvent.endTime = newEndTime;
-      }
-    }
-  
-    return [...sortedEvents, ...events.filter(e => e.type !== 'scheduled')];
-  };
   
   // Helper function to safely format minutes to time
   const formatMinutesToTime = (minutes) => {
@@ -1136,28 +1106,87 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
+  const renderMinimizedActionScheduler = () => {
+    if (scheduleActions.length === 0) return null;
+  
+    const action = scheduleActions[currentMinimizedAction];
+    const isFirstAction = currentMinimizedAction === 0;
+    const isLastAction = currentMinimizedAction === scheduleActions.length - 1;
+  
+    return (
+      <div className="bg-gray-100 border border-gray-300 p-4 mb-4 rounded">
+        <div className="flex items-center justify-center mb-2">
+          {scheduleActions.length > 1 && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentMinimizedAction(prev => prev - 1); }}
+              disabled={isFirstAction}
+              className={`px-2 py-1 rounded ${isFirstAction ? 'bg-gray-300 cursor-not-allowed' : 'dimension-theme-colored'}`}
+            >
+              &lt;
+            </button>
+          )}
+          <h4 className="text-md font-medium mx-4">
+            {localHabitData.habit_action && localHabitData.habit_action.length > 0 
+              ? `"${localHabitData.habit_action}"` + ` `
+              : ''
+            }Action #
+            {`${currentMinimizedAction + 1}`}
+          </h4>
+          {scheduleActions.length > 1 && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentMinimizedAction(prev => prev + 1); }}
+              disabled={isLastAction}
+              className={`px-2 py-1 rounded ${isLastAction ? 'bg-gray-300 cursor-not-allowed' : 'dimension-theme-colored'}`}
+            >
+              &gt;
+            </button>
+          )}
+        </div>
+        <select
+          value={action.type}
+          onChange={(e) => handleActionTypeChange(action.id, e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        >
+          <option value="unspecified">Any Time</option>
+          <option value="scheduled">Specific Time</option>
+        </select>
+        {action.type === 'scheduled' && (
+          <div className="mt-2 flex items-center space-x-2">
+            <span>From:</span>
+            {renderTimeInput(action.id, 'startTime')}
+            <span>To:</span>
+            {renderTimeInput(action.id, 'endTime')}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       {localHabitData.habit_frequencyPeriod === 'daily' && (
         <>
-          <div className="mb-4">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={showActionScheduler}
-                onChange={handleActionSchedulerToggle}
-                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              />
-              <span className="ml-2">Set specific time / time-range to "{localHabitData.habit_action}"</span>
-            </label>
+          <div className="mb-4 flex justify-center items-center flex-wrap">
+            <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleActionSchedulerToggle(); }}
+                className="px-4 py-2 dimension-theme-colored rounded"
+              >
+                {showActionScheduler ? 'Hide Habbit Scheduler' : 'Show Habbit Scheduler'}
+              </button>
           </div>
           {showActionScheduler && (
             <div className="border border-gray-300 p-4 mt-4 rounded">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Schedule your {localHabitData.habit_frequencyNum} Daily "{localHabitData.habit_action}" Action(s)</h3>
+              <h3 className="text-lg font-medium">
+                Schedule your {localHabitData.habit_frequencyNum} Daily 
+                {localHabitData.habit_action && localHabitData.habit_action.length > 0 
+                  ? ` "${localHabitData.habit_action}"` 
+                  : ''
+                } Action(s)
+              </h3>
                 <button
-                  onClick={toggleActionSchedulerMinimize}
-                  className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleActionSchedulerMinimize(); }}
+                  className="w-6 h-6 flex items-center justify-center dimension-theme-colored"
                 >
                   {isActionSchedulerMinimized ? '+' : '-'}
                 </button>
@@ -1165,12 +1194,19 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
               <div 
                 ref={actionSchedulerContentRef}
                 className="overflow-hidden transition-all duration-300 ease-in-out"
-                style={{ maxHeight: isActionSchedulerMinimized ? '0px' : '500px' }}
+                style={{ maxHeight: isActionSchedulerMinimized ? 'auto' : '500px' }}
               >
-                {scheduleActions.map((action, index) => (
+                {isActionSchedulerMinimized 
+                  ? renderMinimizedActionScheduler()
+                  : scheduleActions.map((action, index) => (
                   <div key={action.id} className="bg-gray-100 border border-gray-300 p-4 mb-4 rounded">
                     <h4 className="text-md font-medium mb-2">
-                      {`${index + 1}${getOrdinalSuffix(index + 1)} "${localHabitData.habit_action}" Action`}
+                      {`${index + 1}${getOrdinalSuffix(index + 1)} `}
+                      {localHabitData.habit_action && localHabitData.habit_action.length > 0 
+                        ? `"${localHabitData.habit_action}" ` 
+                        : ''
+                      }
+                      Action
                     </h4>
                     <select
                       value={action.type}
@@ -1189,7 +1225,7 @@ const HabitScheduler = ({ habitData, onHabitDataChange }) => {
                       </div>
                     )}
                   </div>
-                ))}
+              ))}
               </div>
               {renderDailyScheduler()}
             </div>

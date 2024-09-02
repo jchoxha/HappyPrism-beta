@@ -14,7 +14,7 @@ import { loadDependencies } from './Dependencies/loadDependencies.js';
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <HabitSchedulerTestPage />,
+    element: <App />,
   },
   {
     path: "/home",

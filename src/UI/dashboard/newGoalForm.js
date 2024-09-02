@@ -1151,6 +1151,7 @@ useEffect(() => {
   };
 }, [showEmojiPicker]);
 
+
 return (
   <div className="form-container" onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
       {showErrorPopup && (
@@ -1472,13 +1473,14 @@ return (
                                 />
                               )}
                               </div>
-                              <div className="form-group">
-                                <label>Set a Streak Goal</label>
-                                <Switch
-                                  checked={streakGoalEnabled}
-                                  onChange={() => setStreakGoalEnabled(!streakGoalEnabled)}
-                                  color="primary"
-                                />
+                              <div className="form-group flex justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setStreakGoalEnabled(!streakGoalEnabled)}
+                                  className={`dimension-theme-colored py-2 px-4 rounded`}
+                                >
+                                  {streakGoalEnabled ? 'Disable Streak Goal for this Habbit' : 'Set a Streak Goal for this Habbit'}
+                                </button>
                               </div>
 
                               {streakGoalEnabled && (
@@ -1502,9 +1504,9 @@ return (
                                       onChange={handleHabitInputChange}
                                       required
                                     >
-                                      <option value="days">{getStreakPeriodText('days')}</option>
-                                      <option value="weeks">{getStreakPeriodText('weeks')}</option>
-                                      <option value="months">{getStreakPeriodText('months')}</option>
+                                      {getValidStreakPeriods().map(period => (
+                                        <option key={period} value={period}>{getStreakPeriodText(period)}</option>
+                                      ))}
                                     </select>
                                   </div>
                                   {habitErrors.habit_goal_streakNum && (

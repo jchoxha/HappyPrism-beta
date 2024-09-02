@@ -255,7 +255,9 @@ const GoalsPage = () => {
           </div>
         )}
       </div>
-      <h1 className="text-2xl font-bold mb-4">Your Goals</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {filteredGoals.length > 0 ? "Your Goals" : "No Goals to Display..."}
+      </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredGoals.map((goal) => (
           <GoalCard key={goal.id} goal={goal} />

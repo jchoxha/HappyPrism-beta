@@ -1,4 +1,13 @@
 // chatai.js
+
+//To do:
+//  FUNCTIONS:
+//      - UPDATE USER GOALS BASED ON CHAT
+//  INTEGRATION WITH NEW GOAL FORM / DASHBOARD
+//      -USER SHOULD BE ABLE TO OPEN A SMALL CHAT WINDOW WHILE IN THE DASHBOARD THAT HAS ACCESS TO CERTAIN FORMS
+//      -AGENTS SHOULD HAVE CONTEXT OF WHAT THE USER IS CURRENTLY LOOKING AT AND BE ABLE TO INTERACT/RESPOND
+
+
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold} = require('@google/generative-ai');
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
