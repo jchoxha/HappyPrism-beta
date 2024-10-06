@@ -37,14 +37,27 @@ body {
   --dimension-hover-bg-color: #f8a8a8;
   --dimension-text-color: white;
   --dimension-bg-animation: none;
-  --dimension-bg-size: initial;
+  --dimension-bg-size: 400% 400%;
+  --animation-duration: 15s;
 }
 
 .dimension-theme-colored {
   background: var(--dimension-bg-color);
   color: var(--dimension-text-color);
   background-size: var(--dimension-bg-size);
-  animation: var(--dimension-bg-animation);
+  animation: gradientAnimation var(--animation-duration) ease infinite;
+  /* animation-delay: calc(var(--animation-duration) * -1 * var(--random-offset, 0)); */
+}
+
+.dimension-theme-colored-LShape{
+  /* border-image: var(--dimension-bg-color); */
+  border-image-slice: 1;
+  /* animation: gradientAnimation var(--animation-duration) ease infinite; */
+  /* animation-delay: calc(var(--animation-duration) * -1 * var(--random-offset, 0)); */
+}
+
+.dimension-theme-colored-no-bg {
+  color: var(--dimension-text-color);
 }
 
 .dimension-theme-colored button {
@@ -64,20 +77,19 @@ body {
   stroke: var(--dimension-text-color); 
 }
 
+/* .spectrum-black-text{
+  color:#000;
+}
 
-@keyframes gradient {
-  0%, 100% {
-      background-position: 0% 0%;
-  }
-  25% {
-      background-position: 100% 0%;
-  }
-  50% {
-      background-position: 100% 100%;
-  }
-  75% {
-      background-position: 0% 100%;
-  }
+.spectrum-black-text svg {
+  fill: #000;
+  stroke: #000; 
+} */
+
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .custom-gradient {
@@ -142,6 +154,7 @@ body {
   }
 }
 
+
 .chart-container {
   width: 100%;
   height: 100%;
@@ -201,11 +214,6 @@ button:focus {
 }
 .button-hover {
   background-color: #bdbdbd !important;
-}
-button {
-  border-radius: 10px;
-  transition: background-color 0.3s;
-  background-color: initial;
 }
 #control-buttons {
   position: fixed;
@@ -1113,14 +1121,11 @@ div#chat-response-buttons {}
   display: none;
 }
 #dashboard-content {
-  background-color: #ededed;
-  color: #000000;
   position: relative;
   width: 100%;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  overflow-y: scroll;
 }
 #sidebar-nav {
   padding: 20px;
@@ -1142,10 +1147,6 @@ div#chat-response-buttons {}
 }
 #sidebar-nav ul li a:hover {
   text-decoration: underline;
-}
-main {
-  padding: 20px;
-  flex-grow: 1;
 }
 .dashboard-page {
   display: none;
@@ -1227,8 +1228,8 @@ main {
 /* New Goal Form */
 
 .form-container {
-  background-color: #ffffff;
-  padding: 20px;
+  /* background-color: #ffffff; */
+  /* padding: 20px; */
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   max-width: 600px;

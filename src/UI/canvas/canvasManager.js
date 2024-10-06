@@ -257,9 +257,6 @@ class CanvasManager {
 
   async changeCentralNode(orbit, currentCentralNode, newCentralNode) {
     if (!this.defaultNodesInitialized || this.changeCentralNodeMode) {
-      console.log(
-        "Default nodes not initialized or already changing central node"
-      );
       return;
     }
     this.changeCentralNodeMode = true;
@@ -270,10 +267,6 @@ class CanvasManager {
       setTimeout(() => {
         this.changeCentralNodeMode = false;
         if (this.nextCentralNode) {
-          console.log(
-            "Queued node detected, changing central node to: ",
-            this.nextCentralNode.name
-          );
           setTimeout(() => {
             this.changeCentralNodeMode = false;
             if (this.nextCentralNode) {
@@ -376,13 +369,10 @@ class CanvasManager {
   initNodesOnDashboardOpen(canvasManager) {
     if (!this.defaultNodesInitialized) {
       this.instantInitDefaultNodes = true;
-      console.log("Initializing default nodes for dashboard");
       while(this.numNodesInitialized < 7 && !this.defaultNodesInitialized){
-        console.log("Running initDefaultNodes");
         this.initDefaultNodes(canvasManager);
       }
       this.instantInitDefaultNodes = false; // Reset after initialization
-      console.log("All default nodes initialized for dashboard");
     }
   }
 
@@ -533,12 +523,8 @@ class CanvasManager {
         if (this.numNodesInitialized >= 7) {
           // Adjust this number based on your needs
           this.defaultNodesInitialized = true;
-          console.log("Default nodes initialized");
         }
       }
-    }
-    else{
-      console.log("defaultNodesInitialized:", this.defaultNodesInitialized, "width:", this.width, "height:", this.height);
     }
   }
 

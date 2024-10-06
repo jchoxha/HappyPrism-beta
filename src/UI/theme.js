@@ -7,7 +7,6 @@ class Theme {
     }
 
     updateThemeForNode(node) {
-        console.log("updating theme for node: ", node);
         const root = document.documentElement;
         const colors = this.getColorsForNode(node);
 
@@ -32,7 +31,7 @@ class Theme {
                 textColor: '#ffffff'
             },
             'Sol': { backgroundColor: '#ffd900', hoverColor: '#d4b200', textColor: '#000000' },
-            'Amber': { backgroundColor: '#FFA500', hoverColor: '#cc8400', textColor: '#ffffff' },
+            'Amber': { backgroundColor: '#FFA500', hoverColor: '#cc8400', textColor: '#000000' },
             'Red': { backgroundColor: '#FF4500', hoverColor: '#b33400', textColor: '#ffffff' },
             'Violet': { backgroundColor: '#8A2BE2', hoverColor: '#661dbd', textColor: '#ffffff' },
             'Jean': { backgroundColor: '#4169E1', hoverColor: '#3151b3', textColor: '#ffffff' },

@@ -10,7 +10,7 @@ import { getRandomExample } from './goalExamples.js';
 import { Theme } from '../theme.js';
 import KanbanBoard from './KanbanBoard';
 import JourneyMap from './JourneyMap';
-import HabitScheduler from './HabbitScheduler.js';
+import HabitScheduler from './HabitScheduler.js';
 import { v4 as uuidv4 } from 'uuid';
 const config = require('../../config.js');
 
@@ -112,6 +112,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   });
 
   const handleHabitDataChange = (newHabitData) => {
+    console.log("updating habit data: ", newHabitData);
     setHabitData(newHabitData);
     setIsDirty(true);
   };
@@ -122,6 +123,16 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   });
 
   const [streakGoalEnabled, setStreakGoalEnabled] = useState(false);
+
+  const handleFrequencyChange = (change) => {
+    const newValue = Math.max(1, parseInt(habitData.habit_frequencyNum) + change);
+    handleHabitInputChange({
+      target: {
+        name: 'habit_frequencyNum',
+        value: newValue
+      }
+    });
+  };
 
   const handleHabitInputChange = (e) => {
     const { name, value } = e.target;
@@ -461,7 +472,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   
     newGoal.status = goalStatus; 
     newGoal.goal_completedDate = goalData.goal_completedDate; // Add completed date here
-    console.log(newGoal);
+    console.log("New Goal: ", newGoal);
     onSubmit(newGoal);
     clearForm();
   };
@@ -787,7 +798,6 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const handleEmojiClick = (emojiObject) => {
     const emoji = emojiObject.emoji;
     setGoalData(prevData => ({ ...prevData, goal_emoji: emoji }));
-    console.log(goalData);
     setShowEmojiPicker(false);
   };
 
@@ -1004,7 +1014,6 @@ const [goalPickerList, setGoalPickerList] = useState([]);
 
 const getAlreadyAddedGoalIds = () => {
   if (goalType === 'challenge') {
-    console.log(milestones);
     return milestones.map(m => m.pre_existing_goal?.id).filter(id => id);
   } else if (goalType === 'project') {
     return projectTasks.map(t => t.pre_existing_goal?.id).filter(id => id);
@@ -1439,15 +1448,31 @@ return (
                                 <label htmlFor="habit_frequencyNum">Frequency:</label>
                                 <small>How often do you want to try to do your habit?</small>
                                 <div className="frequency-input">
-                                  <input
-                                    type="number"
-                                    id="habit_frequencyNum"
-                                    name="habit_frequencyNum"
-                                    value={habitData.habit_frequencyNum}
-                                    onChange={handleHabitInputChange}
-                                    min="1"
-                                    required
-                                  />
+                                  <div className="flex items-center">
+                                    <input
+                                      type="number"
+                                      id="habit_frequencyNum"
+                                      name="habit_frequencyNum"
+                                      value={habitData.habit_frequencyNum}
+                                      onChange={handleHabitInputChange}
+                                      min="1"
+                                      required
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleFrequencyChange(1)}
+                                      className="ml-2 px-3 py-1 bg-gray-200 rounded"
+                                    >
+                                      +
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleFrequencyChange(-1)}
+                                      className="ml-2 px-3 py-1 bg-gray-200 rounded"
+                                    >
+                                      -
+                                    </button>
+                                  </div>
                                   <select
                                     id="habit_frequencyPeriod"
                                     name="habit_frequencyPeriod"
@@ -1466,12 +1491,11 @@ return (
                                 <small className='description-example'>Example: "3 times per week" or "1 time per day"</small>
                               </div>
                               <div className="form-group">
-                              {habitData.habit_frequencyPeriod === 'daily' && (
                                 <HabitScheduler
                                   habitData={habitData}
                                   onHabitDataChange={handleHabitDataChange}
+                                  currentDimension={currentDimension}
                                 />
-                              )}
                               </div>
                               <div className="form-group flex justify-center">
                                 <button
@@ -1479,7 +1503,7 @@ return (
                                   onClick={() => setStreakGoalEnabled(!streakGoalEnabled)}
                                   className={`dimension-theme-colored py-2 px-4 rounded`}
                                 >
-                                  {streakGoalEnabled ? 'Disable Streak Goal for this Habbit' : 'Set a Streak Goal for this Habbit'}
+                                  {streakGoalEnabled ? 'Disable Streak Goal for this Habit 🗑️' : 'Set a Streak Goal for this Habit 🔥'}
                                 </button>
                               </div>
 

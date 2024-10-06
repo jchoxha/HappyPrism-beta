@@ -54,7 +54,6 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
   const theme = new Theme();
 
   useEffect(() => {
-    console.log('goal card made for goal: ', goal);
   }, []);
 
   useEffect(() => {
@@ -151,11 +150,26 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
   );
 
   const handleCardClick = (task) => {
-    console.log('Card clicked:', task);
   };
 
   const getCompletedMilestonesCount = (milestones) => {
     return milestones.filter(milestone => milestone.status === 'Completed').length;
+  };
+
+  const formatGoalType = (goal) => {
+    if (goal.goal_type !== 'habit') return goal.goal_type.charAt(0).toUpperCase() + goal.goal_type.slice(1);
+
+    const { habit_frequencyNum, habit_frequencyPeriod } = goal;
+    
+    if (habit_frequencyNum === 1) {
+      return `${habit_frequencyPeriod.charAt(0).toUpperCase() + habit_frequencyPeriod.slice(1)}ly Habit`;
+    }
+    
+    if (habit_frequencyNum === 2) {
+      return `Twice ${habit_frequencyPeriod}ly Habit`;
+    }
+    
+    return `${habit_frequencyNum} Times per ${habit_frequencyPeriod} Habit`;
   };
 
   return (
@@ -164,7 +178,7 @@ const GoalCard = ({ goal, showUpdateButton = true }) => {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>{goal.goal_name}</CardTitle>
-            <div className="text-sm">{goal.goal_type.charAt(0).toUpperCase() + goal.goal_type.slice(1)}</div>
+            <div className="text-sm">{formatGoalType(goal)}</div>
             <div className="text-sm text-gray-500">
               <p>Created: {formatDate(goal.goal_startDate)}</p>
               <p>Last Modified: {formatDate(goal.goal_lastUpdated || goal.goal_startDate)}</p>

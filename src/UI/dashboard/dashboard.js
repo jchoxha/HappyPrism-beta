@@ -1,5 +1,5 @@
 // dashboard.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import GoalsPage from './GoalsPage';
 import ProgressPage from './ProgressPage';
 import ToolsPage from './ToolsPage';
@@ -14,12 +14,22 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
 
+  const headerRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const lShapeRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
+      if (sidebarRef.current) setSidebarWidth(sidebarRef.current.offsetWidth);
     };
 
     window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call to set dimensions
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -32,7 +42,6 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   useEffect(() => {
     const colors = theme.getColorsForNode({ dimensionName: currentDimension });
     theme.updateThemeForNode({ dimensionName: currentDimension });
-    console.log("Current dimension: ", currentDimension);
   }, [currentDimension]);
 
   useEffect(() => {
@@ -57,7 +66,6 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   };
 
   const toggleSidebar = () => {
-    console.log('toggleSidebar');
     setIsSidebarOpen(!isSidebarOpen);
   };
 
@@ -74,7 +82,7 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
     }
   };
 
-  const Dimensionselector = () => {
+  const Dimensionselector = (spectrumBlackText = false) => {
     const { dimensionMap } = useDimension();
   
     const getDimensionDisplay = (nodeName) => {
@@ -85,20 +93,23 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
       return `${dimensionName}\nDimension`;
     };
   
+    // const isSpectrumBlackText = spectrumBlackText && currentNode && currentNode.name === 'Spectrum';
+    const isSpectrumBlackText = false;
+  
     return (
       <div className={`flex items-center justify-between ${isMobile ? 'px-0' : 'px-2'} py-3`}>
         <button
-          className={`rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent ${
+          className={`${isSpectrumBlackText ? 'spectrum-black-text' : ''} rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent ${
             isMobile ? 'py-2 pr-2' : 'p-2'
           }`}
           onClick={() => handleNodeChange('prev')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current text-white`} viewBox="0 0 24 24">
+          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current`} viewBox="0 0 24 24">
             <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
           </svg>
         </button>
         <span 
-          className={`font-semibold dimension-theme-colored ${isMobile ? 'text-lg' : 'text-sm'} flex-grow text-center px-2`} 
+          className={`${isSpectrumBlackText ? 'spectrum-black-text' : ''} font-semibold dimension-theme-colored ${isMobile ? 'text-lg' : 'text-sm'} flex-grow text-center px-2`} 
           style={{ 
             background: 'none', 
             minWidth: '170px',
@@ -107,16 +118,16 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            height: '48px'  // Adjust this value as needed
+            height: '48px'
           }}
         >
           {currentNode ? getDimensionDisplay(currentNode.name) : ''}
         </span>
         <button
-          className="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+          className={`${isSpectrumBlackText ? 'spectrum-black-text' : ''} p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent`}
           onClick={() => handleNodeChange('next')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current text-white`} viewBox="0 0 24 24">
+          <svg xmlns="http://www.w3.org/2000/svg" className={`${isMobile ? 'w-6 h-6' : 'w-4 h-4'} fill-current`} viewBox="0 0 24 24">
             <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
           </svg>
         </button>
@@ -124,93 +135,167 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
     );
   }
 
+  useEffect(() => {
+    // Update the single div style to reflect changes in header height, sidebar width, and dimension color
+    if (lShapeRef.current) {
+      const currentColor = dimensionColors[currentDimension];
+      lShapeRef.current.style.borderTopWidth = `${headerHeight}px`;
+      lShapeRef.current.style.borderLeftWidth = isSidebarOpen ? `${sidebarWidth}` : '0px';
+
+      if(isSidebarOpen && isMobile){
+        lShapeRef.current.style.borderLeftWidth = `290px`;
+      }
+      
+      if (currentDimension === 'Spectrum') {
+        lShapeRef.current.style.borderImage = `${currentColor} 1`;
+        lShapeRef.current.style.borderColor = 'transparent';
+        lShapeRef.current.style.animation = 'gradientShift 3s linear infinite alternate';
+      } else {
+        lShapeRef.current.style.borderImage = 'none';
+        lShapeRef.current.style.borderColor = `${currentColor}`;
+        lShapeRef.current.style.animation = 'none';
+      }
+    }
+  }, [headerHeight, sidebarWidth, isSidebarOpen, currentDimension, dimensionColors]);
+
+  useEffect(() => {
+    // Add keyframe animation to the document
+    const style = document.createElement('style');
+    if(!isMobile){
+      style.textContent = `
+      @keyframes gradientShift {
+        0% {
+          border-image-source: linear-gradient(30deg, #FFA500 0%, #FF4500 16.67%, #8A2BE2 33.33%, #4169E1 50%, #2E8B57 66.67%, #ffd900 83.33%, #FFA500 100%);
+        }
+        100% {
+          border-image-source: linear-gradient(30deg, #ffd900 0%, #FFA500 16.67%, #FF4500 33.33%, #8A2BE2 50%, #4169E1 66.67%, #2E8B57 83.33%, #ffd900 100%);
+        }
+      }
+    `;
+    } else{
+      style.textContent = `
+      @keyframes gradientShift {
+        0% {
+          border-image-source: linear-gradient(75deg, #FFA500 0%, #FF4500 16.67%, #8A2BE2 33.33%, #4169E1 50%, #2E8B57 66.67%, #ffd900 83.33%, #FFA500 100%);
+        }
+        100% {
+          border-image-source: linear-gradient(75deg, #ffd900 0%, #FFA500 16.67%, #FF4500 33.33%, #8A2BE2 50%, #4169E1 66.67%, #2E8B57 83.33%, #ffd900 100%);
+        }
+      }
+    `;
+    }
+
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
 
   return (
     <div id="dashboard-popup" style={{ display: 'block' }}>
-      <div id="dashboard-content">
-      <div id="dashboard-header" className="flex items-center justify-between dimension-theme-colored sticky top-0 z-40 py-0 px-4 shadow-md overflow-x-auto">
+      <div id="dashboard-content" className='overflow-y-scroll'>
+        <div id="dashboard-header" ref={headerRef} className="flex items-center justify-between dimension-theme-colored-no-bg bg-transparent sticky top-0 z-40 py-0 px-4 shadow-md overflow-x-auto">
 
-        <button
-          className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-          onClick={toggleSidebar}
-        >
-          <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
-        </button>
-        
-        <h1 className="text-xl font-bold text-center mx-2">{currentPage}</h1>
-        
-        {!isMobile && <Dimensionselector />}
-        
-        <button
-          id="close-dashboard-button"
-          className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-          onClick={onClose}
-        >
-          <img src="/Images/UI/close.svg" alt="close" className="w-6 h-6" />
-        </button>
-      </div>
-        {isSidebarOpen && (
-            <div 
-              id="dashboard-sidebar" 
-              className="fixed z-30 h-full overflow-y-auto"
-              style={{
-                width: isMobile ? '300px' : '200px',
-                transition: 'width 0.3s ease-in-out'
-              }}
-            >
-            <nav className="dimension-theme-colored" id="sidebar-nav">
-            <ul>
-              {isMobile && (<li><Dimensionselector /></li>)}
-              <li>
-                <a
-                  href="#"
-                  className={`dimension-theme-colored block p-4 ${currentPage === 'Dashboard' ? 'underline font-bold' : ''}`}
-                  onClick={() => { setCurrentPage('Dashboard'); isMobile && toggleSidebar(); }}
-                >
-                  Dashboard
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className={`dimension-theme-colored block p-4 ${currentPage === 'Goals' ? 'underline font-bold' : ''}`}
-                  onClick={() => { setCurrentPage('Goals'); isMobile && toggleSidebar(); }}
-                >
-                  Goals
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className={`dimension-theme-colored block p-4 ${currentPage === 'Progress' ? 'underline font-bold' : ''}`}
-                  onClick={() => { setCurrentPage('Progress'); isMobile && toggleSidebar(); }}
-                >
-                  Progress
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className={`dimension-theme-colored block p-4 ${currentPage === 'Tools' ? 'underline font-bold' : ''}`}
-                  onClick={() => { setCurrentPage('Tools'); isMobile && toggleSidebar(); }}
-                >
-                  Tools
-                </a>
-              </li>
-            </ul>
-            </nav>
-          </div>
-        )}
-        {isSidebarOpen && isMobile && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-20" 
-            style={{ margin: "0" }}
+          <button
+            className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
             onClick={toggleSidebar}
+          >
+            <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
+          </button>
+          
+          <h1 className={`${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} text-xl font-bold text-center mx-2`}>{currentPage}</h1>
+          
+          {!isMobile && <Dimensionselector spectrumBlackText={true} />}
+          
+          <button
+            id="close-dashboard-button"
+            className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+            onClick={onClose}
+          >
+            <img src="/Images/UI/close.svg" alt="close" className="w-6 h-6" />
+          </button>
+        </div>
+          {isSidebarOpen && (
+              <div 
+                id="dashboard-sidebar" 
+                ref={sidebarRef}
+                className="fixed z-40 h-full overflow-y-auto"
+                style={{
+                  width: isMobile ? '300px' : '200px',
+                  transition: 'width 0.3s ease-in-out'
+                }}
+              >
+              <nav className="dimension-theme-colored-no-bg bg-transparent" id="sidebar-nav">
+              <ul>
+                {isMobile && (<li><Dimensionselector spectrumBlackText={true} /></li>)}
+                <li>
+                  <a
+                    href="#"
+                    className={`dimension-theme-colored ${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} block p-4 ${currentPage === 'Dashboard' ? 'underline font-bold' : ''}`}
+                    onClick={() => { setCurrentPage('Dashboard'); isMobile && toggleSidebar(); }}
+                  >
+                    Dashboard
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className={`dimension-theme-colored ${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} block p-4 ${currentPage === 'Goals' ? 'underline font-bold' : ''}`}
+                    onClick={() => { setCurrentPage('Goals'); isMobile && toggleSidebar(); }}
+                  >
+                    Goals
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className={`dimension-theme-colored ${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} block p-4 ${currentPage === 'Progress' ? 'underline font-bold' : ''}`}
+                    onClick={() => { setCurrentPage('Progress'); isMobile && toggleSidebar(); }}
+                  >
+                    Progress
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className={`dimension-theme-colored ${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} block p-4 ${currentPage === 'Tools' ? 'underline font-bold' : ''}`}
+                    onClick={() => { setCurrentPage('Tools'); isMobile && toggleSidebar(); }}
+                  >
+                    Tools
+                  </a>
+                </li>
+              </ul>
+              </nav>
+            </div>
+          )}
+          {isSidebarOpen && isMobile && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20" 
+              style={{ margin: "0" }}
+              onClick={toggleSidebar}
+            ></div>
+          )}
+          <div
+            id="dashboard-header-sidebar-bg"
+            ref={lShapeRef}
+            className="fixed bg-transparent transition-all duration-500 dimension-theme-colored-LShape pointer-events-none z-30" 
+            style={{
+              borderStyle: 'solid',
+              borderTopWidth: `${headerHeight}px`,   // Height of the top portion
+              borderLeftWidth: isSidebarOpen ? `${sidebarWidth}px` : '0px', // Width of the left portion
+              // borderColor: 'transparent blue blue transparent',
+              width: '100vw',
+              height: '100vh',
+              top: '0',
+              left: '0',
+              boxSizing: 'border-box',
+            }}
           ></div>
-        )}
-        <main style={{ marginLeft: isSidebarOpen && !isMobile ? '220px' : '0', transition: 'margin-left 0.3s' }}>
-          {renderPage()}
-        </main>
+          <main className='bg-white text-black' style={{ marginLeft: isSidebarOpen && !isMobile ? '220px' : '0', transition: 'margin-left 0.3s' }}>
+            {renderPage()}
+          </main>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
 import App from './App';
-import HabitSchedulerTestPage from './components/Test Pages/HabbitSchedulerTestPage.js';
+import HabitSchedulerTestPage from './components/Test Pages/HabitSchedulerTestPage.js';
 import { loadDependencies } from './Dependencies/loadDependencies.js';
 
 const router = createBrowserRouter([

@@ -4,7 +4,6 @@ let CanvasManager = null;
 let setupIteration = 0;
 
 export function setupEventListeners(canvasManager) {
-    console.log("Setting up event listeners, iteration number: ", setupIteration);
     setupIteration++;
     CanvasManager = canvasManager;
     
@@ -54,7 +53,6 @@ function handleButtonMouseOut(event) {
 }
 
 function handleAllButtonClick(event) {
-    console.log("Button clicked: ", event.currentTarget.id);
     let buttons = document.querySelectorAll('.activatable-button');
     if (buttons) {
         buttons.forEach(btn => {

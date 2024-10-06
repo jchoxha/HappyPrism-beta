@@ -13,12 +13,10 @@ const App = () => {
   const [showApp, setShowApp] = useState(false);
 
   const toggleChat = () => {
-    console.log('toggleChat');
     setShowChat(prevState => !prevState);
   };
 
   const toggleApp = () => {
-    console.log('toggleApp');
     setShowApp(prevState => !prevState);
   };
 
@@ -55,6 +53,34 @@ const App = () => {
       initializeEventListeners(canvasManager);
     }
   }, [canvasManager]);
+
+  // useEffect for setting up random gradient animation start points
+  // useEffect(() => {
+  //   const setRandomGradientOffsets = () => {
+  //     const elements = document.querySelectorAll('.dimension-theme-colored');
+  //     elements.forEach(element => {
+  //       const randomOffset = Math.random();
+  //       element.style.setProperty('--random-offset', randomOffset);
+  //     });
+  //   };
+
+  //   // Initial setup
+  //   setRandomGradientOffsets();
+
+  //   // Set up a MutationObserver to handle dynamically added elements
+  //   const observer = new MutationObserver((mutations) => {
+  //     mutations.forEach((mutation) => {
+  //       if (mutation.type === 'childList') {
+  //         setRandomGradientOffsets();
+  //       }
+  //     });
+  //   });
+
+  //   observer.observe(document.body, { childList: true, subtree: true });
+
+  //   // Cleanup function
+  //   return () => observer.disconnect();
+  // }, []);
 
   return (
     <DimensionProvider>

@@ -65,7 +65,6 @@ const GoalPicker = ({
         }, {});
       }
     });
-    console.log("initialFilters: ", initialFilters);
     return initialFilters;
   });
   
