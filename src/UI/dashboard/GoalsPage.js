@@ -95,11 +95,19 @@ const GoalsPage = () => {
       transformationGoal.goal_startDate = new Date();
       transformationGoal.subGoals = [
         new SubGoal(
-          new Goal("Complete a Fitness Program", "🏋️‍♀️", "challenge", new Date(), new Date("2024-06-30")),
+          (() => {
+            const goal = new Goal("Complete a Fitness Program", "🏋️‍♀️", "challenge", new Date(), new Date("2024-06-30"));
+            goal.percentComplete = Math.floor(Math.random() * 101); // Random number between 0 and 100
+            return goal;
+          })(),
           50
         ),
         new SubGoal(
-          new Goal("Participate in a Marathon", "🏃‍♂️", "challenge", new Date(), new Date("2024-10-31")),
+          (() => {
+            const goal = new Goal("Participate in a Marathon", "🏃‍♂️", "challenge", new Date(), new Date("2024-10-31"));
+            goal.percentComplete = Math.floor(Math.random() * 101); // Random number between 0 and 100
+            return goal;
+          })(),
           50
         )
       ];
@@ -149,84 +157,7 @@ const GoalsPage = () => {
   }, [currentDimension]);
 
 
-  const addNewGoal = (goalData) => {
-    const newGoal = new Goal(
-      goalData.goal_name,
-      goalData.goal_emoji,
-      goalData.goal_type,
-      goalData.goal_startDate,
-      goalData.goal_deadline,
-      goalData.milestones || [],
-      goalData.goal_habitData || {},
-      goalData.goal_performanceData || {},
-      goalData.goal_projectData || { tasks: [] },
-      goalData.goal_subGoals || [],
-      goalData.goal_transformationData || { subGoals: [], totalPercentComplete: 0 },
-      goalData.dimensions
-    );
-    newGoal.id = uuidv4();
-    newGoal.status = goalData.status || "Not Yet Started";
-    newGoal.goal_lastUpdated = new Date();
-
-    if (newGoal.status === "In Progress" && !newGoal.goal_startDate) {
-      newGoal.goal_startDate = new Date();
-    } else if (newGoal.status === "Completed") {
-      if (!newGoal.goal_startDate) {
-        newGoal.goal_startDate = new Date();
-      }
-      newGoal.goal_completedDate = new Date();
-      newGoal.goal_deadline = null;
-    }
-
-    // Handle milestones for challenge goals
-    if (newGoal.goal_type === "challenge") {
-      newGoal.milestones = newGoal.milestones.map(m => new Milestone(
-        m.name,
-        m.emoji,
-        m.status,
-        m.startDate,
-        m.deadline,
-        m.completedDate,
-        m.pre_existing_goal,
-        m.description,
-        m.id
-      ));
-    }
-
-    // Handle project tasks for project goals
-    if (newGoal.goal_type === "project") {
-      newGoal.project_tasks = newGoal.project_tasks.map(t => new ProjectTask(
-        t.name,
-        t.emoji,
-        t.status,
-        t.taskType,
-        t.pre_existing_goal,
-        t.deadline,
-        t.description
-      ));
-    }
-
-    // Handle sub-goals for transformation goals
-    if (newGoal.goal_type === "transformation") {
-      newGoal.subGoals = newGoal.subGoals.map(sg => new SubGoal(
-        new Goal(
-          sg.goal.goal_name,
-          sg.goal.goal_emoji,
-          sg.goal.goal_type,
-          sg.goal.goal_startDate,
-          sg.goal.goal_deadline,
-          sg.goal.milestones,
-          sg.goal.goal_habitData,
-          sg.goal.goal_performanceData,
-          sg.goal.goal_projectData,
-          sg.goal.goal_subGoals,
-          sg.goal.goal_transformationData,
-          sg.goal.dimensions
-        ),
-        sg.percentOfTransformation
-      ));
-    }
-
+  const addNewGoal = (newGoal) => {
     setGoals([...goals, newGoal]);
     setShowNewGoalForm(false);
   };

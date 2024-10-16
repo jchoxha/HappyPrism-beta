@@ -818,7 +818,6 @@ useEffect(() => {
     updateLocalHabitData({ scheduleActions: updatedActions });
   };
   const onEventMoveMonthView = (result) => {
-    console.log("Event Move: ", result);
     const { draggableId, source, destination } = result;
     if (!destination) return;
   
@@ -861,7 +860,6 @@ useEffect(() => {
       });
     };
     const numActionsOnSourceDate = getNumActionsOnSourceDate(sourceDate);
-    console.log("Number of actions on source date: ", numActionsOnSourceDate);
   
     const updatedActions = scheduleActions.map(action => {
       if (eventId.includes(action.id) || (numActionsOnSourceDate > 2 && checkForActionOnDate(action, sourceDate))) {
@@ -2636,7 +2634,6 @@ useEffect(() => {
     });
     setScheduleActions(updatedActions);
     updateLocalHabitData({ scheduleActions: updatedActions });
-    console.log("changedToSpecificWeekDays: ", changedToSpecificWeekDays, "changedFromSpecificWeekDays")
 
     // //Need to call this here to accurately update our selected days and weekDaySpecificty after changing the dropdown
     // if(changedToSpecificWeekDays){
@@ -2848,7 +2845,6 @@ useEffect(() => {
                           )}
                           {rule.value == 'specific' && (
                             <div className='flex flex-col'>
-                               {console.log('Rendering Specific Day Rule for action:', action)}
                               <span className='text-center'>This action will be scheduled weekly on the following days: </span>
                               <div className="mt-2 flex justify-between">
                                 {['Sun.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.'].map((shortDay) => {
@@ -3174,21 +3170,9 @@ useEffect(() => {
   const handleActionWeekDaySpecificityChange = (actionId, value) => {
     const updatedActions = scheduleActions.map(action => {
       if (action.id === actionId) {
-        console.log("Week day spec change for action: ", action, ", to: ", value);
         if (value === 'specific' && action.weekDaySpecificity === 'any') {
-          console.log("Changing to any day, old selected days: ", action.selectedDays);
           const today = format(new Date(), 'EEEE');
           const newSelectedDays = [today];
-          console.log("New selected days: ", newSelectedDays)
-          
-          // Move the event to today's column
-          //onEventMoveWeekView (actionId, 'any-day', today);
-  
-          console.log("Updated action: ", { 
-            ...action, 
-            weekDaySpecificity: value, 
-            selectedDays: newSelectedDays
-          });
           return { 
             ...action, 
             weekDaySpecificity: value, 

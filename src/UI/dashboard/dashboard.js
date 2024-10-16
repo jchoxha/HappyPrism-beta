@@ -8,6 +8,7 @@ import { useDimension } from '../DimensionContext';
 
 const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   const [currentPage, setCurrentPage] = useState('Dashboard');
+  const [activeTool, setActiveTool] = useState(null);
   const { currentDimension, setCurrentDimension, dimensionColors } = useDimension();
   const theme = new Theme();
   const [currentNode, setCurrentNode] = useState(null);
@@ -55,7 +56,9 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
     const currentIndex = canvasManager.defaultNodes.findIndex(node => node.name === currentNode.name);
     const newIndex = direction === 'next' 
       ? (currentIndex + 1) % canvasManager.defaultNodes.length
-      : (currentIndex - 1 + canvasManager.defaultNodes.length) % canvasManager.defaultNodes.length;
+      : direction === 'prev'
+        ? (currentIndex - 1 + canvasManager.defaultNodes.length) % canvasManager.defaultNodes.length
+        : currentIndex;
     const newNode = canvasManager.defaultNodes[newIndex];
     
     setCurrentNode(newNode);
@@ -69,14 +72,31 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const handleToolOpen = (tool) => {
+    setActiveTool(tool);
+  };
+
+  const handleToolClose = () => {
+    setActiveTool(null);
+    setCurrentPage('Tools');
+    if(!currentDimension){
+      setCurrentDimension(useDimension());
+    }  
+    theme.updateThemeForNode({ dimensionName: currentDimension });
+  };
+
   const renderPage = () => {
+    if (activeTool) {
+      return React.cloneElement(activeTool, { onClose: handleToolClose });
+    }
+
     switch (currentPage) {
       case 'Goals':
         return <GoalsPage />;
       case 'Progress':
         return <ProgressPage />;
       case 'Tools':
-        return <ToolsPage />;
+        return <ToolsPage onToolOpen={handleToolOpen} />;
       default:
         return <DashboardMain />;
     }
@@ -135,27 +155,32 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
     );
   }
 
-  useEffect(() => {
-    // Update the single div style to reflect changes in header height, sidebar width, and dimension color
+  const updateLShapeBG = () => {
+    console.log("test1");
     if (lShapeRef.current) {
-      const currentColor = dimensionColors[currentDimension];
-      lShapeRef.current.style.borderTopWidth = `${headerHeight}px`;
-      lShapeRef.current.style.borderLeftWidth = isSidebarOpen ? `${sidebarWidth}` : '0px';
+        const currentColor = dimensionColors[currentDimension];
+        lShapeRef.current.style.borderTopWidth = `${headerHeight}px`;
+        lShapeRef.current.style.borderLeftWidth = isSidebarOpen ? `${sidebarWidth}` : '0px';
 
-      if(isSidebarOpen && isMobile){
-        lShapeRef.current.style.borderLeftWidth = `290px`;
-      }
-      
-      if (currentDimension === 'Spectrum') {
-        lShapeRef.current.style.borderImage = `${currentColor} 1`;
-        lShapeRef.current.style.borderColor = 'transparent';
-        lShapeRef.current.style.animation = 'gradientShift 3s linear infinite alternate';
-      } else {
-        lShapeRef.current.style.borderImage = 'none';
-        lShapeRef.current.style.borderColor = `${currentColor}`;
-        lShapeRef.current.style.animation = 'none';
-      }
+        if (isSidebarOpen && isMobile) {
+            lShapeRef.current.style.borderLeftWidth = `290px`;
+        }
+
+        if (currentDimension === 'Spectrum') {
+            console.log("test2");
+            lShapeRef.current.style.borderImage = `${currentColor} 1`;
+            lShapeRef.current.style.borderColor = 'transparent';
+            lShapeRef.current.style.animation = 'gradientShift 3s linear infinite alternate';
+        } else {
+            lShapeRef.current.style.borderImage = 'none';
+            lShapeRef.current.style.borderColor = `${currentColor}`;
+            lShapeRef.current.style.animation = 'none';
+        }
     }
+}
+
+  useEffect(() => {
+    updateLShapeBG();
   }, [headerHeight, sidebarWidth, isSidebarOpen, currentDimension, dimensionColors]);
 
   useEffect(() => {
@@ -196,38 +221,39 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
   return (
     <div id="dashboard-popup" style={{ display: 'block' }}>
       <div id="dashboard-content" className='overflow-y-scroll'>
-        <div id="dashboard-header" ref={headerRef} className="flex items-center justify-between dimension-theme-colored-no-bg bg-transparent sticky top-0 z-40 py-0 px-4 shadow-md overflow-x-auto">
-
-          <button
-            className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-            onClick={toggleSidebar}
+        {!activeTool && (
+          <div id="dashboard-header" ref={headerRef} className="flex items-center justify-between dimension-theme-colored-no-bg bg-transparent sticky top-0 z-40 py-0 px-4 shadow-md overflow-x-auto">
+            <button
+              className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+              onClick={toggleSidebar}
+            >
+              <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
+            </button>
+            
+            <h1 className={`${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} text-xl font-bold text-center mx-2`}>{currentPage}</h1>
+            
+            {!isMobile && <Dimensionselector spectrumBlackText={true} />}
+            
+            <button
+              id="close-dashboard-button"
+              className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
+              onClick={onClose}
+            >
+              <img src="/Images/UI/close.svg" alt="close" className="w-6 h-6" />
+            </button>
+          </div>
+        )}
+        {!activeTool && isSidebarOpen && (
+          <div 
+            id="dashboard-sidebar" 
+            ref={sidebarRef}
+            className="fixed z-40 h-full overflow-y-auto"
+            style={{
+              width: isMobile ? '300px' : '200px',
+              transition: 'width 0.3s ease-in-out'
+            }}
           >
-            <img src="/Images/UI/menu.svg" alt="Toggle Sidebar" className="w-6 h-6" />
-          </button>
-          
-          <h1 className={`${currentDimension === 'Spectrum' ? 'spectrum-black-text' : ''} text-xl font-bold text-center mx-2`}>{currentPage}</h1>
-          
-          {!isMobile && <Dimensionselector spectrumBlackText={true} />}
-          
-          <button
-            id="close-dashboard-button"
-            className="flex-shrink-0 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors duration-200 bg-transparent"
-            onClick={onClose}
-          >
-            <img src="/Images/UI/close.svg" alt="close" className="w-6 h-6" />
-          </button>
-        </div>
-          {isSidebarOpen && (
-              <div 
-                id="dashboard-sidebar" 
-                ref={sidebarRef}
-                className="fixed z-40 h-full overflow-y-auto"
-                style={{
-                  width: isMobile ? '300px' : '200px',
-                  transition: 'width 0.3s ease-in-out'
-                }}
-              >
-              <nav className="dimension-theme-colored-no-bg bg-transparent" id="sidebar-nav">
+            <nav className="dimension-theme-colored-no-bg bg-transparent" id="sidebar-nav">
               <ul>
                 {isMobile && (<li><Dimensionselector spectrumBlackText={true} /></li>)}
                 <li>
@@ -267,25 +293,25 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
                   </a>
                 </li>
               </ul>
-              </nav>
-            </div>
-          )}
-          {isSidebarOpen && isMobile && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-20" 
-              style={{ margin: "0" }}
-              onClick={toggleSidebar}
-            ></div>
-          )}
+            </nav>
+          </div>
+        )}
+        {!activeTool && isSidebarOpen && isMobile && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-20" 
+            style={{ margin: "0" }}
+            onClick={toggleSidebar}
+          ></div>
+        )}
+        {!activeTool && (
           <div
             id="dashboard-header-sidebar-bg"
             ref={lShapeRef}
             className="fixed bg-transparent transition-all duration-500 dimension-theme-colored-LShape pointer-events-none z-30" 
             style={{
               borderStyle: 'solid',
-              borderTopWidth: `${headerHeight}px`,   // Height of the top portion
-              borderLeftWidth: isSidebarOpen ? `${sidebarWidth}px` : '0px', // Width of the left portion
-              // borderColor: 'transparent blue blue transparent',
+              borderTopWidth: `${headerHeight}px`,
+              borderLeftWidth: isSidebarOpen ? `${sidebarWidth}px` : '0px',
               width: '100vw',
               height: '100vh',
               top: '0',
@@ -293,9 +319,13 @@ const Dashboard = ({ canvasManager, onClose, onNodeChange }) => {
               boxSizing: 'border-box',
             }}
           ></div>
-          <main className='bg-white text-black' style={{ marginLeft: isSidebarOpen && !isMobile ? '220px' : '0', transition: 'margin-left 0.3s' }}>
-            {renderPage()}
-          </main>
+        )}
+        <main className='bg-white text-black' style={{ 
+          marginLeft: !activeTool && isSidebarOpen && !isMobile ? '220px' : '0', 
+          transition: 'margin-left 0.3s'
+        }}>
+          {renderPage()}
+        </main>
       </div>
     </div>
   );

@@ -27,6 +27,7 @@ class Goal {
     this.goal_name = goal_name;
     this.goal_emoji = goal_emoji;
     this.goal_type = goal_type;
+    this.goal_creationDate = new Date();
     this.goal_startDate = goal_startDate;
     this.goal_completedDate = goal_completedDate;
     this.goal_lastUpdated = new Date();
@@ -36,7 +37,9 @@ class Goal {
     this.description = description; 
 
     if (this.goal_type === "challenge") {
-      this.milestones = goal_milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id));
+      this.milestones = Array.isArray(goal_milestones) 
+        ? goal_milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id))
+        : [];
       this.percentComplete = 0;
     }
 
@@ -56,20 +59,23 @@ class Goal {
       this.habit_frequencyPeriod = goal_habitData.habit_frequencyPeriod || null;
       this.habit_numCompleteInCurrentPeriod = 0;
       this.habit_current_streakNum = 0;
+      this.habit_streakEnabled = false;
       this.habit_goal_streakNum = goal_habitData.habit_goal_streakNum || null;
       this.habit_streakPeriod = goal_habitData.habit_streakPeriod || null;
+      this.habit_actionUpdates = [];
       this.percentComplete = 0;
     }
 
     if (this.goal_type === "performance") {
       this.performance_metric = goal_performanceData.performance_metric || null;
       this.performance_unit = goal_performanceData.performance_unit || null;
+      this.performance_unitIsPrefix = goal_performanceData.performance_unitIsPrefix || false;
       this.performance_startingValue = goal_performanceData.performance_startingValue || null;
       this.performance_targetValue = goal_performanceData.performance_targetValue || null;
       this.performance_valueHistory = goal_performanceData.performance_valueHistory || [];
       this.percentComplete = 0;
       this.percentImprovement = 0;
-    }
+  }
   }
 
   updateStatus(newStatus) {
@@ -196,6 +202,37 @@ class Goal {
       this.updateProjectStatus();
     }
   }
+  updateFromTool(tool, entry) {
+    switch (this.goal_type) {
+      case "habit":
+        this.updateHabitFromTool(tool, entry);
+        break;
+      case "performance":
+        this.updatePerformanceFromTool(tool, entry);
+        break;
+      // Add cases for other goal types as needed
+    }
+    this.calculateProgress();
+  }
+  updateHabitFromTool(tool, entry) {
+    // Logic to update habit based on tool entry
+    // This will depend on the specific tool and habit structure
+    // For example, for a running tool:
+    if (tool.name === "Workout Planner" && entry.activity === "running") {
+      this.habit_numCompleteInCurrentPeriod += 1;
+    }
+  }
+
+  updatePerformanceFromTool(tool, entry) {
+    // Logic to update performance goal based on tool entry
+    // For example, for a running tool:
+    if (tool.name === "Workout Planner" && entry.activity === "running") {
+      this.performance_valueHistory.push({
+        date: entry.timestamp,
+        value: entry.distance // assuming the entry includes distance
+      });
+    }
+  }
 }
   
 class Milestone {
@@ -300,4 +337,106 @@ class SubGoal {
       }      
 }
 
-export { Goal, Milestone, ProjectTask, SubGoal };
+const formatPerformanceValue = (value, unit, isPrefix, shortenLongNums = true) => {
+  let formattedValue = value;
+
+  if (typeof value === 'number') {
+    if(shortenLongNums){
+      const formatNumber = (n, divisor, suffix) => {
+        const result = n / divisor;
+        const integerPart = Math.floor(result);
+        return integerPart >= 100 ? 
+          Math.round(result) + suffix :
+          result.toFixed(1) + suffix;
+      };
+  
+      if (value >= 1e12) {
+        formattedValue = formatNumber(value, 1e12, 'T');
+      } else if (value >= 1e9) {
+        formattedValue = formatNumber(value, 1e9, 'B');
+      } else if (value >= 1e6) {
+        formattedValue = formatNumber(value, 1e6, 'M');
+      } else if (value >= 1e3) {
+        formattedValue = formatNumber(value, 1e3, 'K');
+      }
+    } else {
+      formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+
+  }
+
+  if (isPrefix) {
+    return `${unit}${formattedValue}`;
+  } else {
+    return `${formattedValue} ${unit}`;
+  }
+};
+
+export function calculateProgress(goal) {
+  switch (goal.goal_type) {
+    case "challenge":
+      return calculateChallengeProgress(goal);
+    case "project":
+      return calculateProjectProgress(goal);
+    case "transformation":
+      return calculateTransformationProgress(goal);
+    case "habit":
+      return calculateHabitProgress(goal);
+    case "performance":
+      return calculatePerformanceProgress(goal);
+    default:
+      return 0;
+  }
+}
+
+export function calculateChallengeProgress(goal) {
+  const completedMilestones = goal.milestones.filter(m => m.status === "Completed").length;
+  goal.percentComplete = (completedMilestones / goal.milestones.length) * 100;
+  return goal.percentComplete;
+}
+
+export function calculateProjectProgress(goal) {
+  const completedTasks = goal.project_tasks.filter(t => t.status === "Completed").length;
+  goal.percentComplete = (completedTasks / goal.project_tasks.length) * 100;
+  return goal.percentComplete;
+}
+
+export function calculateTransformationProgress(goal) {
+  goal.totalPercentComplete = goal.subGoals.reduce((sum, subGoal) => {
+    const subGoalProgress = subGoal.goal.percentComplete * (subGoal.percentOfTransformation / 100);
+    return sum + subGoalProgress;
+  }, 0);
+  goal.percentComplete = goal.totalPercentComplete;
+  return goal.percentComplete;
+}
+
+export function calculateHabitProgress(goal) {
+  if (goal.habit_frequencyNum && goal.habit_frequencyPeriod) {
+    goal.percentComplete = (goal.habit_numCompleteInCurrentPeriod / goal.habit_frequencyNum) * 100;
+  } else {
+    goal.percentComplete = 0;
+  }
+  return goal.percentComplete;
+}
+
+export function calculatePerformanceProgress(goal) {
+  if (goal.performance_startingValue !== null && goal.performance_targetValue !== null) {
+    const totalChange = goal.performance_targetValue - goal.performance_startingValue;
+    const currentValue = goal.performance_valueHistory.length > 0 
+      ? goal.performance_valueHistory[goal.performance_valueHistory.length - 1].value 
+      : goal.performance_startingValue;
+    const currentChange = currentValue - goal.performance_startingValue;
+
+    goal.percentComplete = totalChange !== 0 ? (currentChange / totalChange) * 100 : 0;
+    goal.percentImprovement = goal.performance_startingValue !== 0 
+      ? (currentChange / Math.abs(goal.performance_startingValue)) * 100 
+      : 0;
+  } else {
+    goal.percentComplete = 0;
+    goal.percentImprovement = 0;
+  }
+  return goal.percentComplete;
+}
+
+
+export { Goal, Milestone, ProjectTask, SubGoal, formatPerformanceValue};

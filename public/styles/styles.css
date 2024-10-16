@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins');
 @import url('https://fonts.googleapis.com/css2?family=Outfit');
 
+/* MAPBOX */
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 0;

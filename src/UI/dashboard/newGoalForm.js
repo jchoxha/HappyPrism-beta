@@ -1,3 +1,6 @@
+//to do: fix goal submitting for all types, need to go through and test this
+//        add gui for performance goals and transformation goals
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Goal, Milestone, ProjectTask, SubGoal } from './goal.js';
 import { Switch } from '@mui/material';
@@ -12,6 +15,9 @@ import KanbanBoard from './KanbanBoard';
 import JourneyMap from './JourneyMap';
 import HabitScheduler from './HabitScheduler.js';
 import { v4 as uuidv4 } from 'uuid';
+import { getSuggestEmojiPrompt } from '../../Prompts/Functions/suggestEmoji.js';
+import { calculateProgress } from './goal.js';
+
 const config = require('../../config.js');
 
 const genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
@@ -92,8 +98,9 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const [performanceData, setPerformanceData] = useState({
     performance_metric: '',
     performance_unit: '',
-    performance_startingValue: '',
-    performance_targetValue: ''
+    performance_unitIsPrefix: false,
+    performance_startingValue: 0,
+    performance_targetValue: null
   });
   const [goalNameExample, setGoalNameExample] = useState('');
   const theme = new Theme();
@@ -106,9 +113,11 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
     habit_action: '',
     habit_frequencyNum: 1,
     habit_frequencyPeriod: 'daily',
-    habit_goal_streakNum: 1,
-    habit_streakPeriod: 'days',
-    scheduleActions: []
+    habit_streakEnabled: false,
+    habit_goal_streakNum: null,
+    habit_streakPeriod: null,
+    scheduleActions: [],
+    habit_actionUpdates: []
   });
 
   const handleHabitDataChange = (newHabitData) => {
@@ -123,6 +132,14 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   });
 
   const [streakGoalEnabled, setStreakGoalEnabled] = useState(false);
+  useEffect(() => {
+    setHabitData(prevData => ({
+      ...prevData,
+      habit_streakEnabled: streakGoalEnabled,
+      habit_goal_streakNum: streakGoalEnabled ? (prevData.habit_goal_streakNum || 1) : null,
+      habit_streakPeriod: streakGoalEnabled ? (prevData.habit_streakPeriod || 'days') : null
+    }));
+  }, [streakGoalEnabled]);
 
   const handleFrequencyChange = (change) => {
     const newValue = Math.max(1, parseInt(habitData.habit_frequencyNum) + change);
@@ -148,6 +165,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
     setHabitData(prevData => {
       const newData = { ...prevData, [name]: updatedValue };
+      setIsDirty(true);
       return newData;
     });
   };
@@ -175,10 +193,17 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
   const handleDimensionToggle = (e, dimensionName) => {
     e.preventDefault(); 
     e.stopPropagation();
-    setSelectedDimensions(prevDimensions => ({
-      ...prevDimensions,
-      [dimensionName]: !prevDimensions[dimensionName]
-    }));
+    setSelectedDimensions(prevDimensions => {
+      const updatedDimensions = {
+        ...prevDimensions,
+        [dimensionName]: !prevDimensions[dimensionName]
+      };
+      // Ensure at least one dimension remains selected
+      if (Object.values(updatedDimensions).every(value => !value)) {
+        return prevDimensions;
+      }
+      return updatedDimensions;
+    });
   };
 
   useEffect(() => {
@@ -292,6 +317,8 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
   useEffect(() => {
     theme.updateThemeForNode({ dimensionName: currentDimension });
+     // Set default selected dimensions based on current dimension context
+     setSelectedDimensions(getDimensionsForNewGoal());
   }, [currentDimension]);
 
   useEffect(() => {
@@ -368,56 +395,59 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
   const handlePerformanceInputChange = (e) => {
     const { name, value } = e.target;
-    setPerformanceData(prevData => ({ ...prevData, [name]: value }));
+    setPerformanceData(prevData => ({
+        ...prevData,
+        [name]: name === 'performance_unitIsPrefix' ? value : value
+    }));
     setIsDirty(true);
-  };
+};
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+
+    // Check if at least one dimension is selected
+    if (Object.values(selectedDimensions).every(value => !value)) {
+      setFormError('Please select at least one dimension for the goal.');
+      setShowFormErrorModal(true);
+      return;
+    }
   
     let newGoal;
+  
+    // Step 1: Create basic Goal object
+    newGoal = new Goal(
+      goalData.goal_name,
+      goalData.goal_emoji,
+      goalData.goal_type
+    );
+  
+    // Step 2: Assign additional properties based on goal type
+    newGoal.goal_creationDate = new Date();
+    newGoal.goal_startDate = goalData.goal_startDate;
+    newGoal.goal_completedDate = goalData.goal_completedDate;
+    newGoal.goal_deadline = goalData.goal_deadline;
+    newGoal.description = goalData.description;
+    newGoal.dimensions = selectedDimensions;
+  
+    // Initialize common properties
+    newGoal.milestones = [];
+    newGoal.goal_habitData = {};
+    newGoal.goal_performanceData = {};
+    newGoal.goal_projectData = { tasks: [], percentComplete: 0, taskPercentagesEnabled: false };
+    newGoal.goal_subGoals = [];
+    newGoal.goal_transformationData = { subGoals: [], totalPercentComplete: 0 };
+  
     if (goalType === 'habit') {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        null,
-        [],
-        habitData,
-        {},
-        {},
-        [],
-        { subGoals: [], totalPercentComplete: 0 },
-        dimensions,
-        goalData.description // Add description here
-      );
+      newGoal.goal_habitData = habitData;
     } else if (goalType === 'challenge') {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        goalData.goal_deadline,
-        milestones.map(m => new Milestone(
-          m.name, 
-          m.emoji, 
-          m.status, 
-          m.startDate, 
-          m.deadline, 
-          m.completedDate, 
-          m.pre_existing_goal, 
-          m.description, 
-          m.id
-        )),
-        {},
-        {},
-        {},
-        [],
-        { subGoals: [], totalPercentComplete: 0 },
-        dimensions,
-        goalData.description // Add description here
-      );
+      if (Array.isArray(milestones)) {
+        newGoal.milestones = milestones.map(m => new Milestone(
+          m.name, m.emoji, m.status, m.startDate, m.deadline, 
+          m.completedDate, m.pre_existing_goal, m.description, m.id
+        ));
+      } else {
+        console.warn('milestones is not an array:', milestones);
+      }
     } else if (goalType === 'project') {
       const allTasks = projectLists.lists.flatMap(list => list.cardIds.map(id => projectLists.cards[id]));
       if (allTasks.length === 0) {
@@ -425,54 +455,51 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
         setShowFormErrorModal(true);
         return;
       }
-      projectGoal.project_tasks = allTasks.map(task => new ProjectTask(
-        task.content,
-        task.emoji,
-        task.status,
-        task.taskType,
-        task.pre_existing_goal,
-        task.deadline,
-        task.description
-      ));
-      newGoal = projectGoal;
-      newGoal.dimensions = dimensions;
-      newGoal.description = goalData.description; // Add description here
+      newGoal.goal_projectData.tasks = projectLists;
     } else if (goalType === 'transformation') {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        goalData.goal_deadline,
-        [],
-        {},
-        {},
-        {},
-        { subGoals: subGoals.map(sg => ({ ...sg, goal: { ...sg.goal, status: sg.goal.status } })), totalPercentComplete: 0 },
-        dimensions,
-        goalData.description // Add description here
-      );
-    } else {
-      newGoal = new Goal(
-        goalData.goal_name,
-        goalData.goal_emoji,
-        goalData.goal_type,
-        goalData.goal_startDate,
-        goalData.goal_deadline,
-        goalData.milestones.map(m => new Milestone(m.name, m.emoji, m.status, m.startDate, m.deadline, m.completedDate, m.pre_existing_goal, m.description, m.id)),
-        {},
-        {},
-        {},
-        [],
-        { subGoals: [], totalPercentComplete: 0 },
-        dimensions,
-        goalData.description // Add description here
-      );
+      newGoal.subGoals = subGoals.map(sg => ({
+        ...sg,
+        goal: new Goal(
+          sg.goal.goal_name,
+          sg.goal.goal_emoji,
+          sg.goal.goal_type,
+          sg.goal.goal_startDate,
+          sg.goal.goal_deadline,
+          sg.goal.milestones,
+          sg.goal.goal_habitData,
+          sg.goal.goal_performanceData,
+          sg.goal.goal_projectData,
+          sg.goal.subGoals,
+          sg.goal.goal_transformationData
+        )
+      }));
+      
+      newGoal.totalPercentComplete = newGoal.subGoals.reduce((total, sg) => {
+        const subGoalProgress = calculateProgress(sg.goal);
+        return total + (subGoalProgress * sg.percentOfTransformation / 100);
+      }, 0);
+    } else if (goalType === 'performance') {
+      newGoal.performance_metric = performanceData.performance_metric;
+      newGoal.performance_unit = performanceData.performance_unit;
+      newGoal.performance_unitIsPrefix = performanceData.performance_unitIsPrefix;
+      newGoal.performance_startingValue = parseFloat(performanceData.performance_startingValue);
+      newGoal.performance_targetValue = parseFloat(performanceData.performance_targetValue);
+      
+      if (goalStatus !== "Not Yet Started") {
+        newGoal.performance_valueHistory = [
+          {
+            date: newGoal.goal_startDate || new Date().toISOString(),
+            value: newGoal.performance_startingValue
+          }
+        ];
+      } else {
+        newGoal.performance_valueHistory = [];
+      }
     }
   
-    newGoal.status = goalStatus; 
-    newGoal.goal_completedDate = goalData.goal_completedDate; // Add completed date here
     console.log("New Goal: ", newGoal);
+    newGoal.updateStatus(goalStatus);
+    newGoal.percentComplete = calculateProgress(newGoal);
     onSubmit(newGoal);
     clearForm();
   };
@@ -713,6 +740,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
     const emojiName = goalData.goal_name;
     const emojiType = goalType;
+    const emojiDescription = goalData.description || '';
 
     if (!emojiName) {
       setEmojiError('Please enter a goal name before suggesting an emoji.');
@@ -728,7 +756,7 @@ const NewGoalForm = ({ onSubmit, onCancel, existingGoals }) => {
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-      const prompt = `Based on the following name for a ${emojiType} goal, suggest an emoji to represent it. Do not return any text besides one suggested emoji: "${emojiName}"`;
+      const prompt = getSuggestEmojiPrompt(emojiType, emojiName, emojiDescription);
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -864,39 +892,6 @@ const renderSubGoal = (subGoal, index) => {
       }
     }
     setSubGoals(updatedSubGoals);
-  };
-
-    const [habitData, setHabitData] = useState({
-    habit_action: '',
-    habit_frequencyNum: 1,
-    habit_frequencyPeriod: 'daily',
-    habit_goal_streakNum: 1,
-    habit_streakPeriod: 'days'
-  });
-
-  const [habitErrors, setHabitErrors] = useState({
-    habit_frequencyNum: '',
-    habit_goal_streakNum: ''
-  });
-
-  const [streakGoalEnabled, setStreakGoalEnabled] = useState(false);
-
-  const handleHabitInputChange = (e) => {
-    const { name, value } = e.target;
-    let updatedValue = value;
-
-    if (name === 'habit_frequencyNum' || name === 'habit_goal_streakNum') {
-      updatedValue = Math.max(1, parseInt(value) || 0);
-      setHabitErrors(prevErrors => ({
-        ...prevErrors,
-        [name]: updatedValue < 1 ? 'Minimum value is 1' : ''
-      }));
-    }
-
-    setHabitData(prevData => {
-      const newData = { ...prevData, [name]: updatedValue };
-      return newData;
-    });
   };
 
   return (
@@ -1329,7 +1324,7 @@ return (
                               )
                             )}
                             </div>
-                            <p className="text-sm text-gray-500 italic text-center mb-4">Click a dimension to toggle it on/off for this goal.</p>
+                            <p className="text-sm text-gray-500 italic text-center mb-4">Click a dimension to toggle it on/off for this goal.<br />Every goal must have at least one assigned dimension.</p>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                               {dimensions.map((dimension) => (
                                 <button
@@ -1503,13 +1498,13 @@ return (
                                   onClick={() => setStreakGoalEnabled(!streakGoalEnabled)}
                                   className={`dimension-theme-colored py-2 px-4 rounded`}
                                 >
-                                  {streakGoalEnabled ? 'Disable Streak Goal for this Habit 🗑️' : 'Set a Streak Goal for this Habit 🔥'}
+                                  {streakGoalEnabled ? 'Disable Streak Target for this Habit 🗑️' : 'Set a Streak Target for this Habit 🔥'}
                                 </button>
                               </div>
 
                               {streakGoalEnabled && (
                                 <div className="form-group">
-                                  <label htmlFor="habit_goal_streakNum">Streak Goal:</label>
+                                  <label htmlFor="habit_goal_streakNum">Streak Target:</label>
                                   <small>How many days/weeks/months in a row do you want to try to keep your habit going?</small>
                                   <div className="streak-input">
                                     <input
@@ -1566,9 +1561,30 @@ return (
                                           required
                                       />
                                       <small className='description-example'>Example: "lbs" or "mph"</small>
+                                      <div className="toggle-switch mt-2">
+                                        <Switch
+                                          id="performance_unitIsPrefix"
+                                          name="performance_unitIsPrefix"
+                                          checked={performanceData.performance_unitIsPrefix}
+                                          onChange={(event) => handlePerformanceInputChange({
+                                              target: {
+                                                  name: 'performance_unitIsPrefix',
+                                                  value: event.target.checked
+                                              }
+                                          })}
+                                          color="primary"
+                                        />
+                                        <div>
+                                          <label htmlFor="performance_unitIsPrefix">
+                                              Unit of Measurement comes before Value
+                                          </label>
+                                          <small className='description-example'>('$100' instead of '100 $')</small>
+                                        </div>
+                                    </div>
                                   </div>
                                   <div className="form-group">
                                       <label htmlFor="performance_startingValue">Starting Value:</label>
+                                      <small className='description-example'>Goal Status cannot be "Not Yet Started" if you set a Starting Value.</small>
                                       <input
                                           type="number"
                                           id="performance_startingValue"
@@ -1576,6 +1592,7 @@ return (
                                           value={performanceData.performance_startingValue}
                                           onChange={handlePerformanceInputChange}
                                           required
+                                          disabled={goalStatus === "Not Yet Started"}
                                       />
                                       <small className='description-example'>Example: "100" (for 100 lbs) or "6" (for 6 mph)</small>
                                   </div>
