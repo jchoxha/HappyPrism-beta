@@ -5,7 +5,7 @@ import { physicsUpdate } from './UI/canvas/Physics/physics.js';
 import { Theme } from './UI/theme.js';
 import CanvasUI from './UI/canvas/CanvasUI.js';
 import { DimensionProvider } from './UI/DimensionContext.js';
-
+const config = require('./config.js');
 const App = () => {
   const canvasRef = useRef(null);
   const [canvasManager, setCanvasManager] = useState(null);
@@ -21,6 +21,11 @@ const App = () => {
   };
 
   useEffect(() => {
+    const accessToken = config.MAPBOX_ACCESS_TOKEN;
+    const apiKey = config.GOOGLE_API_KEY
+    console.log("Access token: ", accessToken);
+    console.log("OAPIK token: ", apiKey);
+    
     const theme = new Theme();
 
     if (canvasRef.current) {

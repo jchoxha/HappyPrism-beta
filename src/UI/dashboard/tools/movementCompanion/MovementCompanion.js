@@ -26,7 +26,6 @@ const MovementCompanion = ({ onClose }) => {
 
   useEffect(() => {
     if (mapContainer.current && !map.current) {
-      console.log("Access token: ", mapboxgl.accessToken);
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/outdoors-v12',
